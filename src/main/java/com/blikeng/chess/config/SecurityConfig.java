@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -29,12 +30,13 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests( request -> {
                         request.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();
-                        request.requestMatchers("/auth").permitAll();
+                        request.requestMatchers("/api/auth/**").permitAll();
                         request.anyRequest().authenticated();
                 })
-                .httpBasic(it -> it.disable())
-                .formLogin(it -> it.disable())
-                .csrf(it -> it.disable())
+
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(it ->
                         it.authenticationEntryPoint((request, response, authException) ->

@@ -2,6 +2,8 @@ package com.blikeng.chess.entity;
 
 import com.blikeng.chess.model.Board;
 import com.blikeng.chess.model.GameStatus;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 
 import java.util.UUID;
 
