@@ -1,0 +1,45 @@
+package com.blikeng.chess.config;
+
+import com.blikeng.chess.security.JwtAuthFilter;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+@Configuration
+public class SecurityConfig {
+    private JwtAuthFilter jwtAuthFilter;
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeHttpRequests( request -> {
+                        request.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();
+                        request.requestMatchers("/auth").permitAll();
+                        request.anyRequest().authenticated();
+                })
+                .httpBasic(it -> it.disable())
+                .formLogin(it -> it.disable())
+                .csrf(it -> it.disable())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(it ->
+                        it.authenticationEntryPoint((request, response, authException) ->
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token")
+                        )
+                );
+
+
+        return http.build();
+
+    }
+}
