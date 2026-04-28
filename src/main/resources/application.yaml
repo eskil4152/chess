@@ -1,3 +1,7 @@
 spring:
   application:
     name: chess
+  datasource:
+    url: jdbc:postgresql://localhost:5432/chess
+    username: eskil
+    password: password
