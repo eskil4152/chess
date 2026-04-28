@@ -53,7 +53,7 @@ public class AuthController {
                 .body("User logged out successfully");
     }
 
-    @PostMapping("")
+    @PostMapping
     public String auth(){
         // TODO
         return "Auth successful";
