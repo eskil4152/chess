@@ -1,5 +1,6 @@
 package com.blikeng.chess.model;
 
+import com.blikeng.chess.engine.MoveGenerator;
 import com.blikeng.chess.model.piece.Knight;
 import com.blikeng.chess.model.piece.Piece;
 
@@ -12,12 +13,12 @@ public class Board {
         setupBoard(squares);
     }
 
-    public Piece getPiece(int x, int y) {
-        return squares[x][y];
+    public Piece getPiece(int row, int col) {
+        return squares[row][col];
     }
 
-    public void setPiece(int x, int y, Piece piece) {
-        squares[x][y] = piece;
+    public void setPiece(int row, int col, Piece piece) {
+        squares[row][col] = piece;
     }
 
     @Override

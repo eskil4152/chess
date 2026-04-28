@@ -2,13 +2,28 @@ package com.blikeng.chess.engine;
 
 import com.blikeng.chess.model.Board;
 import com.blikeng.chess.model.Position;
-import com.blikeng.chess.model.piece.Color;
+import com.blikeng.chess.model.piece.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MoveGenerator {
-    public List<Position> getRookMoves(Board board, Position position) {
+    public List<Position> getLegalMoves(Board board, Position position) {
+        Piece piece = board.getPiece(position.row(), position.col());
+
+        if (piece == null) return List.of();
+
+        return switch (piece.getPieceType()) {
+            case PieceType.ROOK -> getRookMoves(board, position);
+            case PieceType.KNIGHT -> getKnightMoves(board, position);
+            case PieceType.BISHOP -> getBishopMoves(board, position);
+            case PieceType.QUEEN -> getQueenMoves(board, position);
+            case PieceType.KING -> getKingMoves(board, position);
+            case PieceType.PAWN -> getPawnMoves(board, position);
+        };
+    }
+
+    private List<Position> getRookMoves(Board board, Position position) {
         List<Position> moves = new ArrayList<>();
 
         int[][] directions = {
@@ -19,7 +34,7 @@ public class MoveGenerator {
         return slideDirection(position, moves, directions);
     }
 
-    public List<Position> getKnightMoves(Board board, Position position) {
+    private List<Position> getKnightMoves(Board board, Position position) {
         List<Position> moves = new ArrayList<>();
 
         int[][] offsets = {
@@ -41,7 +56,7 @@ public class MoveGenerator {
         return moves;
     }
 
-    public List<Position> getBishopMoves(Board board, Position position) {
+    private List<Position> getBishopMoves(Board board, Position position) {
         List<Position> moves = new ArrayList<>();
 
         int[][] directions = {
@@ -52,7 +67,7 @@ public class MoveGenerator {
         return slideDirection(position, moves, directions);
     }
 
-    public List<Position> getQueenMoves(Board board, Position position) {
+    private List<Position> getQueenMoves(Board board, Position position) {
         List<Position> moves = new ArrayList<>();
 
         int[][] directions = {
@@ -65,7 +80,7 @@ public class MoveGenerator {
         return slideDirection(position, moves, directions);
     }
 
-    public List<Position> getKingMoves(Board board, Position position) {
+    private List<Position> getKingMoves(Board board, Position position) {
         List<Position> moves = new ArrayList<>();
 
         int[][] directions = {
@@ -86,7 +101,7 @@ public class MoveGenerator {
         return moves;
     }
 
-    public List<Position> getPawnMoves(Board board, Position position){
+    private List<Position> getPawnMoves(Board board, Position position){
         List<Position> moves = new ArrayList<>();
 
         // TODO: Check if pawn can en passant

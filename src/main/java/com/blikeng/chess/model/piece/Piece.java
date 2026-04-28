@@ -8,6 +8,8 @@ public abstract class Piece {
         this.color = color;
     }
 
+    public abstract PieceType getPieceType();
+
     public Color getColor() {
         return color;
     }
@@ -16,7 +18,7 @@ public abstract class Piece {
         return moved;
     }
 
-    public void setMoved(boolean moved) {
-        this.moved = moved;
+    public void setMoved() {
+        this.moved = true;
     }
 }
