@@ -146,13 +146,7 @@ Tip:
 
 ---
 
-## Phase 7 — Auth
-- Register / login
-- JWT filter
-
----
-
-## Phase 8 — REST API
+## Phase 7 — REST API
 - POST `/games`
 - GET `/games/{id}`
 - POST `/games/{id}/moves`
@@ -169,7 +163,7 @@ Tip:
 
 ---
 
-## Phase 9 — Concurrency Safety
+## Phase 8 — Concurrency Safety
 Goal: prevent broken games.
 
 - Add version field (optimistic locking)
@@ -181,7 +175,7 @@ Goal: prevent broken games.
 
 ---
 
-## Phase 10 — WebSocket
+## Phase 9 — WebSocket
 - `/ws/game/{id}`
 
 - Broadcast:
@@ -194,7 +188,7 @@ Goal: prevent broken games.
 
 ---
 
-## Phase 11 — Matchmaking & ELO
+## Phase 10 — Matchmaking & ELO
 - Queue endpoint
 - Pair players → create game
 
@@ -208,7 +202,7 @@ Goal: prevent broken games.
 
 ---
 
-## Phase 12 — Polish
+## Phase 11 — Polish
 - Flyway migrations
 - Docker Compose
 - Integration tests
