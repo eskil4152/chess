@@ -14,8 +14,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-    private AuthService authService;
-    private Environment environment;
+    private final AuthService authService;
+    private final Environment environment;
+
+    public AuthController(
+            AuthService authService,
+            Environment environment
+    ) {
+        this.authService = authService;
+        this.environment = environment;
+    }
 
     private final Long maxAge = (long) 24 * 60 * 60;
 

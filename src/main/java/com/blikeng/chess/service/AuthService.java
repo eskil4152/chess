@@ -15,9 +15,19 @@ import java.util.Optional;
 
 @Service
 public class AuthService {
-    private AuthRepository authRepository;
-    private JwtService jwtService;
-    private PasswordService passwordService;
+    private final AuthRepository authRepository;
+    private final JwtService jwtService;
+    private final PasswordService passwordService;
+
+    public AuthService(
+            AuthRepository authRepository,
+            JwtService jwtService,
+            PasswordService passwordService
+    ) {
+        this.authRepository = authRepository;
+        this.jwtService = jwtService;
+        this.passwordService = passwordService;
+    }
 
     public String login(LoginDTO loginDTO) {
         Optional<UserEntity> user = authRepository.findByUsernameIgnoreCase(loginDTO.username());

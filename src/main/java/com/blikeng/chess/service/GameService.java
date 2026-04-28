@@ -9,7 +9,11 @@ import java.util.UUID;
 
 @Service
 public class GameService {
-    private GameRepository gameRepository;
+    private final GameRepository gameRepository;
+
+    public GameService(GameRepository gameRepository) {
+        this.gameRepository = gameRepository;
+    }
 
     private final HashMap<UUID, GameEntity> games = new HashMap<>();
 }
