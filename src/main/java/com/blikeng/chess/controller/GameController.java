@@ -1,0 +1,11 @@
+package com.blikeng.chess.controller;
+
+import com.blikeng.chess.service.GameService;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api")
+public class GameController {
+    private GameService gameService;
+}

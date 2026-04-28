@@ -1,7 +1,7 @@
 package com.blikeng.chess.engine;
 
 import com.blikeng.chess.model.Board;
-import com.blikeng.chess.model.Game;
+import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.model.Move;
 import com.blikeng.chess.model.Position;
 import com.blikeng.chess.model.piece.Color;
@@ -12,7 +12,7 @@ import java.util.List;
 public class MoveExecutor {
     private final MoveGenerator moveGenerator = new MoveGenerator();
 
-    public void performMove(Game game, Move move) {
+    public void performMove(GameEntity game, Move move) {
         Board board = game.getBoard();
         Piece piece = board.getPiece(move.from().row(), move.from().col());
 

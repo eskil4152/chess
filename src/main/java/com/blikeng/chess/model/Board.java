@@ -1,6 +1,5 @@
 package com.blikeng.chess.model;
 
-import com.blikeng.chess.engine.MoveGenerator;
 import com.blikeng.chess.model.piece.Knight;
 import com.blikeng.chess.model.piece.Piece;
 
