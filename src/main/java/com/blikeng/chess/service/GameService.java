@@ -33,6 +33,8 @@ public class GameService {
 
     public void beginGame(GameDTO gameDTO){
         GameEntity game = new GameEntity(gameDTO.whiteId(), gameDTO.whiteUsername(), gameDTO.blackId(), gameDTO.blackUsername());
+        game.setWhiteKingPosition(new Position(7, 4));
+        game.setBlackKingPosition(new Position(0, 4));
 
         games.put(game.getId(), game);
     }

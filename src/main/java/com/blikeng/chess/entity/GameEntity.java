@@ -2,7 +2,9 @@ package com.blikeng.chess.entity;
 
 import com.blikeng.chess.model.Board;
 import com.blikeng.chess.model.GameStatus;
+import com.blikeng.chess.model.Position;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
@@ -25,6 +27,12 @@ public class GameEntity {
 
     private String blackId;
     private String blackUsername;
+
+    @Setter
+    private Position whiteKingPosition;
+
+    @Setter
+    private Position blackKingPosition;
 
     private Board board;
     private boolean isWhiteTurn;

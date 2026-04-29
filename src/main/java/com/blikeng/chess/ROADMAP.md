@@ -1,25 +1,5 @@
 # Chess Backend — Build Plan
 
-## Phase 0 — Minimal Domain Setup
-Goal: avoid rewrites later without overengineering.
-
-- Define core classes:
-    - `Board` (8x8 array)
-    - `Piece` (type, color)
-    - `Position` (row, col) — immutable record
-    - `Move` (from: Position, to: Position, promotion: PieceType nullable)
-- Define **GameState (lightweight)**:
-    - current turn
-    - lastMove (nullable)
-    - castling rights (simple flags)
-- Internal coordinate system: `row 0–7`, `col 0–7`. Row 0 = rank 8, row 7 = rank 1.
-- Algebraic notation (`e2`) is input/output only — isolate parsing in a `PositionMapper` class.
-- Engine never sees strings. Controllers convert DTO strings → `Move` before calling engine.
-
-Sketch these in 30 minutes. Don't perfect them — they'll evolve as you build Phase 1.
-
----
-
 ## Phase 1 — Board & Movement (Pseudo-Legal Only)
 Goal: pieces move correctly, no game rules yet.
 

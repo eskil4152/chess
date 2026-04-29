@@ -6,6 +6,7 @@ import com.blikeng.chess.model.Move;
 import com.blikeng.chess.model.Position;
 import com.blikeng.chess.model.piece.Color;
 import com.blikeng.chess.model.piece.Piece;
+import com.blikeng.chess.model.piece.PieceType;
 
 import java.util.List;
 
@@ -21,6 +22,14 @@ public class MoveExecutor {
 
         List<Position> legalMoves = moveGenerator.getLegalMoves(board, move.from());
         if (!legalMoves.contains(move.to())) return false;
+
+        if (piece.getPieceType() == PieceType.KING) {
+            if (game.isWhiteTurn()) {
+                game.setWhiteKingPosition(new Position(move.to().row(), move.to().col()));
+            } else {
+                game.setBlackKingPosition(new Position(move.to().row(), move.to().col()));
+            }
+        }
 
         board.setPiece(move.to().row(), move.to().col(), piece);
         board.setPiece(move.from().row(), move.from().col(), null);

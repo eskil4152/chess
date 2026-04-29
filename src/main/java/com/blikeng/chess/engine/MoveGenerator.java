@@ -24,14 +24,12 @@ public class MoveGenerator {
     }
 
     private List<Position> getRookMoves(Board board, Position position) {
-        List<Position> moves = new ArrayList<>();
-
         int[][] directions = {
             {-1, 0}, {+1, 0},
             {0, -1}, {0, +1}
         };
 
-        return slideDirection(position, moves, directions);
+        return slideDirection(board, position, directions);
     }
 
     private List<Position> getKnightMoves(Board board, Position position) {
@@ -49,7 +47,12 @@ public class MoveGenerator {
             int newCol = position.col() + offset[1];
 
             if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
-                moves.add(new Position(newRow, newCol));
+                if (
+                        board.getPiece(newRow, newCol) == null ||
+                        board.getPiece(newRow, newCol).getColor() != board.getPiece(position.row(), position.col()).getColor()
+                ){
+                    moves.add(new Position(newRow, newCol));
+                }
             }
         }
 
@@ -57,19 +60,15 @@ public class MoveGenerator {
     }
 
     private List<Position> getBishopMoves(Board board, Position position) {
-        List<Position> moves = new ArrayList<>();
-
         int[][] directions = {
                 {-1, -1}, {-1, +1},
                 {+1, -1}, {+1, +1}
         };
 
-        return slideDirection(position, moves, directions);
+        return slideDirection(board, position, directions);
     }
 
     private List<Position> getQueenMoves(Board board, Position position) {
-        List<Position> moves = new ArrayList<>();
-
         int[][] directions = {
             {-1, -1}, {-1, +1},
             {+1, -1}, {+1, +1},
@@ -77,7 +76,7 @@ public class MoveGenerator {
             {0, -1}, {0, +1}
         };
 
-        return slideDirection(position, moves, directions);
+        return slideDirection(board, position, directions);
     }
 
     private List<Position> getKingMoves(Board board, Position position) {
@@ -94,7 +93,15 @@ public class MoveGenerator {
             int col = position.col() + direction[1];
 
             if ((row >= 0 && row < 8 && col >= 0 && col < 8)) {
-                moves.add(new Position(row, col));
+                if (board.getPiece(row, col) == null) {
+                    moves.add(new Position(row, col));
+                } else {
+                    Piece moving = board.getPiece(position.row(), position.col());
+                    Piece target = board.getPiece(row, col);
+                    if (target.getColor() != moving.getColor()) {
+                        moves.add(new Position(row, col));
+                    }
+                }
             }
         }
 
@@ -111,38 +118,71 @@ public class MoveGenerator {
 
         if (isWhite) {
             // Walk ahead
-            moves.add(new Position(position.row() - 1, position.col()));
+            if (board.getPiece(position.row() - 1, position.col()) == null) moves.add(new Position(position.row() - 1, position.col()));
 
             // Captures
-            moves.add(new Position(position.row() - 1, position.col() + 1));
-            moves.add(new Position(position.row() - 1, position.col() - 1));
+            if (
+                    board.getPiece(position.row() - 1, position.col() + 1) != null &&
+                    board.getPiece(position.row() - 1, position.col() + 1).getColor() != Color.WHITE
+            ) moves.add(new Position(position.row() - 1, position.col() + 1));
 
-            if (!hasMoved) {
-                moves.add(new Position(position.row() - 2, position.col()));
-            }
+            if (
+                    board.getPiece(position.row() - 1, position.col() - 1) != null &&
+                    board.getPiece(position.row() - 1, position.col() - 1).getColor() != Color.WHITE
+            ) moves.add(new Position(position.row() - 1, position.col() - 1));
+
+            if (
+                    !hasMoved &&
+                    board.getPiece(position.row() - 2, position.col()) == null &&
+                    board.getPiece(position.row() - 1, position.col()) == null
+            ) moves.add(new Position(position.row() - 2, position.col()));
+
         } else {
             // Walk ahead
-            moves.add(new Position(position.row() + 1, position.col()));
+            if (board.getPiece(position.row() + 1, position.col()) == null) moves.add(new Position(position.row() + 1, position.col()));
 
             // Captures
-            moves.add(new Position(position.row() + 1, position.col() + 1));
-            moves.add(new Position(position.row() + 1, position.col() - 1));
+            if (
+                    board.getPiece(position.row() + 1, position.col() + 1) != null &&
+                    board.getPiece(position.row() + 1, position.col() + 1).getColor() != Color.BLACK
+            ) moves.add(new Position(position.row() + 1, position.col() + 1));
 
-            if (!hasMoved) {
-                moves.add(new Position(position.row() + 2, position.col()));
-            }
+            if (
+                    board.getPiece(position.row() + 1, position.col() + -1) != null &&
+                    board.getPiece(position.row() + 1, position.col() + -1).getColor() != Color.BLACK
+            ) moves.add(new Position(position.row() + 1, position.col() - 1));
+
+            // First move
+            if (
+                    !hasMoved &&
+                    board.getPiece(position.row() + 2, position.col()) == null &&
+                    board.getPiece(position.row() + 1, position.col()) == null
+            ) moves.add(new Position(position.row() + 2, position.col()));
         }
 
         return moves;
     }
 
-    private List<Position> slideDirection(Position position, List<Position> moves, int[][] directions) {
+    private List<Position> slideDirection(Board board, Position position, int[][] directions) {
+        List<Position> moves = new ArrayList<>();
+
         for (int[] direction : directions) {
             int row = position.row() + direction[0];
             int col = position.col() + direction[1];
 
             while (row >= 0 && row < 8 && col >= 0 && col < 8) {
-                moves.add(new Position(row, col));
+                Piece target = board.getPiece(row, col);
+
+                if (target == null) {
+                    moves.add(new Position(row, col));
+                } else {
+                    Piece moving = board.getPiece(position.row(), position.col());
+                    if (target.getColor() != moving.getColor()) {
+                        moves.add(new Position(row, col));
+                    }
+                    break;
+                }
+
                 row += direction[0];
                 col += direction[1];
             }
