@@ -1,5 +1,6 @@
 package com.blikeng.chess.engine;
 
+import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.model.Board;
 import com.blikeng.chess.model.Position;
 import com.blikeng.chess.model.piece.*;
@@ -8,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MoveGenerator {
-    public List<Position> getPseudoLegalMoves(Board board, Position position) {
+    public List<Position> getPseudoLegalMoves(GameEntity game, Board board, Position position) {
         Piece piece = board.getPiece(position.row(), position.col());
 
         if (piece == null) return List.of();
@@ -18,7 +19,7 @@ public class MoveGenerator {
             case PieceType.KNIGHT -> getKnightMoves(board, position);
             case PieceType.BISHOP -> getBishopMoves(board, position);
             case PieceType.QUEEN -> getQueenMoves(board, position);
-            case PieceType.KING -> getKingMoves(board, position);
+            case PieceType.KING -> getKingMoves(game, board, position);
             case PieceType.PAWN -> getPawnMoves(board, position);
         };
     }
@@ -79,7 +80,7 @@ public class MoveGenerator {
         return slideDirection(board, position, directions);
     }
 
-    private List<Position> getKingMoves(Board board, Position position) {
+    private List<Position> getKingMoves(GameEntity game, Board board, Position position) {
         List<Position> moves = new ArrayList<>();
 
         int[][] directions = {
@@ -101,6 +102,55 @@ public class MoveGenerator {
                     if (target.getColor() != moving.getColor()) {
                         moves.add(new Position(row, col));
                     }
+                }
+            }
+        }
+
+        Piece king = board.getPiece(position.row(), position.col());
+        if (king.getColor() == Color.WHITE) {
+            if (!king.hasMoved()){
+                Piece kingsideRook = board.getPiece(7, 7);
+                if (
+                        kingsideRook != null &&
+                        !kingsideRook.hasMoved() &&
+                        board.getPiece(7, 6) == null &&
+                        board.getPiece(7, 5) == null
+                ) {
+                    moves.add(new Position(7, 6));
+                }
+
+                Piece queensideRook = board.getPiece(7, 0);
+                if (
+                        queensideRook != null &&
+                        !queensideRook.hasMoved() &&
+                        board.getPiece(7, 1) == null &&
+                        board.getPiece(7, 2) == null &&
+                        board.getPiece(7, 3) == null
+                ) {
+                    moves.add(new Position(7, 2));
+                }
+            }
+        } else {
+            if (!king.hasMoved()) {
+                Piece kingsideRook = board.getPiece(0, 7);
+                if (
+                        kingsideRook != null &&
+                        !kingsideRook.hasMoved() &&
+                        board.getPiece(0, 5) == null &&
+                        board.getPiece(0, 6) == null
+                ) {
+                    moves.add(new Position(0, 6));
+                }
+
+                Piece queensideRook = board.getPiece(0, 0);
+                if (
+                        queensideRook != null &&
+                        !queensideRook.hasMoved() &&
+                        board.getPiece(0, 1) == null &&
+                        board.getPiece(0, 2) == null &&
+                        board.getPiece(0, 3) == null
+                ) {
+                    moves.add(new Position(0, 2));
                 }
             }
         }

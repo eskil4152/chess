@@ -23,13 +23,17 @@ public class MoveExecutor {
         Color color = piece.getColor();
         if (color == Color.WHITE != game.isWhiteTurn()) return null;
 
-        List<Position> legalMoves = moveGenerator.getPseudoLegalMoves(board, move.from());
+        List<Position> legalMoves = moveGenerator.getPseudoLegalMoves(game, board, move.from());
         if (!legalMoves.contains(move.to())) return null;
 
         if (kingLeftInCheck(board, game, move, piece, color)) return null;
 
-        updateKingPosition(game, piece, move);
         piece = checkIfPawnPromotion(piece, move, promotionPiece);
+
+        if (piece.getPieceType() == PieceType.KING){
+            handleCastling(board, move, piece);
+            updateKingPosition(game, piece, move);
+        }
 
         board.setPiece(move.to().row(), move.to().col(), piece);
         board.setPiece(move.from().row(), move.from().col(), null);
@@ -66,7 +70,7 @@ public class MoveExecutor {
                 if (p == null || p.getColor() != opponentColor) continue;
 
                 Position from = new Position(row, col);
-                List<Position> pseudoMoves = moveGenerator.getPseudoLegalMoves(board, from);
+                List<Position> pseudoMoves = moveGenerator.getPseudoLegalMoves(game, board, from);
 
                 for (Position to : pseudoMoves) {
                     if (!kingLeftInCheck(board, game, new Move(from, to), p, opponentColor)) {
@@ -89,6 +93,27 @@ public class MoveExecutor {
 
         game.switchTurn();
         return GameStatus.ONGOING;
+    }
+
+    private void handleCastling(Board board, Move move, Piece piece) {
+        if (piece.getPieceType() != PieceType.KING) return;
+
+        int colDiff = move.to().col() - move.from().col();
+        if (Math.abs(colDiff) != 2) return;
+
+        int row = move.from().row();
+
+        if (colDiff == 2) {
+            Piece rook = board.getPiece(row, 7);
+            board.setPiece(row, 5, rook);
+            board.setPiece(row, 7, null);
+            rook.setMoved();
+        } else {
+            Piece rook = board.getPiece(row, 0);
+            board.setPiece(row, 3, rook);
+            board.setPiece(row, 0, null);
+            rook.setMoved();
+        }
     }
 
     private void updateKingPosition(GameEntity game, Piece piece, Move move) {
