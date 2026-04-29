@@ -8,6 +8,14 @@ import static com.blikeng.chess.engine.SetupBoard.setupBoard;
 public class Board {
     private final Piece[][] squares = new Piece[8][8];
 
+    public Board(Board board) {
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                this.squares[row][col] = board.squares[row][col];
+            }
+        }
+    }
+
     public Board() {
         setupBoard(squares);
     }

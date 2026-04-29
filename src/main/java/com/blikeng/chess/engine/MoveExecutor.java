@@ -19,16 +19,22 @@ public class MoveExecutor {
         Piece piece = board.getPiece(move.from().row(), move.from().col());
 
         if (piece == null) return false;
-        if (piece.getColor() == Color.WHITE != game.isWhiteTurn()) return false;
+
+        Color color = piece.getColor();
+        if (color == Color.WHITE != game.isWhiteTurn()) return false;
 
         List<Position> legalMoves = moveGenerator.getLegalMoves(board, move.from());
         if (!legalMoves.contains(move.to())) return false;
 
+        if (kingLeftInCheck(board, game, move, piece, color)) return false;
+
         if (piece.getPieceType() == PieceType.KING) {
+            Position newKingPosition = new Position(move.to().row(), move.to().col());
+
             if (game.isWhiteTurn()) {
-                game.setWhiteKingPosition(new Position(move.to().row(), move.to().col()));
+                game.setWhiteKingPosition(newKingPosition);
             } else {
-                game.setBlackKingPosition(new Position(move.to().row(), move.to().col()));
+                game.setBlackKingPosition(newKingPosition);
             }
         }
 
@@ -39,5 +45,23 @@ public class MoveExecutor {
         game.switchTurn();
 
         return true;
+    }
+
+    private boolean kingLeftInCheck(Board board, GameEntity game, Move move, Piece piece, Color color) {
+        Board copy = new Board(board);
+        copy.setPiece(move.to().row(), move.to().col(), piece);
+        copy.setPiece(move.from().row(), move.from().col(), null);
+
+        Position kingPos = color == Color.WHITE
+                ? game.getWhiteKingPosition()
+                : game.getBlackKingPosition();
+
+        if (piece.getPieceType() == PieceType.KING) {
+            kingPos = move.to();
+        }
+
+        Color attacker = color == Color.WHITE ? Color.BLACK : Color.WHITE;
+
+        return squareAttacked.isSquareAttacked(copy, kingPos, attacker);
     }
 }

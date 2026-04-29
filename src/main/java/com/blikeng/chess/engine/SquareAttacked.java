@@ -20,7 +20,7 @@ public class SquareAttacked {
         return isSquareAttacked(game.getBoard(), kingPos, attacker);
     }
 
-    private boolean isSquareAttacked (Board board, Position position, Color attackingColor){
+    public boolean isSquareAttacked (Board board, Position position, Color attackingColor){
         for (int row = 0; row < 8; row++){
             for (int col = 0; col < 7; col++){
                 Piece piece = board.getPiece(row, col);
