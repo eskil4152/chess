@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MoveGenerator {
+    private final SquareAttacked squareAttacked = new SquareAttacked();
     public List<Position> getPseudoLegalMoves(GameEntity game, Board board, Position position) {
         Piece piece = board.getPiece(position.row(), position.col());
 
@@ -20,7 +21,7 @@ public class MoveGenerator {
             case PieceType.BISHOP -> getBishopMoves(board, position);
             case PieceType.QUEEN -> getQueenMoves(board, position);
             case PieceType.KING -> getKingMoves(game, board, position);
-            case PieceType.PAWN -> getPawnMoves(board, position);
+            case PieceType.PAWN -> getPawnMoves(game, board, position);
         };
     }
 
@@ -108,13 +109,14 @@ public class MoveGenerator {
 
         Piece king = board.getPiece(position.row(), position.col());
         if (king.getColor() == Color.WHITE) {
-            if (!king.hasMoved()){
+            if (!king.hasMoved() && !squareAttacked.isSquareAttacked(board, game, new Position(7, 4), Color.BLACK)) {
                 Piece kingsideRook = board.getPiece(7, 7);
                 if (
                         kingsideRook != null &&
                         !kingsideRook.hasMoved() &&
                         board.getPiece(7, 6) == null &&
-                        board.getPiece(7, 5) == null
+                        board.getPiece(7, 5) == null &&
+                        !squareAttacked.isSquareAttacked(board, game, new Position(7, 5), Color.BLACK)
                 ) {
                     moves.add(new Position(7, 6));
                 }
@@ -125,19 +127,21 @@ public class MoveGenerator {
                         !queensideRook.hasMoved() &&
                         board.getPiece(7, 1) == null &&
                         board.getPiece(7, 2) == null &&
-                        board.getPiece(7, 3) == null
+                        board.getPiece(7, 3) == null &&
+                        !squareAttacked.isSquareAttacked(board, game, new Position(7, 3), Color.BLACK)
                 ) {
                     moves.add(new Position(7, 2));
                 }
             }
         } else {
-            if (!king.hasMoved()) {
+            if (!king.hasMoved() && !squareAttacked.isSquareAttacked(board, game, new Position(0, 4), Color.WHITE)) {
                 Piece kingsideRook = board.getPiece(0, 7);
                 if (
                         kingsideRook != null &&
                         !kingsideRook.hasMoved() &&
                         board.getPiece(0, 5) == null &&
-                        board.getPiece(0, 6) == null
+                        board.getPiece(0, 6) == null &&
+                        !squareAttacked.isSquareAttacked(board, game, new Position(0, 5), Color.WHITE)
                 ) {
                     moves.add(new Position(0, 6));
                 }
@@ -148,7 +152,8 @@ public class MoveGenerator {
                         !queensideRook.hasMoved() &&
                         board.getPiece(0, 1) == null &&
                         board.getPiece(0, 2) == null &&
-                        board.getPiece(0, 3) == null
+                        board.getPiece(0, 3) == null &&
+                        !squareAttacked.isSquareAttacked(board, game, new Position(0, 3), Color.WHITE)
                 ) {
                     moves.add(new Position(0, 2));
                 }
@@ -158,13 +163,12 @@ public class MoveGenerator {
         return moves;
     }
 
-    private List<Position> getPawnMoves(Board board, Position position){
+    private List<Position> getPawnMoves(GameEntity game, Board board, Position position){
         List<Position> moves = new ArrayList<>();
-
-        // TODO: Check if pawn can en passant
 
         boolean hasMoved = board.getPiece(position.row(), position.col()).hasMoved();
         boolean isWhite = board.getPiece(position.row(), position.col()).getColor() == Color.WHITE;
+        Position enPassantTarget = game.getEnPassantTarget();
 
         if (isWhite) {
             // Walk ahead
@@ -187,6 +191,12 @@ public class MoveGenerator {
                     board.getPiece(position.row() - 1, position.col()) == null
             ) moves.add(new Position(position.row() - 2, position.col()));
 
+            // En passant
+            if (enPassantTarget != null && enPassantTarget.row() == position.row() - 1 &&
+                    Math.abs(enPassantTarget.col() - position.col()) == 1) {
+                moves.add(enPassantTarget);
+            }
+
         } else {
             // Walk ahead
             if (board.getPiece(position.row() + 1, position.col()) == null) moves.add(new Position(position.row() + 1, position.col()));
@@ -208,6 +218,12 @@ public class MoveGenerator {
                     board.getPiece(position.row() + 2, position.col()) == null &&
                     board.getPiece(position.row() + 1, position.col()) == null
             ) moves.add(new Position(position.row() + 2, position.col()));
+
+            // En passant
+            if (enPassantTarget != null && enPassantTarget.row() == position.row() + 1 &&
+                    Math.abs(enPassantTarget.col() - position.col()) == 1) {
+                moves.add(enPassantTarget);
+            }
         }
 
         return moves;

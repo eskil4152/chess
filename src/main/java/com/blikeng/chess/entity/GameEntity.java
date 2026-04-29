@@ -40,6 +40,9 @@ public class GameEntity {
     @Setter
     private GameStatus status = GameStatus.ONGOING;
 
+    @Setter
+    private Position enPassantTarget;
+
     public GameEntity() {
         this.board = new Board();
     }

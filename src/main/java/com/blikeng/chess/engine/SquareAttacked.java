@@ -17,17 +17,17 @@ public class SquareAttacked {
                 : game.getBlackKingPosition();
 
         Color attacker = color == Color.WHITE ? Color.BLACK : Color.WHITE;
-        return isSquareAttacked(game.getBoard(), kingPos, attacker);
+        return isSquareAttacked(game.getBoard(), game, kingPos, attacker);
     }
 
-    public boolean isSquareAttacked (Board board, Position position, Color attackingColor){
+    public boolean isSquareAttacked(Board board, GameEntity game, Position position, Color attackingColor){
         for (int row = 0; row < 8; row++){
-            for (int col = 0; col < 7; col++){
+            for (int col = 0; col < 8; col++){
                 Piece piece = board.getPiece(row, col);
 
-                if (piece == null || piece.getColor() != attackingColor) return false;
+                if (piece == null || piece.getColor() != attackingColor) continue;
 
-                List<Position> moves = moveGenerator.getPseudoLegalMoves(board, new Position(row, col));
+                List<Position> moves = moveGenerator.getPseudoLegalMoves(game, board, new Position(row, col));
                 if (moves.contains(position)) return true;
             }
         }

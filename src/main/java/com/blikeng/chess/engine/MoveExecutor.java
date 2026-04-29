@@ -26,7 +26,10 @@ public class MoveExecutor {
         List<Position> legalMoves = moveGenerator.getPseudoLegalMoves(game, board, move.from());
         if (!legalMoves.contains(move.to())) return null;
 
-        if (kingLeftInCheck(board, game, move, piece, color)) return null;
+        boolean isEnPassant = piece.getPieceType() == PieceType.PAWN
+                && move.to().equals(game.getEnPassantTarget());
+
+        if (kingLeftInCheck(board, game, move, piece, color, isEnPassant)) return null;
 
         piece = checkIfPawnPromotion(piece, move, promotionPiece);
 
@@ -35,6 +38,12 @@ public class MoveExecutor {
             updateKingPosition(game, piece, move);
         }
 
+        if (isEnPassant) {
+            board.setPiece(move.from().row(), move.to().col(), null);
+        }
+
+        updateEnPassantTarget(game, piece, move);
+
         board.setPiece(move.to().row(), move.to().col(), piece);
         board.setPiece(move.from().row(), move.from().col(), null);
         piece.setMoved();
@@ -42,10 +51,13 @@ public class MoveExecutor {
         return isGameOver(color, board, game);
     }
 
-    private boolean kingLeftInCheck(Board board, GameEntity game, Move move, Piece piece, Color color) {
+    private boolean kingLeftInCheck(Board board, GameEntity game, Move move, Piece piece, Color color, boolean isEnPassant) {
         Board copy = new Board(board);
         copy.setPiece(move.to().row(), move.to().col(), piece);
         copy.setPiece(move.from().row(), move.from().col(), null);
+        if (isEnPassant) {
+            copy.setPiece(move.from().row(), move.to().col(), null);
+        }
 
         Position kingPos = color == Color.WHITE
                 ? game.getWhiteKingPosition()
@@ -57,7 +69,7 @@ public class MoveExecutor {
 
         Color attacker = color == Color.WHITE ? Color.BLACK : Color.WHITE;
 
-        return squareAttacked.isSquareAttacked(copy, kingPos, attacker);
+        return squareAttacked.isSquareAttacked(copy, game, kingPos, attacker);
     }
 
     private GameStatus isGameOver(Color playerColor, Board board, GameEntity game){
@@ -73,7 +85,8 @@ public class MoveExecutor {
                 List<Position> pseudoMoves = moveGenerator.getPseudoLegalMoves(game, board, from);
 
                 for (Position to : pseudoMoves) {
-                    if (!kingLeftInCheck(board, game, new Move(from, to), p, opponentColor)) {
+                    boolean epMove = p.getPieceType() == PieceType.PAWN && to.equals(game.getEnPassantTarget());
+                    if (!kingLeftInCheck(board, game, new Move(from, to), p, opponentColor, epMove)) {
                         hasLegalMove = true;
                         break;
                     }
@@ -125,6 +138,15 @@ public class MoveExecutor {
             } else {
                 game.setBlackKingPosition(newKingPosition);
             }
+        }
+    }
+
+    private void updateEnPassantTarget(GameEntity game, Piece piece, Move move) {
+        if (piece.getPieceType() == PieceType.PAWN && Math.abs(move.to().row() - move.from().row()) == 2) {
+            int epRow = (move.from().row() + move.to().row()) / 2;
+            game.setEnPassantTarget(new Position(epRow, move.from().col()));
+        } else {
+            game.setEnPassantTarget(null);
         }
     }
 
