@@ -5,4 +5,7 @@ public final class ErrorMessages {
     public static final String INVALID_USERNAME = "Invalid username";
     public static final String INVALID_PASSWORD = "Invalid password";
     public static final String USERNAME_TAKEN = "Username already taken";
+    public static final String INVALID_UUID = "Invalid UUID";
+    public static final String GAME_NOT_FOUND = "Game not found";
+    public static final String INVALID_USER = "Invalid user";
 }

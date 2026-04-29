@@ -12,20 +12,22 @@ import java.util.List;
 public class MoveExecutor {
     private final MoveGenerator moveGenerator = new MoveGenerator();
 
-    public void performMove(GameEntity game, Move move) {
+    public boolean performMove(GameEntity game, Move move) {
         Board board = game.getBoard();
         Piece piece = board.getPiece(move.from().row(), move.from().col());
 
-        if (piece == null) return;
-        if (piece.getColor() == Color.WHITE != game.isWhiteTurn()) return;
+        if (piece == null) return false;
+        if (piece.getColor() == Color.WHITE != game.isWhiteTurn()) return false;
 
         List<Position> legalMoves = moveGenerator.getLegalMoves(board, move.from());
-        if (!legalMoves.contains(move.to())) return;
+        if (!legalMoves.contains(move.to())) return false;
 
         board.setPiece(move.to().row(), move.to().col(), piece);
         board.setPiece(move.from().row(), move.from().col(), null);
         piece.setMoved();
 
         game.switchTurn();
+
+        return true;
     }
 }
