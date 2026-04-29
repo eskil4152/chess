@@ -1,6 +1,6 @@
 package com.blikeng.chess.engine;
 
-import com.blikeng.chess.entity.GameEntity;
+import com.blikeng.chess.model.Game;
 import com.blikeng.chess.model.Board;
 import com.blikeng.chess.model.Position;
 import com.blikeng.chess.model.piece.*;
@@ -10,7 +10,7 @@ import java.util.List;
 
 public class MoveGenerator {
     private final SquareAttacked squareAttacked = new SquareAttacked();
-    public List<Position> getPseudoLegalMoves(GameEntity game, Board board, Position position) {
+    public List<Position> getPseudoLegalMoves(Game game, Board board, Position position) {
         Piece piece = board.getPiece(position.row(), position.col());
 
         if (piece == null) return List.of();
@@ -81,7 +81,7 @@ public class MoveGenerator {
         return slideDirection(board, position, directions);
     }
 
-    private List<Position> getKingMoves(GameEntity game, Board board, Position position) {
+    private List<Position> getKingMoves(Game game, Board board, Position position) {
         List<Position> moves = new ArrayList<>();
 
         int[][] directions = {
@@ -163,7 +163,7 @@ public class MoveGenerator {
         return moves;
     }
 
-    private List<Position> getPawnMoves(GameEntity game, Board board, Position position){
+    private List<Position> getPawnMoves(Game game, Board board, Position position){
         List<Position> moves = new ArrayList<>();
 
         boolean hasMoved = board.getPiece(position.row(), position.col()).hasMoved();

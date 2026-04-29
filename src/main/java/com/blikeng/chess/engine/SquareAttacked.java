@@ -1,6 +1,6 @@
 package com.blikeng.chess.engine;
 
-import com.blikeng.chess.entity.GameEntity;
+import com.blikeng.chess.model.Game;
 import com.blikeng.chess.model.Board;
 import com.blikeng.chess.model.Position;
 import com.blikeng.chess.model.piece.Color;
@@ -11,7 +11,7 @@ import java.util.List;
 public class SquareAttacked {
     private final MoveGenerator moveGenerator = new MoveGenerator();
 
-    public boolean isInCheck(GameEntity game, Color color){
+    public boolean isInCheck(Game game, Color color){
         Position kingPos = color == Color.WHITE
                 ? game.getWhiteKingPosition()
                 : game.getBlackKingPosition();
@@ -20,7 +20,7 @@ public class SquareAttacked {
         return isSquareAttacked(game.getBoard(), game, kingPos, attacker);
     }
 
-    public boolean isSquareAttacked(Board board, GameEntity game, Position position, Color attackingColor){
+    public boolean isSquareAttacked(Board board, Game game, Position position, Color attackingColor){
         for (int row = 0; row < 8; row++){
             for (int col = 0; col < 8; col++){
                 Piece piece = board.getPiece(row, col);

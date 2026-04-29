@@ -1,8 +1,5 @@
-package com.blikeng.chess.entity;
+package com.blikeng.chess.model;
 
-import com.blikeng.chess.model.Board;
-import com.blikeng.chess.model.GameStatus;
-import com.blikeng.chess.model.Position;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,8 +7,8 @@ import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Getter
-public class GameEntity {
-    public GameEntity(String whiteId, String whiteUsername, String blackId, String blackUsername) {
+public class Game {
+    public Game(String whiteId, String whiteUsername, String blackId, String blackUsername) {
         this.whiteId = whiteId;
         this.whiteUsername = whiteUsername;
         this.blackId = blackId;
@@ -43,7 +40,7 @@ public class GameEntity {
     @Setter
     private Position enPassantTarget;
 
-    public GameEntity() {
+    public Game() {
         this.board = new Board();
     }
 

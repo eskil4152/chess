@@ -4,7 +4,7 @@ import com.blikeng.chess.dto.GameDTO;
 import com.blikeng.chess.dto.MoveDTO;
 import com.blikeng.chess.engine.MoveExecutor;
 import com.blikeng.chess.engine.PositionMapper;
-import com.blikeng.chess.entity.GameEntity;
+import com.blikeng.chess.model.Game;
 import com.blikeng.chess.exception.ErrorTypes.GameNotFoundException;
 import com.blikeng.chess.exception.ErrorTypes.InvalidUserException;
 import com.blikeng.chess.model.GameStatus;
@@ -30,10 +30,10 @@ public class GameService {
         this.jwtService = jwtService;
     }
 
-    private final ConcurrentHashMap<UUID, GameEntity> games = new ConcurrentHashMap<UUID, GameEntity>();
+    private final ConcurrentHashMap<UUID, Game> games = new ConcurrentHashMap<UUID, Game>();
 
     public void beginGame(GameDTO gameDTO){
-        GameEntity game = new GameEntity(gameDTO.whiteId(), gameDTO.whiteUsername(), gameDTO.blackId(), gameDTO.blackUsername());
+        Game game = new Game(gameDTO.whiteId(), gameDTO.whiteUsername(), gameDTO.blackId(), gameDTO.blackUsername());
         game.setWhiteKingPosition(new Position(7, 4));
         game.setBlackKingPosition(new Position(0, 4));
 
@@ -41,8 +41,8 @@ public class GameService {
     }
 
     public void makeMove(MoveDTO moveDTO){
-        Optional<GameEntity> optionalGame = getGame(moveDTO.gameId());
-        GameEntity game;
+        Optional<Game> optionalGame = getGame(moveDTO.gameId());
+        Game game;
 
         if (optionalGame.isEmpty()) {
             throw new GameNotFoundException();
@@ -88,7 +88,7 @@ public class GameService {
         }
     }
 
-    private boolean isUserTurn(GameEntity game, UUID userId){
+    private boolean isUserTurn(Game game, UUID userId){
         if (game.isWhiteTurn()){
             return game.getWhiteId().equals(userId);
         } else {
@@ -96,7 +96,7 @@ public class GameService {
         }
     }
 
-    private Optional<GameEntity> getGame(String gameString){
+    private Optional<Game> getGame(String gameString){
         UUID gameId;
         try {
             gameId = UUID.fromString(gameString);
@@ -107,7 +107,7 @@ public class GameService {
         return Optional.ofNullable(games.get(gameId));
     }
 
-    private void handleGameEnd(GameEntity game, GameStatus gameStatus){
+    private void handleGameEnd(Game game, GameStatus gameStatus){
         // TODO: Handle game end. Mark game over with winner, return appropriate message. Disconnect WS? Or keep-alive for chat. Calculate ELO. Etc.
     }
 }

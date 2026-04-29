@@ -2,7 +2,7 @@ package com.blikeng.chess.engine;
 
 import com.blikeng.chess.exception.ErrorTypes.InvalidPromotionException;
 import com.blikeng.chess.model.Board;
-import com.blikeng.chess.entity.GameEntity;
+import com.blikeng.chess.model.Game;
 import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.model.Move;
 import com.blikeng.chess.model.Position;
@@ -14,7 +14,7 @@ public class MoveExecutor {
     private final MoveGenerator moveGenerator = new MoveGenerator();
     private final SquareAttacked squareAttacked = new SquareAttacked();
 
-    public GameStatus performMove(GameEntity game, Move move, PieceType promotionPiece) {
+    public GameStatus performMove(Game game, Move move, PieceType promotionPiece) {
         Board board = game.getBoard();
         Piece piece = board.getPiece(move.from().row(), move.from().col());
 
@@ -51,7 +51,7 @@ public class MoveExecutor {
         return isGameOver(color, board, game);
     }
 
-    private boolean kingLeftInCheck(Board board, GameEntity game, Move move, Piece piece, Color color, boolean isEnPassant) {
+    private boolean kingLeftInCheck(Board board, Game game, Move move, Piece piece, Color color, boolean isEnPassant) {
         Board copy = new Board(board);
         copy.setPiece(move.to().row(), move.to().col(), piece);
         copy.setPiece(move.from().row(), move.from().col(), null);
@@ -72,7 +72,7 @@ public class MoveExecutor {
         return squareAttacked.isSquareAttacked(copy, game, kingPos, attacker);
     }
 
-    private GameStatus isGameOver(Color playerColor, Board board, GameEntity game){
+    private GameStatus isGameOver(Color playerColor, Board board, Game game){
         Color opponentColor = playerColor == Color.WHITE ? Color.BLACK : Color.WHITE;
         boolean hasLegalMove = false;
 
@@ -129,7 +129,7 @@ public class MoveExecutor {
         }
     }
 
-    private void updateKingPosition(GameEntity game, Piece piece, Move move) {
+    private void updateKingPosition(Game game, Piece piece, Move move) {
         if (piece.getPieceType() == PieceType.KING) {
             Position newKingPosition = new Position(move.to().row(), move.to().col());
 
@@ -141,7 +141,7 @@ public class MoveExecutor {
         }
     }
 
-    private void updateEnPassantTarget(GameEntity game, Piece piece, Move move) {
+    private void updateEnPassantTarget(Game game, Piece piece, Move move) {
         if (piece.getPieceType() == PieceType.PAWN && Math.abs(move.to().row() - move.from().row()) == 2) {
             int epRow = (move.from().row() + move.to().row()) / 2;
             game.setEnPassantTarget(new Position(epRow, move.from().col()));
