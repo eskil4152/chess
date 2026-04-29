@@ -67,10 +67,13 @@ public class GameService {
                 return;
             }
 
-            GameStatus gameStatus = moveExecutor.performMove(game, new Move(
-                    PositionMapper.fromString(moveDTO.fromPos()),
-                    PositionMapper.fromString(moveDTO.toPos())
-            ));
+            GameStatus gameStatus = moveExecutor.performMove(
+                    game,
+                    new Move(
+                        PositionMapper.fromString(moveDTO.fromPos()),
+                        PositionMapper.fromString(moveDTO.toPos())),
+                    moveDTO.promotionPiece()
+                    );
 
             if (gameStatus == null) {
                 // Illegal move. Ignore

@@ -1,13 +1,12 @@
 package com.blikeng.chess.engine;
 
+import com.blikeng.chess.exception.ErrorTypes.InvalidPromotionException;
 import com.blikeng.chess.model.Board;
 import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.model.Move;
 import com.blikeng.chess.model.Position;
-import com.blikeng.chess.model.piece.Color;
-import com.blikeng.chess.model.piece.Piece;
-import com.blikeng.chess.model.piece.PieceType;
+import com.blikeng.chess.model.piece.*;
 
 import java.util.List;
 
@@ -15,7 +14,7 @@ public class MoveExecutor {
     private final MoveGenerator moveGenerator = new MoveGenerator();
     private final SquareAttacked squareAttacked = new SquareAttacked();
 
-    public GameStatus performMove(GameEntity game, Move move) {
+    public GameStatus performMove(GameEntity game, Move move, PieceType promotionPiece) {
         Board board = game.getBoard();
         Piece piece = board.getPiece(move.from().row(), move.from().col());
 
@@ -29,15 +28,8 @@ public class MoveExecutor {
 
         if (kingLeftInCheck(board, game, move, piece, color)) return null;
 
-        if (piece.getPieceType() == PieceType.KING) {
-            Position newKingPosition = new Position(move.to().row(), move.to().col());
-
-            if (game.isWhiteTurn()) {
-                game.setWhiteKingPosition(newKingPosition);
-            } else {
-                game.setBlackKingPosition(newKingPosition);
-            }
-        }
+        updateKingPosition(game, piece, move);
+        piece = checkIfPawnPromotion(piece, move, promotionPiece);
 
         board.setPiece(move.to().row(), move.to().col(), piece);
         board.setPiece(move.from().row(), move.from().col(), null);
@@ -97,5 +89,47 @@ public class MoveExecutor {
 
         game.switchTurn();
         return GameStatus.ONGOING;
+    }
+
+    private void updateKingPosition(GameEntity game, Piece piece, Move move) {
+        if (piece.getPieceType() == PieceType.KING) {
+            Position newKingPosition = new Position(move.to().row(), move.to().col());
+
+            if (game.isWhiteTurn()) {
+                game.setWhiteKingPosition(newKingPosition);
+            } else {
+                game.setBlackKingPosition(newKingPosition);
+            }
+        }
+    }
+
+    private Piece checkIfPawnPromotion(Piece piece, Move move, PieceType promotionPiece) {
+        if (piece.getPieceType() == PieceType.PAWN) {
+            switch (piece.getColor()){
+                case WHITE -> {
+                    if (move.to().row() == 0 && promotionPiece != null){
+                        piece = createPromotionPiece(promotionPiece, Color.WHITE);
+                    }
+                }
+
+                case BLACK -> {
+                    if (move.to().row() == 7 && promotionPiece != null){
+                        piece = createPromotionPiece(promotionPiece, Color.BLACK);
+                    }
+                }
+            }
+        }
+
+        return piece;
+    }
+
+    private Piece createPromotionPiece(PieceType promotionPiece, Color color) {
+        return switch (promotionPiece){
+            case QUEEN -> new Queen(color);
+            case ROOK -> new Rook(color);
+            case BISHOP -> new Bishop(color);
+            case KNIGHT -> new Knight(color);
+            default -> throw new InvalidPromotionException();
+        };
     }
 }
