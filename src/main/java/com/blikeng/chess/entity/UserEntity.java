@@ -26,6 +26,10 @@ public class UserEntity {
 
     private int elo = 800;
 
+    public int getElo() {
+        return elo;
+    }
+
     public String getUsername() {
         return username;
     }

@@ -9,7 +9,11 @@ import com.blikeng.chess.model.piece.Piece;
 import java.util.List;
 
 public class SquareAttacked {
-    private final MoveGenerator moveGenerator = new MoveGenerator();
+    private final MoveGenerator moveGenerator;
+
+    public SquareAttacked(MoveGenerator moveGenerator) {
+        this.moveGenerator = moveGenerator;
+    }
 
     public boolean isInCheck(Game game, Color color){
         Position kingPos = color == Color.WHITE

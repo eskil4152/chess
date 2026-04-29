@@ -8,7 +8,7 @@ import java.util.List;
 
 public class MoveExecutor {
     private final MoveGenerator moveGenerator = new MoveGenerator();
-    private final SquareAttacked squareAttacked = new SquareAttacked();
+    private final SquareAttacked squareAttacked = new SquareAttacked(moveGenerator);
 
     public GameStatus performMove(Game game, Move move, PieceType promotionPiece) {
         boolean isCastling = false;

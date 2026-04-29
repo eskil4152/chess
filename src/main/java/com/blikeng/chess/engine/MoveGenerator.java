@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MoveGenerator {
-    private final SquareAttacked squareAttacked = new SquareAttacked();
+    private final SquareAttacked squareAttacked = new SquareAttacked(this);
     public List<Position> getPseudoLegalMoves(Game game, Board board, Position position) {
         Piece piece = board.getPiece(position.row(), position.col());
 

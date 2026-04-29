@@ -12,6 +12,7 @@ import com.blikeng.chess.security.PasswordService;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -51,5 +52,9 @@ public class AuthService {
         UserEntity user = authRepository.save(new UserEntity(trimmedUsername, passwordService.hashPassword(trimmedPassword)));
 
         return jwtService.generateToken(user);
+    }
+
+    public Optional<UserEntity> findUserById(UUID userId){
+        return authRepository.findById(userId);
     }
 }

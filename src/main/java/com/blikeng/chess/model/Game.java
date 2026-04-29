@@ -9,7 +9,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Getter
 public class Game {
-    public Game(String whiteId, String whiteUsername, String blackId, String blackUsername) {
+    public Game(UUID whiteId, String whiteUsername, UUID blackId, String blackUsername) {
         this.whiteId = whiteId;
         this.whiteUsername = whiteUsername;
         this.blackId = blackId;
@@ -20,10 +20,10 @@ public class Game {
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    private String whiteId;
+    private UUID whiteId;
     private String whiteUsername;
 
-    private String blackId;
+    private UUID blackId;
     private String blackUsername;
 
     @Setter

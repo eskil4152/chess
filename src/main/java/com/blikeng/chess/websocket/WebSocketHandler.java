@@ -1,14 +1,23 @@
 package com.blikeng.chess.websocket;
 
+import com.blikeng.chess.service.GameService;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import java.util.UUID;
+
 public class WebSocketHandler extends TextWebSocketHandler {
+    private final GameService gameService;
+
+    public WebSocketHandler(GameService gameService) {
+        this.gameService = gameService;
+    }
+
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        super.afterConnectionEstablished(session);
+    public void afterConnectionEstablished(WebSocketSession session) {
+        gameService.queuePlayer(getUserId(session));
     }
 
     @Override
@@ -18,6 +27,10 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        super.afterConnectionClosed(session, status);
+        gameService.dequeuePlayer(getUserId(session));
+    }
+
+    private UUID getUserId(WebSocketSession session) {
+        return (UUID) session.getAttributes().get("userId");
     }
 }
