@@ -1,5 +1,5 @@
 package com.blikeng.chess.model;
 
 public enum GameStatus {
-    ONGOING, WHITE, BLACK, DRAW
+    ONGOING, WHITE_WIN, BLACK_WIN, DRAW
 }

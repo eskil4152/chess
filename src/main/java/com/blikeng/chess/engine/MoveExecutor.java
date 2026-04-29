@@ -2,6 +2,7 @@ package com.blikeng.chess.engine;
 
 import com.blikeng.chess.model.Board;
 import com.blikeng.chess.entity.GameEntity;
+import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.model.Move;
 import com.blikeng.chess.model.Position;
 import com.blikeng.chess.model.piece.Color;
@@ -14,19 +15,19 @@ public class MoveExecutor {
     private final MoveGenerator moveGenerator = new MoveGenerator();
     private final SquareAttacked squareAttacked = new SquareAttacked();
 
-    public boolean performMove(GameEntity game, Move move) {
+    public GameStatus performMove(GameEntity game, Move move) {
         Board board = game.getBoard();
         Piece piece = board.getPiece(move.from().row(), move.from().col());
 
-        if (piece == null) return false;
+        if (piece == null) return null;
 
         Color color = piece.getColor();
-        if (color == Color.WHITE != game.isWhiteTurn()) return false;
+        if (color == Color.WHITE != game.isWhiteTurn()) return null;
 
-        List<Position> legalMoves = moveGenerator.getLegalMoves(board, move.from());
-        if (!legalMoves.contains(move.to())) return false;
+        List<Position> legalMoves = moveGenerator.getPseudoLegalMoves(board, move.from());
+        if (!legalMoves.contains(move.to())) return null;
 
-        if (kingLeftInCheck(board, game, move, piece, color)) return false;
+        if (kingLeftInCheck(board, game, move, piece, color)) return null;
 
         if (piece.getPieceType() == PieceType.KING) {
             Position newKingPosition = new Position(move.to().row(), move.to().col());
@@ -42,9 +43,7 @@ public class MoveExecutor {
         board.setPiece(move.from().row(), move.from().col(), null);
         piece.setMoved();
 
-        game.switchTurn();
-
-        return true;
+        return isGameOver(color, board, game);
     }
 
     private boolean kingLeftInCheck(Board board, GameEntity game, Move move, Piece piece, Color color) {
@@ -63,5 +62,40 @@ public class MoveExecutor {
         Color attacker = color == Color.WHITE ? Color.BLACK : Color.WHITE;
 
         return squareAttacked.isSquareAttacked(copy, kingPos, attacker);
+    }
+
+    private GameStatus isGameOver(Color playerColor, Board board, GameEntity game){
+        Color opponentColor = playerColor == Color.WHITE ? Color.BLACK : Color.WHITE;
+        boolean hasLegalMove = false;
+
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece p = board.getPiece(row, col);
+                if (p == null || p.getColor() != opponentColor) continue;
+
+                Position from = new Position(row, col);
+                List<Position> pseudoMoves = moveGenerator.getPseudoLegalMoves(board, from);
+
+                for (Position to : pseudoMoves) {
+                    if (!kingLeftInCheck(board, game, new Move(from, to), p, opponentColor)) {
+                        hasLegalMove = true;
+                        break;
+                    }
+                }
+
+                if (hasLegalMove) break;
+            }
+        }
+
+        if (!hasLegalMove) {
+            if (squareAttacked.isInCheck(game, opponentColor)) {
+                return playerColor == Color.WHITE ? GameStatus.WHITE_WIN : GameStatus.BLACK_WIN;
+            } else {
+                return GameStatus.DRAW;
+            }
+        }
+
+        game.switchTurn();
+        return GameStatus.ONGOING;
     }
 }

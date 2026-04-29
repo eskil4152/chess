@@ -27,7 +27,7 @@ public class SquareAttacked {
 
                 if (piece == null || piece.getColor() != attackingColor) return false;
 
-                List<Position> moves = moveGenerator.getLegalMoves(board, new Position(row, col));
+                List<Position> moves = moveGenerator.getPseudoLegalMoves(board, new Position(row, col));
                 if (moves.contains(position)) return true;
             }
         }

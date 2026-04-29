@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MoveGenerator {
-    public List<Position> getLegalMoves(Board board, Position position) {
+    public List<Position> getPseudoLegalMoves(Board board, Position position) {
         Piece piece = board.getPiece(position.row(), position.col());
 
         if (piece == null) return List.of();

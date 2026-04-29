@@ -7,6 +7,7 @@ import com.blikeng.chess.engine.PositionMapper;
 import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.exception.ErrorTypes.GameNotFoundException;
 import com.blikeng.chess.exception.ErrorTypes.InvalidUserException;
+import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.model.Move;
 import com.blikeng.chess.model.Position;
 import com.blikeng.chess.security.JwtPrincipal;
@@ -39,9 +40,6 @@ public class GameService {
         games.put(game.getId(), game);
     }
 
-    public void endGame(){
-    }
-
     public void makeMove(MoveDTO moveDTO){
         Optional<GameEntity> optionalGame = getGame(moveDTO.gameId());
         GameEntity game;
@@ -69,16 +67,19 @@ public class GameService {
                 return;
             }
 
-            boolean moveMade = moveExecutor.performMove(game, new Move(
+            GameStatus gameStatus = moveExecutor.performMove(game, new Move(
                     PositionMapper.fromString(moveDTO.fromPos()),
                     PositionMapper.fromString(moveDTO.toPos())
             ));
 
-            if (moveMade){
-                // send ws update or something
+            if (gameStatus == null) {
+                // Illegal move. Ignore
+            } else if (gameStatus == GameStatus.ONGOING) {
+                // Game proceeds
             } else {
-                // ignore and unlock
+                handleGameEnd(game, gameStatus);
             }
+
         } finally {
             lock.unlock();
         }
@@ -101,5 +102,9 @@ public class GameService {
         }
 
         return Optional.ofNullable(games.get(gameId));
+    }
+
+    private void handleGameEnd(GameEntity game, GameStatus gameStatus){
+        // TODO: Handle game end. Mark game over with winner, return appropriate message. Disconnect WS? Or keep-alive for chat. Calculate ELO. Etc.
     }
 }

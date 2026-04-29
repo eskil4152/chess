@@ -36,6 +36,8 @@ public class GameEntity {
 
     private Board board;
     private boolean isWhiteTurn;
+
+    @Setter
     private GameStatus status = GameStatus.ONGOING;
 
     public GameEntity() {
