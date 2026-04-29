@@ -12,6 +12,7 @@ import java.util.List;
 
 public class MoveExecutor {
     private final MoveGenerator moveGenerator = new MoveGenerator();
+    private final SquareAttacked squareAttacked = new SquareAttacked();
 
     public boolean performMove(GameEntity game, Move move) {
         Board board = game.getBoard();
