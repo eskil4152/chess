@@ -1,11 +1,7 @@
 package com.blikeng.chess.engine;
 
 import com.blikeng.chess.exception.ErrorTypes.InvalidPromotionException;
-import com.blikeng.chess.model.Board;
-import com.blikeng.chess.model.Game;
-import com.blikeng.chess.model.GameStatus;
-import com.blikeng.chess.model.Move;
-import com.blikeng.chess.model.Position;
+import com.blikeng.chess.model.*;
 import com.blikeng.chess.model.piece.*;
 
 import java.util.List;
@@ -15,6 +11,8 @@ public class MoveExecutor {
     private final SquareAttacked squareAttacked = new SquareAttacked();
 
     public GameStatus performMove(Game game, Move move, PieceType promotionPiece) {
+        boolean isCastling = false;
+
         Board board = game.getBoard();
         Piece piece = board.getPiece(move.from().row(), move.from().col());
 
@@ -34,7 +32,7 @@ public class MoveExecutor {
         piece = checkIfPawnPromotion(piece, move, promotionPiece);
 
         if (piece.getPieceType() == PieceType.KING){
-            handleCastling(board, move, piece);
+            isCastling = handleCastling(board, move, piece);
             updateKingPosition(game, piece, move);
         }
 
@@ -47,6 +45,13 @@ public class MoveExecutor {
         board.setPiece(move.to().row(), move.to().col(), piece);
         board.setPiece(move.from().row(), move.from().col(), null);
         piece.setMoved();
+
+        game.addMove(new MoveRecord(
+                move,
+                piece.getPieceType(),
+                isEnPassant,
+                isCastling
+        ));
 
         return isGameOver(color, board, game);
     }
@@ -108,11 +113,11 @@ public class MoveExecutor {
         return GameStatus.ONGOING;
     }
 
-    private void handleCastling(Board board, Move move, Piece piece) {
-        if (piece.getPieceType() != PieceType.KING) return;
+    private boolean handleCastling(Board board, Move move, Piece piece) {
+        if (piece.getPieceType() != PieceType.KING) return false;
 
         int colDiff = move.to().col() - move.from().col();
-        if (Math.abs(colDiff) != 2) return;
+        if (Math.abs(colDiff) != 2) return false;
 
         int row = move.from().row();
 
@@ -127,6 +132,8 @@ public class MoveExecutor {
             board.setPiece(row, 0, null);
             rook.setMoved();
         }
+
+        return true;
     }
 
     private void updateKingPosition(Game game, Piece piece, Move move) {
