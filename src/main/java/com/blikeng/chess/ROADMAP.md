@@ -1,9 +1,6 @@
 # Chess Backend — Build Plan
 
 ## Current
-- Add games controller. Should handle game retrieval, history etc.
-- Add user controller. 
-- Add some form of ELO. Simple +-1 would suffice for now.
 - Convert MoveHistory to an algebraic list
 
 ---
@@ -47,11 +44,10 @@
 
 ---
 
-## Phase 7 — REST API (partial)
+## Phase 7 — REST API ✓
 - Auth endpoints ✓
-- Games controller — pending (see Current)
-- User controller — pending (see Current)
-- Move submission is over WebSocket, not REST
+- Games controller ✓
+- User controller ✓
 
 ---
 
@@ -69,10 +65,10 @@
 
 ---
 
-## Phase 10 — Matchmaking & ELO (partial)
-- Matchmaking with ELO-based pairing ✓
-- Queue/dequeue on connect/disconnect ✓
-- ELO update on game end — pending (see Current)
+## Phase 10 — Matchmaking & ELO ✓
+- Matchmaking with ELO-based pairing
+- Queue/dequeue on connect/disconnect
+- ELO update on game end — pending
 
 ---
 

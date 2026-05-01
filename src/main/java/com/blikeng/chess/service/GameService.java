@@ -36,15 +36,17 @@ public class GameService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final MoveExecutor moveExecutor = new MoveExecutor();
     private final ConcurrentHashMap<UUID, Game> games = new ConcurrentHashMap<>();
+    private final UserService userService;
 
     public GameService(
             GameRepository gameRepository,
             ApplicationEventPublisher eventPublisher,
-            NotificationService notificationService
-    ) {
+            NotificationService notificationService,
+            UserService userService) {
         this.gameRepository = gameRepository;
         this.eventPublisher = eventPublisher;
         this.notificationService = notificationService;
+        this.userService = userService;
     }
 
     @Transactional
@@ -150,5 +152,7 @@ public class GameService {
         gameRepository.updateGameStatusById(game.getId(), gameStatus);
         eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus));
         games.remove(game.getId());
+
+        userService.updateUserElo(game.getBlackId(), game.getWhiteId(), game.getStatus());
     }
 }
