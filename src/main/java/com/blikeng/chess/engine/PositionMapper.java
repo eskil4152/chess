@@ -8,4 +8,8 @@ public class PositionMapper {
         int row = 8 - (s.charAt(1) - '0');
         return new Position(row, col);
     }
+
+    public static String toString(Position position) {
+        return "" + (char)('a' + position.col()) + (8 - position.row());
+    }
 }

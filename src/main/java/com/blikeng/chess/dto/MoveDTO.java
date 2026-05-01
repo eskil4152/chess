@@ -1,11 +1,9 @@
 package com.blikeng.chess.dto;
 
-import com.blikeng.chess.model.piece.PieceType;
+import com.blikeng.chess.model.MoveRecord;
 
 public record MoveDTO (
         String gameId,
-        String fromPos,
-        String toPos,
-        PieceType promotionPiece
+        String move
 ) {
 }

@@ -1,16 +1,15 @@
 package com.blikeng.chess.service;
 
+import com.blikeng.chess.dto.GameOverDTO;
 import com.blikeng.chess.dto.GameStartedDTO;
 import com.blikeng.chess.dto.MoveDTO;
 import com.blikeng.chess.engine.MoveExecutor;
 import com.blikeng.chess.engine.PositionMapper;
 import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.entity.UserEntity;
-import com.blikeng.chess.model.Game;
+import com.blikeng.chess.model.*;
 import com.blikeng.chess.exception.ErrorTypes.GameNotFoundException;
-import com.blikeng.chess.model.GameStatus;
-import com.blikeng.chess.model.Move;
-import com.blikeng.chess.model.Position;
+import com.blikeng.chess.model.piece.PieceType;
 import com.blikeng.chess.repository.GameRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -112,6 +111,7 @@ public class GameService {
         }
     }
 
+    @Transactional
     public void makeMove(UUID userId, MoveDTO moveDTO) {
         Game game = getGame(moveDTO.gameId()).orElseThrow(GameNotFoundException::new);
 
@@ -121,17 +121,36 @@ public class GameService {
         try {
             if (!isUserTurn(game, userId)) return;
 
+            String move = moveDTO.move();
+            String from = move.substring(0, 2);
+            String to = move.substring(2, 4);
+            PieceType promotion = move.length() > 4 ? PieceType.fromChar(move.charAt(4)) : null;
+
             GameStatus gameStatus = moveExecutor.performMove(
                     game,
-                    new Move(
-                            PositionMapper.fromString(moveDTO.fromPos()),
-                            PositionMapper.fromString(moveDTO.toPos())),
-                    moveDTO.promotionPiece()
+                    new Move(PositionMapper.fromString(from), PositionMapper.fromString(to)),
+                    promotion
             );
 
             if (gameStatus == null) {
                 // Illegal move. Ignore
             } else if (gameStatus == GameStatus.ONGOING) {
+                StringBuilder outgoingString = new StringBuilder(from).append(to);
+                if (promotion != null) outgoingString.append(promotion);
+
+                MoveDTO outgoingMove = new MoveDTO(
+                        game.getId().toString(),
+                        outgoingString.toString()
+                );
+
+                try {
+                    String payload = objectMapper.writeValueAsString(outgoingMove);
+                    sendToUser(game.getWhiteId(), payload);
+                    sendToUser(game.getBlackId(), payload);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
                 // Game proceeds
             } else {
                 handleGameEnd(game, gameStatus);
@@ -189,6 +208,23 @@ public class GameService {
     }
 
     private void handleGameEnd(Game game, GameStatus gameStatus) {
-        // TODO: Handle game end. Mark game over with winner, return appropriate message. Disconnect WS? Or keep-alive for chat. Calculate ELO. Etc.
+        gameRepository.updateGameStatusById(game.getId(), gameStatus);
+
+        GameOverDTO gameOverDTO = new GameOverDTO(
+                game.getId(),
+                gameStatus
+        );
+
+        try {
+            String payload = objectMapper.writeValueAsString(gameOverDTO);
+            sendToUser(game.getWhiteId(), payload);
+            sendToUser(game.getBlackId(), payload);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        games.remove(game.getId());
+        userSessions.remove(game.getWhiteId());
+        userSessions.remove(game.getBlackId());
     }
 }
