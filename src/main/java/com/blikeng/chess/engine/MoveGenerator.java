@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MoveGenerator {
-    private final SquareAttacked squareAttacked = new SquareAttacked(this);
     public List<Position> getPseudoLegalMoves(Game game, Board board, Position position) {
         Piece piece = board.getPiece(position.row(), position.col());
 
@@ -20,7 +19,7 @@ public class MoveGenerator {
             case PieceType.KNIGHT -> getKnightMoves(board, position);
             case PieceType.BISHOP -> getBishopMoves(board, position);
             case PieceType.QUEEN -> getQueenMoves(board, position);
-            case PieceType.KING -> getKingMoves(game, board, position);
+            case PieceType.KING -> getKingMoves(board, position);
             case PieceType.PAWN -> getPawnMoves(game, board, position);
         };
     }
@@ -81,7 +80,7 @@ public class MoveGenerator {
         return slideDirection(board, position, directions);
     }
 
-    private List<Position> getKingMoves(Game game, Board board, Position position) {
+    private List<Position> getKingMoves(Board board, Position position) {
         List<Position> moves = new ArrayList<>();
 
         int[][] directions = {
@@ -109,14 +108,13 @@ public class MoveGenerator {
 
         Piece king = board.getPiece(position.row(), position.col());
         if (king.getColor() == Color.WHITE) {
-            if (!king.hasMoved() && !squareAttacked.isSquareAttacked(board, game, new Position(7, 4), Color.BLACK)) {
+            if (!king.hasMoved()) {
                 Piece kingsideRook = board.getPiece(7, 7);
                 if (
                         kingsideRook != null &&
                         !kingsideRook.hasMoved() &&
                         board.getPiece(7, 6) == null &&
-                        board.getPiece(7, 5) == null &&
-                        !squareAttacked.isSquareAttacked(board, game, new Position(7, 5), Color.BLACK)
+                        board.getPiece(7, 5) == null
                 ) {
                     moves.add(new Position(7, 6));
                 }
@@ -127,21 +125,19 @@ public class MoveGenerator {
                         !queensideRook.hasMoved() &&
                         board.getPiece(7, 1) == null &&
                         board.getPiece(7, 2) == null &&
-                        board.getPiece(7, 3) == null &&
-                        !squareAttacked.isSquareAttacked(board, game, new Position(7, 3), Color.BLACK)
+                        board.getPiece(7, 3) == null
                 ) {
                     moves.add(new Position(7, 2));
                 }
             }
         } else {
-            if (!king.hasMoved() && !squareAttacked.isSquareAttacked(board, game, new Position(0, 4), Color.WHITE)) {
+            if (!king.hasMoved()) {
                 Piece kingsideRook = board.getPiece(0, 7);
                 if (
                         kingsideRook != null &&
                         !kingsideRook.hasMoved() &&
                         board.getPiece(0, 5) == null &&
-                        board.getPiece(0, 6) == null &&
-                        !squareAttacked.isSquareAttacked(board, game, new Position(0, 5), Color.WHITE)
+                        board.getPiece(0, 6) == null
                 ) {
                     moves.add(new Position(0, 6));
                 }
@@ -152,8 +148,7 @@ public class MoveGenerator {
                         !queensideRook.hasMoved() &&
                         board.getPiece(0, 1) == null &&
                         board.getPiece(0, 2) == null &&
-                        board.getPiece(0, 3) == null &&
-                        !squareAttacked.isSquareAttacked(board, game, new Position(0, 3), Color.WHITE)
+                        board.getPiece(0, 3) == null
                 ) {
                     moves.add(new Position(0, 2));
                 }

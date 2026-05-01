@@ -32,7 +32,7 @@ public class MoveExecutor {
         piece = checkIfPawnPromotion(piece, move, promotionPiece);
 
         if (piece.getPieceType() == PieceType.KING){
-            isCastling = handleCastling(board, move, piece);
+            isCastling = handleCastling(board, game, move, piece);
             updateKingPosition(game, piece, move);
         }
 
@@ -113,11 +113,13 @@ public class MoveExecutor {
         return GameStatus.ONGOING;
     }
 
-    private boolean handleCastling(Board board, Move move, Piece piece) {
+    private boolean handleCastling(Board board, Game game, Move move, Piece piece) {
         if (piece.getPieceType() != PieceType.KING) return false;
 
         int colDiff = move.to().col() - move.from().col();
         if (Math.abs(colDiff) != 2) return false;
+
+        if (!canCastle(board, game, colDiff, piece.getColor())) return false;
 
         int row = move.from().row();
 
@@ -134,6 +136,15 @@ public class MoveExecutor {
         }
 
         return true;
+    }
+
+    private boolean canCastle(Board board, Game game, int colDiff, Color color) {
+        Color attacker = color == Color.WHITE ? Color.BLACK : Color.WHITE;
+        int row = color == Color.WHITE ? 7 : 0;
+        int transitCol = colDiff == 2 ? 5 : 3;
+
+        return !squareAttacked.isSquareAttacked(board, game, new Position(row, 4), attacker)
+            && !squareAttacked.isSquareAttacked(board, game, new Position(row, transitCol), attacker);
     }
 
     private void updateKingPosition(Game game, Piece piece, Move move) {
