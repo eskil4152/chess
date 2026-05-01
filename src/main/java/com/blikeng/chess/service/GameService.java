@@ -1,27 +1,28 @@
 package com.blikeng.chess.service;
 
-import com.blikeng.chess.dto.GameOverDTO;
-import com.blikeng.chess.dto.GameStartedDTO;
-import com.blikeng.chess.dto.MoveDTO;
+import com.blikeng.chess.dto.websocket.WsGameStartedDTO;
+import com.blikeng.chess.dto.websocket.WsMoveDTO;
 import com.blikeng.chess.engine.MoveExecutor;
 import com.blikeng.chess.engine.PositionMapper;
 import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.entity.UserEntity;
-import com.blikeng.chess.model.*;
 import com.blikeng.chess.exception.ErrorTypes.GameNotFoundException;
+import com.blikeng.chess.model.*;
 import com.blikeng.chess.model.piece.PieceType;
+import com.blikeng.chess.notifications.NotificationService;
+import com.blikeng.chess.notifications.events.MatchEndedEvent;
+import com.blikeng.chess.notifications.events.MatchStartedEvent;
+import com.blikeng.chess.notifications.events.MoveMadeEvent;
 import com.blikeng.chess.repository.GameRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.io.IOException;
 import java.time.Instant;
-import java.util.Comparator;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -29,29 +30,21 @@ import java.util.concurrent.locks.ReentrantLock;
 @Service
 public class GameService {
     private final GameRepository gameRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    private final NotificationService notificationService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final MoveExecutor moveExecutor = new MoveExecutor();
-    private final MatchmakingService matchmakingService;
+    private final ConcurrentHashMap<UUID, Game> games = new ConcurrentHashMap<>();
 
     public GameService(
             GameRepository gameRepository,
-            MatchmakingService matchmakingService) {
+            ApplicationEventPublisher eventPublisher,
+            NotificationService notificationService
+    ) {
         this.gameRepository = gameRepository;
-        this.matchmakingService = matchmakingService;
-    }
-
-    private final ConcurrentHashMap<UUID, Game> games = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<UUID, Set<WebSocketSession>> userSessions = new ConcurrentHashMap<>();
-
-    public void removeSession(UUID userId, WebSocketSession session) {
-        Set<WebSocketSession> sessions = userSessions.get(userId);
-        if (sessions == null) return;
-        sessions.remove(session);
-        if (sessions.isEmpty()) {
-            userSessions.remove(userId);
-            matchmakingService.dequeuePlayer(userId);
-        }
+        this.eventPublisher = eventPublisher;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -70,23 +63,17 @@ public class GameService {
 
         games.put(game.getId(), game);
 
-        try {
-            String payload = objectMapper.writeValueAsString(new GameStartedDTO(
-                    game.getId(),
-                    whitePlayer.getId(),
-                    whitePlayer.getUsername(),
-                    blackPlayer.getId(),
-                    blackPlayer.getUsername()
-            ));
-            sendToUser(whitePlayer.getId(), payload);
-            sendToUser(blackPlayer.getId(), payload);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        eventPublisher.publishEvent(new MatchStartedEvent(
+                game.getId(),
+                whitePlayer.getId(),
+                whitePlayer.getUsername(),
+                blackPlayer.getId(),
+                blackPlayer.getUsername()
+        ));
     }
 
     @Transactional
-    public void makeMove(UUID userId, MoveDTO moveDTO) {
+    public void makeMove(UUID userId, WsMoveDTO moveDTO) {
         Game game = getGame(moveDTO.gameId()).orElseThrow(GameNotFoundException::new);
 
         ReentrantLock lock = game.lockGame();
@@ -106,67 +93,45 @@ public class GameService {
                     promotion
             );
 
-            if (gameStatus == null) {
-                // Illegal move. Ignore
-            } else if (gameStatus == GameStatus.ONGOING) {
-                StringBuilder outgoingString = new StringBuilder(from).append(to);
-                if (promotion != null) outgoingString.append(promotion);
+            if (gameStatus == GameStatus.ONGOING) {
+                StringBuilder outgoingMove = new StringBuilder(from).append(to);
+                if (promotion != null) outgoingMove.append(promotion);
 
-                MoveDTO outgoingMove = new MoveDTO(
-                        game.getId().toString(),
-                        outgoingString.toString()
-                );
-
-                try {
-                    String payload = objectMapper.writeValueAsString(outgoingMove);
-                    sendToUser(game.getWhiteId(), payload);
-                    sendToUser(game.getBlackId(), payload);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-                // Game proceeds
-            } else {
+                eventPublisher.publishEvent(new MoveMadeEvent(
+                        game.getId(), game.getWhiteId(), game.getBlackId(), outgoingMove.toString()
+                ));
+            } else if (gameStatus != null) {
                 handleGameEnd(game, gameStatus);
             }
-
         } finally {
             lock.unlock();
         }
     }
 
-    public void saveSession(UUID userId, WebSocketSession session) {
-        userSessions.computeIfAbsent(userId, k -> ConcurrentHashMap.newKeySet()).add(session);
+    public boolean isInGame(UUID userId) {
+        return games.values().stream()
+                .anyMatch(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId));
+    }
 
+    public void onSessionConnected(UUID userId, WebSocketSession session) {
         games.values().stream()
                 .filter(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId))
                 .findFirst()
                 .ifPresent(game -> {
                     try {
-                        String payload = objectMapper.writeValueAsString(new GameStartedDTO(
+                        // TODO: replace with WsGameStateDTO once move history is implemented. Currently user just receives a fresh game, not the actual game state
+                        String payload = objectMapper.writeValueAsString(new WsGameStartedDTO(
                                 game.getId(),
                                 game.getWhiteId(),
                                 game.getWhiteUsername(),
                                 game.getBlackId(),
                                 game.getBlackUsername()
                         ));
-                        session.sendMessage(new TextMessage(payload));
-                    } catch (IOException e) {
+                        notificationService.sendToSession(session, payload);
+                    } catch (JsonProcessingException e) {
                         // session will need to retry
                     }
                 });
-    }
-
-    private void sendToUser(UUID userId, String payload) {
-        Set<WebSocketSession> sessions = userSessions.get(userId);
-        if (sessions == null) return;
-        for (WebSocketSession session : sessions) {
-            try {
-                if (session.isOpen()) session.sendMessage(new TextMessage(payload));
-            } catch (IOException e) {
-                // session will need to retry
-            }
-        }
     }
 
     private boolean isUserTurn(Game game, UUID userId) {
@@ -183,22 +148,7 @@ public class GameService {
 
     private void handleGameEnd(Game game, GameStatus gameStatus) {
         gameRepository.updateGameStatusById(game.getId(), gameStatus);
-
-        GameOverDTO gameOverDTO = new GameOverDTO(
-                game.getId(),
-                gameStatus
-        );
-
-        try {
-            String payload = objectMapper.writeValueAsString(gameOverDTO);
-            sendToUser(game.getWhiteId(), payload);
-            sendToUser(game.getBlackId(), payload);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
+        eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus));
         games.remove(game.getId());
-        userSessions.remove(game.getWhiteId());
-        userSessions.remove(game.getBlackId());
     }
 }

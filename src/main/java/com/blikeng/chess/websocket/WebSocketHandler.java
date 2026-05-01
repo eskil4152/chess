@@ -1,8 +1,9 @@
 package com.blikeng.chess.websocket;
 
-import com.blikeng.chess.dto.MoveDTO;
+import com.blikeng.chess.dto.websocket.WsMoveDTO;
 import com.blikeng.chess.service.GameService;
 import com.blikeng.chess.service.MatchmakingService;
+import com.blikeng.chess.service.PresenceService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
@@ -17,19 +18,26 @@ import java.util.UUID;
 public class WebSocketHandler extends TextWebSocketHandler {
     private final GameService gameService;
     private final MatchmakingService matchmakingService;
+    private final PresenceService presenceService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public WebSocketHandler(GameService gameService, MatchmakingService matchmakingService) {
+    public WebSocketHandler(
+            GameService gameService, MatchmakingService matchmakingService,
+            PresenceService presenceService
+    ) {
         this.gameService = gameService;
         this.matchmakingService = matchmakingService;
+        this.presenceService = presenceService;
     }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         UUID userId = getUserId(session);
-
-        gameService.saveSession(userId, session);
-        matchmakingService.queuePlayer(userId);
+        presenceService.saveSession(userId, session);
+        gameService.onSessionConnected(userId, session);
+        if (!gameService.isInGame(userId)) {
+            matchmakingService.queuePlayer(userId);
+        }
     }
 
     @Override
@@ -42,7 +50,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
             switch (type) {
                 case "MOVE" -> {
-                    gameService.makeMove(userId, objectMapper.treeToValue(json, MoveDTO.class));
+                    gameService.makeMove(userId, objectMapper.treeToValue(json, WsMoveDTO.class));
                 }
 
                 case "MESSAGE" -> {
@@ -68,7 +76,11 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-        gameService.removeSession(getUserId(session), session);
+        UUID userId = getUserId(session);
+        presenceService.removeSession(userId, session);
+        if (presenceService.hasNoSessions(userId)) {
+            matchmakingService.dequeuePlayer(userId);
+        }
     }
 
     private UUID getUserId(WebSocketSession session) {
