@@ -1,6 +1,8 @@
 package com.blikeng.chess.controller;
 
 import com.blikeng.chess.dto.GamePreviewDTO;
+import com.blikeng.chess.dto.ProfileDTO;
+import com.blikeng.chess.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,28 +14,16 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
+    private final UserService userService;
 
-    @GetMapping
-    public String getSelf() {
-        return "Self";
-    }
-
-    @GetMapping("/games")
-    public ResponseEntity<List<GamePreviewDTO>> getSelfGames() {
-        return ResponseEntity.ok(null);
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
 
     @GetMapping("/{username}")
-    public String getUser(
+    public ResponseEntity<ProfileDTO> getUser(
             @PathVariable String username
     ) {
-        return "User " + username;
-    }
-
-    @GetMapping("/{username}/games")
-    public ResponseEntity<List<GamePreviewDTO>> getUserGames(
-            @PathVariable String username
-    ) {
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok(userService.getUser(username));
     }
 }

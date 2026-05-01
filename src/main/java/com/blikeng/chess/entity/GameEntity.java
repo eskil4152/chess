@@ -4,12 +4,14 @@ import com.blikeng.chess.model.GameStatus;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
+@Getter
 public class GameEntity {
     protected GameEntity() {}
     public GameEntity(
