@@ -14,6 +14,7 @@ public class Game {
         this.whiteUsername = whiteUsername;
         this.blackId = blackId;
         this.blackUsername = blackUsername;
+        this.board = new Board();
     }
 
     private final UUID id = UUID.randomUUID();
@@ -33,18 +34,14 @@ public class Game {
     private Position blackKingPosition;
 
     private Board board;
-    private boolean isWhiteTurn;
-    private List<MoveRecord> moves;
+    private boolean isWhiteTurn = true;
+    private final List<MoveRecord> moves = List.of();
 
     @Setter
     private GameStatus status = GameStatus.ONGOING;
 
     @Setter
     private Position enPassantTarget;
-
-    public Game() {
-        this.board = new Board();
-    }
 
     public void switchTurn() {
         isWhiteTurn = !isWhiteTurn;

@@ -47,13 +47,13 @@ public class GameService {
     private final ConcurrentHashMap<UUID, Set<WebSocketSession>> userSessions = new ConcurrentHashMap<>();
 
     public void queuePlayer(UUID userId) {
-        if (queue.containsKey(userId)) return;
-
         UserEntity user = authService.findUserById(userId).orElseThrow();
 
         UserEntity matched;
 
         synchronized (queue) {
+            if (queue.containsKey(userId)) return;
+
             var best = queue.entrySet().stream()
                     .min(Comparator.comparingInt(e -> Math.abs(e.getValue().getElo() - user.getElo())))
                     .filter(e -> Math.abs(e.getValue().getElo() - user.getElo()) <= 200)

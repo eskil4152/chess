@@ -161,13 +161,16 @@ public class MoveExecutor {
         if (piece.getPieceType() == PieceType.PAWN) {
             switch (piece.getColor()){
                 case WHITE -> {
-                    if (move.to().row() == 0 && promotionPiece != null){
+                    if (move.to().row() == 0){
+                        if (promotionPiece == null) throw new InvalidPromotionException();
                         piece = createPromotionPiece(promotionPiece, Color.WHITE);
                     }
                 }
 
                 case BLACK -> {
-                    if (move.to().row() == 7 && promotionPiece != null){
+                    if (move.to().row() == 7){
+                        if (promotionPiece == null) throw new InvalidPromotionException();
+
                         piece = createPromotionPiece(promotionPiece, Color.BLACK);
                     }
                 }
