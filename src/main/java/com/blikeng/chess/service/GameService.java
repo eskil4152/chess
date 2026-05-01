@@ -28,48 +28,21 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class GameService {
-    private final AuthService authService;
     private final GameRepository gameRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final MoveExecutor moveExecutor = new MoveExecutor();
+    private final MatchmakingService matchmakingService;
 
     public GameService(
-            AuthService authService,
-            GameRepository gameRepository
-    ) {
-        this.authService = authService;
+            GameRepository gameRepository,
+            MatchmakingService matchmakingService) {
         this.gameRepository = gameRepository;
+        this.matchmakingService = matchmakingService;
     }
 
     private final ConcurrentHashMap<UUID, Game> games = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<UUID, UserEntity> queue = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Set<WebSocketSession>> userSessions = new ConcurrentHashMap<>();
-
-    public void queuePlayer(UUID userId) {
-        UserEntity user = authService.findUserById(userId).orElseThrow();
-
-        UserEntity matched;
-
-        synchronized (queue) {
-            if (queue.containsKey(userId)) return;
-
-            var best = queue.entrySet().stream()
-                    .min(Comparator.comparingInt(e -> Math.abs(e.getValue().getElo() - user.getElo())))
-                    .filter(e -> Math.abs(e.getValue().getElo() - user.getElo()) <= 200)
-                    .orElse(null);
-
-            if (best == null) {
-                queue.put(userId, user);
-                return;
-            }
-
-            queue.remove(best.getKey());
-            matched = best.getValue();
-        }
-
-        beginGame(matched, user);
-    }
 
     public void removeSession(UUID userId, WebSocketSession session) {
         Set<WebSocketSession> sessions = userSessions.get(userId);
@@ -77,10 +50,11 @@ public class GameService {
         sessions.remove(session);
         if (sessions.isEmpty()) {
             userSessions.remove(userId);
-            queue.remove(userId);
+            matchmakingService.dequeuePlayer(userId);
         }
     }
 
+    @Transactional
     public void beginGame(UserEntity whitePlayer, UserEntity blackPlayer) {
         Game game = new Game(whitePlayer.getId(), whitePlayer.getUsername(), blackPlayer.getId(), blackPlayer.getUsername());
         game.setWhiteKingPosition(new Position(7, 4));
