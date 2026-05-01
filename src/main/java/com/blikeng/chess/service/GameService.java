@@ -95,12 +95,11 @@ public class GameService {
                     promotion
             );
 
-            if (gameStatus == GameStatus.ONGOING) {
-                StringBuilder outgoingMove = new StringBuilder(from).append(to);
-                if (promotion != null) outgoingMove.append(promotion);
+            game.addMove(moveDTO.move());
 
+            if (gameStatus == GameStatus.ONGOING) {
                 eventPublisher.publishEvent(new MoveMadeEvent(
-                        game.getId(), game.getWhiteId(), game.getBlackId(), outgoingMove.toString()
+                        game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move()
                 ));
             } else if (gameStatus != null) {
                 handleGameEnd(game, gameStatus);
@@ -149,7 +148,7 @@ public class GameService {
     }
 
     private void handleGameEnd(Game game, GameStatus gameStatus) {
-        gameRepository.updateGameStatusById(game.getId(), gameStatus);
+        gameRepository.updateGameById(game.getId(), game.getMoves(), gameStatus);
         eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus));
         games.remove(game.getId());
 

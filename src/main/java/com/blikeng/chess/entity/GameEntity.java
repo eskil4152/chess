@@ -1,6 +1,7 @@
 package com.blikeng.chess.entity;
 
 import com.blikeng.chess.model.GameStatus;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
@@ -8,6 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -42,5 +44,7 @@ public class GameEntity {
 
     private Instant createdAt;
 
-    // TODO: Add move history in a usable format
+    @Setter
+    @ElementCollection
+    private List<String> moves;
 }

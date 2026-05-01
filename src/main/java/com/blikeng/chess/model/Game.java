@@ -35,7 +35,7 @@ public class Game {
 
     private Board board;
     private boolean isWhiteTurn = true;
-    private final List<MoveRecord> moves = List.of();
+    private final List<String> moves = List.of();
 
     @Setter
     private GameStatus status = GameStatus.ONGOING;
@@ -51,7 +51,7 @@ public class Game {
         return lock;
     }
 
-    public void addMove(MoveRecord moveRecord){
-        moves.add(moveRecord);
+    public void addMove(String move){
+        moves.add(move);
     }
 }

@@ -13,9 +13,9 @@ import java.util.UUID;
 
 @Repository
 public interface GameRepository extends JpaRepository<GameEntity, UUID> {
-    @Query("update GameEntity g set g.status = :status where g.id = :id")
+    @Query("update GameEntity g set g.status = :status, g.moves = :moves where g.id = :id")
     @Modifying
-    void updateGameStatusById(@Param("id") UUID id, @Param("status") GameStatus status);
+    void updateGameById(@Param("id") UUID id, @Param("moves") List<String> moves, @Param("status") GameStatus status);
 
     @Query("""
         select g

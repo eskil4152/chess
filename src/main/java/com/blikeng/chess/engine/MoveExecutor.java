@@ -46,13 +46,6 @@ public class MoveExecutor {
         board.setPiece(move.from().row(), move.from().col(), null);
         piece.setMoved();
 
-        game.addMove(new MoveRecord(
-                move,
-                piece.getPieceType(),
-                isEnPassant,
-                isCastling
-        ));
-
         return isGameOver(color, board, game);
     }
 

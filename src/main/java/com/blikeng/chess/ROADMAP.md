@@ -1,7 +1,7 @@
 # Chess Backend — Build Plan
 
 ## Current
-- Convert MoveHistory to an algebraic list
+
 
 ---
 
@@ -32,7 +32,7 @@
 
 ---
 
-## Phase 5 — Move History (Pending)
+## Phase 5 — Move History ✓
 - Store moves as algebraic list on `Game`
 - Enables reconnect state replay and game history endpoint
 
