@@ -176,11 +176,13 @@ public class MoveGenerator {
 
             // Captures
             if (
+                    position.col() + 1 < 8 &&
                     board.getPiece(position.row() - 1, position.col() + 1) != null &&
                     board.getPiece(position.row() - 1, position.col() + 1).getColor() != Color.WHITE
             ) moves.add(new Position(position.row() - 1, position.col() + 1));
 
             if (
+                    position.col() - 1 >= 0 &&
                     board.getPiece(position.row() - 1, position.col() - 1) != null &&
                     board.getPiece(position.row() - 1, position.col() - 1).getColor() != Color.WHITE
             ) moves.add(new Position(position.row() - 1, position.col() - 1));
@@ -203,13 +205,15 @@ public class MoveGenerator {
 
             // Captures
             if (
+                    position.col() + 1 < 8 &&
                     board.getPiece(position.row() + 1, position.col() + 1) != null &&
                     board.getPiece(position.row() + 1, position.col() + 1).getColor() != Color.BLACK
             ) moves.add(new Position(position.row() + 1, position.col() + 1));
 
             if (
-                    board.getPiece(position.row() + 1, position.col() + -1) != null &&
-                    board.getPiece(position.row() + 1, position.col() + -1).getColor() != Color.BLACK
+                    position.col() - 1 >= 0 &&
+                    board.getPiece(position.row() + 1, position.col() - 1) != null &&
+                    board.getPiece(position.row() + 1, position.col() - 1).getColor() != Color.BLACK
             ) moves.add(new Position(position.row() + 1, position.col() - 1));
 
             // First move
