@@ -1,8 +1,6 @@
 # Chess Backend — Build Plan
 
 ## Current
-- Add Dockerfile
-- Add docker-compose file
 - Add unit tests
 - Add integration tests
 - Add JaCoCo
@@ -51,9 +49,9 @@
 ---
 
 ## Phase 7 — REST API ✓
-- Auth endpoints ✓
-- Games controller ✓
-- User controller ✓
+- Auth endpoints
+- Games controller
+- User controller
 
 ---
 
@@ -79,9 +77,9 @@
 ---
 
 ## Phase 11 — Polish (in progress)
-- Flyway migrations – pending
 - Integration + unit tests — in progress
-- Docker Compose — pending
+- Flyway migrations ✓
+- Docker Compose ✓
 - Logging ✓
 
 ---
