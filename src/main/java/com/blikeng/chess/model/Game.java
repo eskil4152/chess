@@ -9,7 +9,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Getter
 public class Game {
-    public Game(UUID whiteId, String whiteUsername, UUID blackId, String blackUsername) {
+    public Game(UUID id, UUID whiteId, String whiteUsername, UUID blackId, String blackUsername) {
+        this.id = id;
         this.whiteId = whiteId;
         this.whiteUsername = whiteUsername;
         this.blackId = blackId;
@@ -17,7 +18,7 @@ public class Game {
         this.board = new Board();
     }
 
-    private final UUID id = UUID.randomUUID();
+    private final UUID id;
 
     private final ReentrantLock lock = new ReentrantLock();
 

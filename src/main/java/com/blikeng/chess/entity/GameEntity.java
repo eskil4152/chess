@@ -1,10 +1,7 @@
 package com.blikeng.chess.entity;
 
 import com.blikeng.chess.model.GameStatus;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,13 +14,11 @@ import java.util.UUID;
 public class GameEntity {
     protected GameEntity() {}
     public GameEntity(
-            UUID id,
             UserEntity white,
             UserEntity black,
             GameStatus status,
             Instant createdAt
     ){
-        this.id = id;
         this.white = white;
         this.black = black;
         this.status = status;
@@ -31,7 +26,7 @@ public class GameEntity {
     }
 
     @Id
-    UUID id;
+    private final UUID id = UUID.randomUUID();
 
     @ManyToOne
     private UserEntity white;
@@ -40,11 +35,13 @@ public class GameEntity {
     private UserEntity black;
 
     @Setter
+    @Enumerated(EnumType.STRING)
     private GameStatus status;
 
     private Instant createdAt;
 
     @Setter
     @ElementCollection
+    @CollectionTable(name = "game_moves", joinColumns = @JoinColumn(name = "game_id"))
     private List<String> moves;
 }

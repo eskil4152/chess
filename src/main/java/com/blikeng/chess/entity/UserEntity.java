@@ -19,7 +19,7 @@ public class UserEntity {
     protected UserEntity() {}
 
     @Id
-    private UUID id = UUID.randomUUID();
+    private final UUID id = UUID.randomUUID();
 
     @Column(nullable = false, unique = true)
     private String username;

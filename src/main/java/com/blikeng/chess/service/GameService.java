@@ -56,17 +56,16 @@ public class GameService {
 
     @Transactional
     public void beginGame(UserEntity whitePlayer, UserEntity blackPlayer) {
-        Game game = new Game(whitePlayer.getId(), whitePlayer.getUsername(), blackPlayer.getId(), blackPlayer.getUsername());
-        game.setWhiteKingPosition(new Position(7, 4));
-        game.setBlackKingPosition(new Position(0, 4));
-
-        gameRepository.save(new GameEntity(
-                game.getId(),
+        GameEntity gameEntity = gameRepository.save(new GameEntity(
                 whitePlayer,
                 blackPlayer,
                 GameStatus.ONGOING,
                 Instant.now()
         ));
+
+        Game game = new Game(gameEntity.getId(), whitePlayer.getId(), whitePlayer.getUsername(), blackPlayer.getId(), blackPlayer.getUsername());
+        game.setWhiteKingPosition(new Position(7, 4));
+        game.setBlackKingPosition(new Position(0, 4));
 
         games.put(game.getId(), game);
 

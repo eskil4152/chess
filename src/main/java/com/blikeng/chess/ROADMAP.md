@@ -1,7 +1,6 @@
 # Chess Backend — Build Plan
 
 ## Current
-- Add flyway
 - Add Dockerfile
 - Add docker-compose file
 - Add unit tests
