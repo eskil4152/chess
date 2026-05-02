@@ -1,16 +1,17 @@
 package com.blikeng.chess.service;
 
+import com.blikeng.chess.dto.AuthDTO;
 import com.blikeng.chess.dto.LoginDTO;
 import com.blikeng.chess.entity.UserEntity;
-import com.blikeng.chess.exception.ErrorTypes.InvalidCredentialsException;
-import com.blikeng.chess.exception.ErrorTypes.InvalidPasswordException;
-import com.blikeng.chess.exception.ErrorTypes.InvalidUsernameException;
-import com.blikeng.chess.exception.ErrorTypes.UsernameTakenException;
+import com.blikeng.chess.exception.ErrorTypes.*;
 import com.blikeng.chess.repository.AuthRepository;
+import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.PasswordService;
+import com.blikeng.chess.security.UserRole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -59,6 +60,17 @@ public class AuthService {
         UserEntity user = authRepository.save(new UserEntity(trimmedUsername, passwordService.hashPassword(trimmedPassword)));
 
         return jwtService.generateToken(user);
+    }
+
+    public AuthDTO authenticate(){
+        JwtPrincipal principal = JwtService.getCurrentUser();
+        if (principal == null) throw new InvalidUserException();
+
+        return new AuthDTO(
+                principal.userId(),
+                principal.username(),
+                UserRole.USER
+        );
     }
 
     public Optional<UserEntity> findUserById(UUID userId){

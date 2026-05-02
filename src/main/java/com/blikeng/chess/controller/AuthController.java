@@ -1,15 +1,13 @@
 package com.blikeng.chess.controller;
 
+import com.blikeng.chess.dto.AuthDTO;
 import com.blikeng.chess.dto.LoginDTO;
 import com.blikeng.chess.service.AuthService;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -61,10 +59,9 @@ public class AuthController {
                 .body("User logged out successfully");
     }
 
-    @PostMapping
-    public String auth(){
-        // TODO
-        return "Auth successful";
+    @GetMapping
+    public ResponseEntity<AuthDTO> auth(){
+        return ResponseEntity.ok(authService.authenticate());
     }
 
     private ResponseCookie makeCookie(String token, Long maxAge) {

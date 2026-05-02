@@ -64,9 +64,10 @@ public class JwtService {
         }
     }
 
-    public JwtPrincipal getCurrentUser() {
+    public static JwtPrincipal getCurrentUser() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) throw new IllegalArgumentException();
+        if (auth == null) return null;
+
         return (JwtPrincipal) auth.getPrincipal();
     }
 }
