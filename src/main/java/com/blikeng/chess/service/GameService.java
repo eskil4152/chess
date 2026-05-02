@@ -1,6 +1,6 @@
 package com.blikeng.chess.service;
 
-import com.blikeng.chess.dto.websocket.WsGameStartedDTO;
+import com.blikeng.chess.dto.websocket.WsGameStateDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
 import com.blikeng.chess.engine.MoveExecutor;
 import com.blikeng.chess.engine.PositionMapper;
@@ -130,17 +130,17 @@ public class GameService {
                 .findFirst()
                 .ifPresent(game -> {
                     try {
-                        // TODO: replace with WsGameStateDTO once move history is implemented. Currently user just receives a fresh game, not the actual game state
-                        String payload = objectMapper.writeValueAsString(new WsGameStartedDTO(
+                        String payload = objectMapper.writeValueAsString(new WsGameStateDTO(
                                 game.getId(),
                                 game.getWhiteId(),
                                 game.getWhiteUsername(),
                                 game.getBlackId(),
-                                game.getBlackUsername()
+                                game.getBlackUsername(),
+                                game.getMoves()
                         ));
                         notificationService.sendToSession(session, payload);
                     } catch (JsonProcessingException e) {
-                        // session will need to retry
+                        logger.error("Error serializing game state for game {}: ", game.getId(), e);
                     }
                 });
     }
