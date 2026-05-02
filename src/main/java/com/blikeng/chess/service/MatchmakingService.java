@@ -39,9 +39,9 @@ public class MatchmakingService {
 
             queue.remove(best.getKey());
             matched = best.getValue();
-        }
 
-        gameService.beginGame(matched, user);
+            gameService.beginGame(matched, user);
+        }
     }
 
     public void dequeuePlayer(UUID userId) {

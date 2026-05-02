@@ -7,6 +7,7 @@ import com.blikeng.chess.engine.PositionMapper;
 import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.ErrorTypes.GameNotFoundException;
+import com.blikeng.chess.exception.ErrorTypes.InvalidMoveException;
 import com.blikeng.chess.model.*;
 import com.blikeng.chess.model.piece.PieceType;
 import com.blikeng.chess.notifications.NotificationService;
@@ -84,6 +85,8 @@ public class GameService {
         try {
             if (!isUserTurn(game, userId)) return;
 
+            if (moveDTO.move().length() < 4) throw new InvalidMoveException();
+
             String move = moveDTO.move();
             String from = move.substring(0, 2);
             String to = move.substring(2, 4);
@@ -95,13 +98,15 @@ public class GameService {
                     promotion
             );
 
-            game.addMove(moveDTO.move());
-
             if (gameStatus == GameStatus.ONGOING) {
+                game.addMove(moveDTO.move());
+
                 eventPublisher.publishEvent(new MoveMadeEvent(
                         game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move()
                 ));
             } else if (gameStatus != null) {
+                game.addMove(moveDTO.move());
+
                 handleGameEnd(game, gameStatus);
             }
         } finally {
@@ -152,6 +157,6 @@ public class GameService {
         eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus));
         games.remove(game.getId());
 
-        userService.updateUserElo(game.getBlackId(), game.getWhiteId(), game.getStatus());
+        userService.updateUserElo(game.getWhiteId(), game.getBlackId(), game.getStatus());
     }
 }

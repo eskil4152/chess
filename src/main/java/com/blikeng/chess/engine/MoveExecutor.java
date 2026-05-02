@@ -11,8 +11,6 @@ public class MoveExecutor {
     private final SquareAttacked squareAttacked = new SquareAttacked(moveGenerator);
 
     public GameStatus performMove(Game game, Move move, PieceType promotionPiece) {
-        boolean isCastling = false;
-
         Board board = game.getBoard();
         Piece piece = board.getPiece(move.from().row(), move.from().col());
 
@@ -32,7 +30,7 @@ public class MoveExecutor {
         piece = checkIfPawnPromotion(piece, move, promotionPiece);
 
         if (piece.getPieceType() == PieceType.KING){
-            isCastling = handleCastling(board, game, move, piece);
+            handleCastling(board, game, move, piece);
             updateKingPosition(game, piece, move);
         }
 
@@ -106,29 +104,28 @@ public class MoveExecutor {
         return GameStatus.ONGOING;
     }
 
-    private boolean handleCastling(Board board, Game game, Move move, Piece piece) {
-        if (piece.getPieceType() != PieceType.KING) return false;
+    private void handleCastling(Board board, Game game, Move move, Piece piece) {
+        if (piece.getPieceType() != PieceType.KING) return;
 
         int colDiff = move.to().col() - move.from().col();
-        if (Math.abs(colDiff) != 2) return false;
+        if (Math.abs(colDiff) != 2) return;
 
-        if (!canCastle(board, game, colDiff, piece.getColor())) return false;
+        if (!canCastle(board, game, colDiff, piece.getColor())) return;
 
         int row = move.from().row();
 
+        Piece rook;
         if (colDiff == 2) {
-            Piece rook = board.getPiece(row, 7);
+            rook = board.getPiece(row, 7);
             board.setPiece(row, 5, rook);
             board.setPiece(row, 7, null);
-            rook.setMoved();
         } else {
-            Piece rook = board.getPiece(row, 0);
+            rook = board.getPiece(row, 0);
             board.setPiece(row, 3, rook);
             board.setPiece(row, 0, null);
-            rook.setMoved();
         }
 
-        return true;
+        rook.setMoved();
     }
 
     private boolean canCastle(Board board, Game game, int colDiff, Color color) {

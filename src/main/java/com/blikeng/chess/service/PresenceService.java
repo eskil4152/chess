@@ -12,14 +12,18 @@ public class PresenceService {
     private final ConcurrentHashMap<UUID, Set<WebSocketSession>> userSessions = new ConcurrentHashMap<>();
 
     public void saveSession(UUID userId, WebSocketSession session) {
-        userSessions.computeIfAbsent(userId, _ -> ConcurrentHashMap.newKeySet()).add(session);
+        userSessions.compute(userId, (k, sessions) -> {
+            if (sessions == null) sessions = ConcurrentHashMap.newKeySet();
+            sessions.add(session);
+            return sessions;
+        });
     }
 
     public void removeSession(UUID userId, WebSocketSession session) {
-        Set<WebSocketSession> sessions = userSessions.get(userId);
-        if (sessions == null) return;
-        sessions.remove(session);
-        if (sessions.isEmpty()) userSessions.remove(userId);
+        userSessions.computeIfPresent(userId, (k, sessions) -> {
+            sessions.remove(session);
+            return sessions.isEmpty() ? null : sessions;
+        });
     }
 
     public boolean hasNoSessions(UUID userId) {
