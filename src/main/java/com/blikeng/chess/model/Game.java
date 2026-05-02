@@ -3,6 +3,7 @@ package com.blikeng.chess.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
@@ -36,7 +37,7 @@ public class Game {
 
     private Board board;
     private boolean isWhiteTurn = true;
-    private final List<String> moves = List.of();
+    private final List<String> moves = new ArrayList<>();
 
     @Setter
     private GameStatus status = GameStatus.ONGOING;
