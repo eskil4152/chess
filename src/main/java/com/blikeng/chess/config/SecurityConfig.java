@@ -26,7 +26,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http) {
         http
                 .authorizeHttpRequests( request -> {
                         request.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();

@@ -6,8 +6,9 @@ import com.blikeng.chess.engine.MoveExecutor;
 import com.blikeng.chess.engine.PositionMapper;
 import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.entity.UserEntity;
-import com.blikeng.chess.exception.ErrorTypes.GameNotFoundException;
-import com.blikeng.chess.exception.ErrorTypes.InvalidMoveException;
+import com.blikeng.chess.exception.errorTypes.GameNotFoundException;
+import com.blikeng.chess.exception.errorTypes.InvalidMoveException;
+import com.blikeng.chess.exception.errorTypes.InvalidUUIDException;
 import com.blikeng.chess.model.*;
 import com.blikeng.chess.model.piece.PieceType;
 import com.blikeng.chess.notifications.NotificationService;
@@ -152,8 +153,8 @@ public class GameService {
     private Optional<Game> getGame(String gameString) {
         try {
             return Optional.ofNullable(games.get(UUID.fromString(gameString)));
-        } catch (IllegalArgumentException e) {
-            return Optional.empty();
+        } catch (IllegalArgumentException _) {
+            throw new InvalidUUIDException();
         }
     }
 

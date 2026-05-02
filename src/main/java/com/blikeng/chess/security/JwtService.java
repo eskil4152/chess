@@ -1,7 +1,6 @@
 package com.blikeng.chess.security;
 
 import com.blikeng.chess.entity.UserEntity;
-import com.blikeng.chess.exception.ErrorTypes.InvalidUserException;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -3,7 +3,7 @@ package com.blikeng.chess.service;
 import com.blikeng.chess.dto.AuthDTO;
 import com.blikeng.chess.dto.LoginDTO;
 import com.blikeng.chess.entity.UserEntity;
-import com.blikeng.chess.exception.ErrorTypes.*;
+import com.blikeng.chess.exception.errorTypes.*;
 import com.blikeng.chess.repository.AuthRepository;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
@@ -11,7 +11,6 @@ import com.blikeng.chess.security.PasswordService;
 import com.blikeng.chess.security.UserRole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;

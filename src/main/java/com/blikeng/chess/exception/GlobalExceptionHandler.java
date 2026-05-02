@@ -11,7 +11,7 @@ public class GlobalExceptionHandler {
     Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ApiException.class)
-    ResponseEntity<String> handleException(ApiException ex) {
+    public ResponseEntity<String> handleException(ApiException ex) {
         logger.warn("API exception: {} {}", ex.getStatus(), ex.getMessage(), ex);
 
         return ResponseEntity
@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    ResponseEntity<String> handleException(Exception ex) {
+    public ResponseEntity<String> handleException(Exception ex) {
         logger.error("Unexpected exception occurred: ", ex);
         return ResponseEntity
                 .status(500)

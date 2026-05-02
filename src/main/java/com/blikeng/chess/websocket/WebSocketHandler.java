@@ -52,7 +52,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) {
+    public void handleTextMessage(WebSocketSession session, TextMessage message) {
         UUID userId = getUserId(session);
 
         try {
@@ -107,7 +107,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
         try {
             notificationService.sendToSession(session,
                     objectMapper.writeValueAsString(new WsErrorDTO(status, message)));
-        } catch (JsonProcessingException _) {
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to serialize message: {}", message, e);
         }
     }
 }

@@ -2,11 +2,9 @@ package com.blikeng.chess.service;
 
 import com.blikeng.chess.dto.GameDTO;
 import com.blikeng.chess.dto.GamePreviewDTO;
-import com.blikeng.chess.entity.GameEntity;
-import com.blikeng.chess.exception.ErrorTypes.GameNotFoundException;
-import com.blikeng.chess.exception.ErrorTypes.InvalidUUIDException;
-import com.blikeng.chess.exception.ErrorTypes.UserNotFoundException;
-import com.blikeng.chess.model.Game;
+import com.blikeng.chess.exception.errorTypes.GameNotFoundException;
+import com.blikeng.chess.exception.errorTypes.InvalidUUIDException;
+import com.blikeng.chess.exception.errorTypes.UserNotFoundException;
 import com.blikeng.chess.repository.GameRepository;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +24,7 @@ public class GameHistoryService {
 
         try {
             gameUUID = UUID.fromString(gameId);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             throw new InvalidUUIDException();
         }
 
