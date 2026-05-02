@@ -9,6 +9,8 @@ import com.blikeng.chess.notifications.events.MoveMadeEvent;
 import com.blikeng.chess.service.PresenceService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -21,7 +23,9 @@ import java.util.UUID;
 @Service
 public class NotificationService {
     private final PresenceService presenceService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Logger logger = LoggerFactory.getLogger(NotificationService.class);
 
     public NotificationService(PresenceService presenceService) {
         this.presenceService = presenceService;
@@ -54,7 +58,7 @@ public class NotificationService {
         try {
             if (session.isOpen()) session.sendMessage(new TextMessage(payload));
         } catch (IOException e) {
-            // session will need to retry
+            logger.warn("Error sending message to session: ", e);
         }
     }
 

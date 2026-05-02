@@ -17,6 +17,8 @@ import com.blikeng.chess.notifications.events.MoveMadeEvent;
 import com.blikeng.chess.repository.GameRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,11 +35,13 @@ public class GameService {
     private final GameRepository gameRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationService notificationService;
+    private final UserService userService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final MoveExecutor moveExecutor = new MoveExecutor();
+    private final Logger logger = LoggerFactory.getLogger(GameService.class);
+
     private final ConcurrentHashMap<UUID, Game> games = new ConcurrentHashMap<>();
-    private final UserService userService;
 
     public GameService(
             GameRepository gameRepository,
@@ -73,6 +77,8 @@ public class GameService {
                 blackPlayer.getId(),
                 blackPlayer.getUsername()
         ));
+
+        logger.info("Game started: {}. Black: {}. White: {}", game.getId(), whitePlayer.getUsername(), blackPlayer.getUsername());
     }
 
     @Transactional
@@ -158,5 +164,7 @@ public class GameService {
         games.remove(game.getId());
 
         userService.updateUserElo(game.getWhiteId(), game.getBlackId(), game.getStatus());
+
+        logger.info("Game ended: {}. Black: {}. White: {}. Result: {}", game.getId(), game.getWhiteUsername(), game.getBlackUsername(), gameStatus.name());
     }
 }

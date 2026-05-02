@@ -47,6 +47,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
         if (!gameService.isInGame(userId)) {
             matchmakingService.queuePlayer(userId);
         }
+
+        logger.debug("New connection for user: {}", userId);
     }
 
     @Override
@@ -93,6 +95,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
         if (presenceService.hasNoSessions(userId)) {
             matchmakingService.dequeuePlayer(userId);
         }
+
+        logger.debug("Connection closed for user: {}", userId);
     }
 
     private UUID getUserId(WebSocketSession session) {

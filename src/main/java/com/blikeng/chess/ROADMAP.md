@@ -9,7 +9,6 @@
 - Add JaCoCo
 - Add SonarCloud integration
 - Add GitHub Actions workflow for testing and server hosting
-- Add logging
 
 ---
 

@@ -12,6 +12,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     ResponseEntity<String> handleException(ApiException ex) {
+        logger.warn("API exception: {} {}", ex.getStatus(), ex.getMessage(), ex);
+
         return ResponseEntity
                 .status(ex.getStatus())
                 .body(ex.getMessage());
@@ -19,7 +21,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<String> handleException(Exception ex) {
-        logger.error("Exception: ", ex);
+        logger.error("Unexpected exception occurred: ", ex);
         return ResponseEntity
                 .status(500)
                 .body("Unexpected error occurred. Please try again later.");

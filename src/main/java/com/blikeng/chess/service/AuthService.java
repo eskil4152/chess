@@ -9,6 +9,8 @@ import com.blikeng.chess.exception.ErrorTypes.UsernameTakenException;
 import com.blikeng.chess.repository.AuthRepository;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.PasswordService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -19,6 +21,8 @@ public class AuthService {
     private final AuthRepository authRepository;
     private final JwtService jwtService;
     private final PasswordService passwordService;
+
+    Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     public AuthService(
             AuthRepository authRepository,
@@ -35,7 +39,10 @@ public class AuthService {
 
         if (user.isEmpty()) throw new InvalidCredentialsException();
 
-        if (!passwordService.checkPassword(loginDTO.password(), user.get().getPassword())) throw new InvalidCredentialsException();
+        if (!passwordService.checkPassword(loginDTO.password(), user.get().getPassword())) {
+            logger.warn("Failed login attempt for username: {}", loginDTO.username());
+            throw new InvalidCredentialsException();
+        }
 
         return jwtService.generateToken(user.get());
     }
