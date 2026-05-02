@@ -1,7 +1,6 @@
 # Chess Backend — Build Plan
 
 ## Current
-- Add exception catcher in WebSocket, currently just catches and ignores
 - Add flyway
 - Add Dockerfile
 - Add docker-compose file

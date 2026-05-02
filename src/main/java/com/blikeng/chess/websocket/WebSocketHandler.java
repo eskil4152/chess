@@ -1,11 +1,17 @@
 package com.blikeng.chess.websocket;
 
+import com.blikeng.chess.dto.websocket.WsErrorDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
+import com.blikeng.chess.exception.ApiException;
+import com.blikeng.chess.notifications.NotificationService;
 import com.blikeng.chess.service.GameService;
 import com.blikeng.chess.service.MatchmakingService;
 import com.blikeng.chess.service.PresenceService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -20,14 +26,17 @@ public class WebSocketHandler extends TextWebSocketHandler {
     private final MatchmakingService matchmakingService;
     private final PresenceService presenceService;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final NotificationService notificationService;
+    private final Logger logger = LoggerFactory.getLogger(WebSocketHandler.class);
 
     public WebSocketHandler(
             GameService gameService, MatchmakingService matchmakingService,
-            PresenceService presenceService
-    ) {
+            PresenceService presenceService,
+            NotificationService notificationService) {
         this.gameService = gameService;
         this.matchmakingService = matchmakingService;
         this.presenceService = presenceService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -46,7 +55,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         try {
             JsonNode json = objectMapper.readTree(message.getPayload());
-            String type = json.get("type").asText();
+            String type = json.path("type").asText("");
 
             switch (type) {
                 case "MOVE" -> {
@@ -69,8 +78,11 @@ public class WebSocketHandler extends TextWebSocketHandler {
                     /* ignore */
                 }
             }
+        } catch (ApiException e) {
+           sendError(session, e.getStatus().value(), e.getMessage());
         } catch (Exception e) {
-            // submit ws error
+            logger.error("WS Handler error for user {}: ", userId, e);
+            sendError(session, 500, "Internal server error");
         }
     }
 
@@ -85,5 +97,13 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     private UUID getUserId(WebSocketSession session) {
         return (UUID) session.getAttributes().get("userId");
+    }
+
+    private void sendError(WebSocketSession session, int status, String message) {
+        try {
+            notificationService.sendToSession(session,
+                    objectMapper.writeValueAsString(new WsErrorDTO(status, message)));
+        } catch (JsonProcessingException _) {
+        }
     }
 }
