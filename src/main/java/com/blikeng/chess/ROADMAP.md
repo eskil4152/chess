@@ -83,9 +83,14 @@
 - Flyway migrations – pending
 - Integration + unit tests — in progress
 - Docker Compose — pending
-- Logging — pending
+- Logging ✓
 
 ---
+
+## Phase 12 — Monitoring
+- Prometheus metrics
+- Micrometer metrics
+- Sentry
 
 ## Phase X — Later (Optional)
 - Threefold repetition
