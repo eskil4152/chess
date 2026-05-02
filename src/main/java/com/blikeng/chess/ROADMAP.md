@@ -1,7 +1,16 @@
 # Chess Backend — Build Plan
 
 ## Current
-
+- Add exception catcher in WebSocket, currently just catches and ignores
+- Add flyway
+- Add Dockerfile
+- Add docker-compose file
+- Add unit tests
+- Add integration tests
+- Add JaCoCo
+- Add SonarCloud integration
+- Add GitHub Actions workflow for testing and server hosting
+- Add logging
 
 ---
 
@@ -38,7 +47,7 @@
 
 ---
 
-## Phase 6 — Persistence ✓ (partial)
+## Phase 6 — Persistence ✓
 - `UserEntity`, `GameEntity` with Flyway migrations
 - Move history entity — pending Phase 5
 
@@ -73,7 +82,7 @@
 ---
 
 ## Phase 11 — Polish (in progress)
-- Flyway migrations ✓
+- Flyway migrations – pending
 - Integration + unit tests — in progress
 - Docker Compose — pending
 - Logging — pending
