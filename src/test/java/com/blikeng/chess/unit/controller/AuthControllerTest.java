@@ -1,0 +1,103 @@
+package com.blikeng.chess.unit.controller;
+
+import com.blikeng.chess.dto.AuthDTO;
+import com.blikeng.chess.dto.LoginDTO;
+import com.blikeng.chess.exception.errorTypes.InvalidCredentialsException;
+import com.blikeng.chess.security.JwtService;
+import com.blikeng.chess.security.UserRole;
+import com.blikeng.chess.service.AuthService;
+import com.blikeng.chess.controller.AuthController;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.blikeng.chess.config.SecurityConfig;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.hamcrest.Matchers.containsString;
+
+@WebMvcTest(AuthController.class)
+@Import(SecurityConfig.class)
+class AuthControllerTest {
+
+    @Autowired MockMvc mockMvc;
+    @MockitoBean AuthService authService;
+    @MockitoBean JwtService jwtService;
+    @MockitoBean Environment environment;
+
+    ObjectMapper objectMapper = new ObjectMapper();
+
+    @Test
+    void shouldLogIn() throws Exception {
+        when(authService.login(any(LoginDTO.class))).thenReturn("jwt-token");
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginDTO("user", "pass"))))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("Set-Cookie"));
+    }
+
+    @Test
+    void shouldFailToLogIn() throws Exception {
+        when(authService.login(any(LoginDTO.class))).thenThrow(new InvalidCredentialsException());
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginDTO("user", "wrong"))))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldRegister() throws Exception {
+        when(authService.register(any(LoginDTO.class))).thenReturn("jwt-token");
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginDTO("newuser", "password1"))))
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Set-Cookie"));
+    }
+
+    @Test
+    void shouldLogOut() throws Exception {
+        mockMvc.perform(post("/api/auth/logout"))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("Set-Cookie"));
+    }
+
+    @Test
+    void shouldSuccessfullyAuthenticate() throws Exception {
+        UUID userId = UUID.randomUUID();
+        when(authService.authenticate()).thenReturn(new AuthDTO(userId, "user", UserRole.USER));
+
+        mockMvc.perform(get("/api/auth"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(userId.toString()))
+                .andExpect(jsonPath("$.username").value("user"))
+                .andExpect(jsonPath("$.role").value(UserRole.USER.name()));
+    }
+
+    @Test
+    void cookieShouldBeSecureWhenProdProfile() throws Exception {
+        when(authService.login(any(LoginDTO.class))).thenReturn("jwt-token");
+        when(environment.matchesProfiles("prod")).thenReturn(true);
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginDTO("user", "pass"))))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Set-Cookie", containsString("Secure")));
+    }
+}
