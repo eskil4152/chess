@@ -28,6 +28,17 @@
 	</scm>
 	<properties>
 		<java.version>25</java.version>
+		<sonar.organization>eskil4152</sonar.organization>
+		<sonar.projectKey>eskil4152_chess</sonar.projectKey>
+		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+		<sonar.coverage.exclusions>
+			**/ChessApplication.java,
+			**/ErrorMessages.java,
+			**/PositionMapper.java,
+			**/SetupBoard.java,
+			**/entity/*
+		</sonar.coverage.exclusions>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -107,6 +118,11 @@
 			<artifactId>spring-boot-starter-websocket-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -126,6 +142,37 @@
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<goals>
+							<goal>report</goal>
+						</goals>
+						<configuration>
+							<excludes>
+								<exclude>**/ChessApplication*</exclude>
+								<exclude>**/ErrorMessages*</exclude>
+								<exclude>**/PositionMapper*</exclude>
+								<exclude>**/SetupBoard*</exclude>
+								<exclude>**/entity/*</exclude>
+							</excludes>
+							<formats>
+								<format>XML</format>
+								<format>HTML</format>
+							</formats>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
