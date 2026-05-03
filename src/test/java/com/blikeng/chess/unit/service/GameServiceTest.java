@@ -196,16 +196,16 @@ class GameServiceTest {
 
         Pawn pawn = new Pawn(Color.WHITE);
         pawn.setMoved();
-        game.getBoard().setPiece(6, 4, null);
-        game.getBoard().setPiece(1, 2, pawn);
-        game.getBoard().setPiece(0, 2, null);
-        game.getBoard().setPiece(0, 4, null);
-        game.getBoard().setPiece(0, 7, new King(Color.BLACK));
-        game.setBlackKingPosition(new Position(0, 7));
+        game.getBoard().setPiece(6, 2, null);  // clear black pawn at c7
+        game.getBoard().setPiece(6, 2, pawn);  // place white pawn at c7
+        game.getBoard().setPiece(7, 2, null);  // clear black bishop at c8
+        game.getBoard().setPiece(7, 4, null);  // clear black king at e8
+        game.getBoard().setPiece(7, 7, new King(Color.BLACK));
+        game.setBlackKingPosition(new Position(7, 7));
 
         gameService.makeMove(white.getId(), new WsMoveDTO(game.getId().toString(), "c7c8q"));
 
-        assertThat(game.getBoard().getPiece(0, 2)).isInstanceOf(Queen.class);
+        assertThat(game.getBoard().getPiece(7, 2)).isInstanceOf(Queen.class);
     }
 
 
@@ -218,11 +218,11 @@ class GameServiceTest {
             for (int c = 0; c < 8; c++)
                 game.getBoard().setPiece(r, c, null);
 
-        game.getBoard().setPiece(3, 6, new Queen(Color.WHITE));
-        game.getBoard().setPiece(2, 5, new King(Color.WHITE));
-        game.getBoard().setPiece(0, 7, new King(Color.BLACK));
-        game.setWhiteKingPosition(new Position(2, 5));
-        game.setBlackKingPosition(new Position(0, 7));
+        game.getBoard().setPiece(4, 6, new Queen(Color.WHITE));
+        game.getBoard().setPiece(5, 5, new King(Color.WHITE));
+        game.getBoard().setPiece(7, 7, new King(Color.BLACK));
+        game.setWhiteKingPosition(new Position(5, 5));
+        game.setBlackKingPosition(new Position(7, 7));
 
         gameService.makeMove(white.getId(), new WsMoveDTO(game.getId().toString(), "g5g7"));
 

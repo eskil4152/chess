@@ -128,7 +128,7 @@ public class MoveExecutor {
 
     private boolean canCastle(Board board, Game game, int colDiff, Color color) {
         Color attacker = color == Color.WHITE ? Color.BLACK : Color.WHITE;
-        int row = color == Color.WHITE ? 7 : 0;
+        int row = color == Color.WHITE ? 0 : 7;
         int transitCol = colDiff == 2 ? 5 : 3;
 
         return !squareAttacked.isSquareAttacked(board, game, new Position(row, 4), attacker)
@@ -157,12 +157,12 @@ public class MoveExecutor {
     private Piece checkIfPawnPromotion(Piece piece, Move move, PieceType promotionPiece) {
         if (piece.getPieceType() != PieceType.PAWN) return piece;
 
-        if (piece.getColor() == Color.WHITE && move.to().row() == 0) {
+        if (piece.getColor() == Color.WHITE && move.to().row() == 7) {
             if (promotionPiece == null) throw new InvalidPromotionException();
             return createPromotionPiece(promotionPiece, Color.WHITE);
         }
 
-        if (piece.getColor() == Color.BLACK && move.to().row() == 7) {
+        if (piece.getColor() == Color.BLACK && move.to().row() == 0) {
             if (promotionPiece == null) throw new InvalidPromotionException();
             return createPromotionPiece(promotionPiece, Color.BLACK);
         }

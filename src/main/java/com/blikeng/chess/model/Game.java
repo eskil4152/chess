@@ -19,15 +19,29 @@ public class Game {
         this.board = new Board();
     }
 
+    public Game(Game other) {
+        this.id = other.id;
+        this.whiteId = other.whiteId;
+        this.whiteUsername = other.whiteUsername;
+        this.blackId = other.blackId;
+        this.blackUsername = other.blackUsername;
+        this.board = new Board(other.board);
+        this.isWhiteTurn = other.isWhiteTurn;
+        this.whiteKingPosition = other.whiteKingPosition;
+        this.blackKingPosition = other.blackKingPosition;
+        this.enPassantTarget = other.enPassantTarget;
+        this.status = other.status;
+    }
+
     private final UUID id;
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    private UUID whiteId;
-    private String whiteUsername;
+    private final UUID whiteId;
+    private final String whiteUsername;
 
-    private UUID blackId;
-    private String blackUsername;
+    private final UUID blackId;
+    private final String blackUsername;
 
     @Setter
     private Position whiteKingPosition;
@@ -35,7 +49,7 @@ public class Game {
     @Setter
     private Position blackKingPosition;
 
-    private Board board;
+    private final Board board;
     private boolean isWhiteTurn = true;
     private final List<String> moves = new ArrayList<>();
 

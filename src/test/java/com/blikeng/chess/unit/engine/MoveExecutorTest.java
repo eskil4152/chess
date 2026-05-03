@@ -23,13 +23,13 @@ class MoveExecutorTest {
     void setup() {
         executor = new MoveExecutor();
         game = new Game(UUID.randomUUID(), UUID.randomUUID(), "w", UUID.randomUUID(), "b");
-        game.setWhiteKingPosition(new Position(7, 4));
-        game.setBlackKingPosition(new Position(0, 4));
+        game.setWhiteKingPosition(new Position(0, 4));
+        game.setBlackKingPosition(new Position(7, 4));
         board = game.getBoard();
         clearBoard();
         // Keep kings on board so check detection works
-        board.setPiece(7, 4, new King(Color.WHITE));
-        board.setPiece(0, 4, new King(Color.BLACK));
+        board.setPiece(0, 4, new King(Color.WHITE));
+        board.setPiece(7, 4, new King(Color.BLACK));
     }
 
     private void clearBoard() {
@@ -48,23 +48,23 @@ class MoveExecutorTest {
 
     @Test
     void shouldReturnNullWhenWrongColorMoves() {
-        board.setPiece(1, 4, new Pawn(Color.BLACK));
-        GameStatus result = executor.performMove(game, new Move(new Position(1, 4), new Position(2, 4)), null);
+        board.setPiece(6, 4, new Pawn(Color.BLACK));
+        GameStatus result = executor.performMove(game, new Move(new Position(6, 4), new Position(5, 4)), null);
         assertThat(result).isNull();
     }
 
     @Test
     void shouldReturnNullForIllegalMove() {
-        board.setPiece(6, 4, new Pawn(Color.WHITE));
-        GameStatus result = executor.performMove(game, new Move(new Position(6, 4), new Position(5, 5)), null);
+        board.setPiece(1, 4, new Pawn(Color.WHITE));
+        GameStatus result = executor.performMove(game, new Move(new Position(1, 4), new Position(2, 5)), null);
         assertThat(result).isNull();
     }
 
     @Test
     void shouldReturnNullWhenMoveLeavesKingInCheck() {
-        board.setPiece(7, 3, new Rook(Color.WHITE));
-        board.setPiece(7, 0, new Rook(Color.BLACK));
-        GameStatus result = executor.performMove(game, new Move(new Position(7, 3), new Position(3, 3)), null);
+        board.setPiece(0, 3, new Rook(Color.WHITE));
+        board.setPiece(0, 0, new Rook(Color.BLACK));
+        GameStatus result = executor.performMove(game, new Move(new Position(0, 3), new Position(3, 3)), null);
         assertThat(result).isNull();
     }
 
@@ -72,37 +72,37 @@ class MoveExecutorTest {
 
     @Test
     void pawnForwardMoveShouldReturnOngoingAndMovePiece() {
-        board.setPiece(6, 4, new Pawn(Color.WHITE));
-        board.setPiece(1, 0, new Pawn(Color.BLACK));
-        GameStatus result = executor.performMove(game, new Move(new Position(6, 4), new Position(5, 4)), null);
+        board.setPiece(1, 4, new Pawn(Color.WHITE));
+        board.setPiece(6, 0, new Pawn(Color.BLACK));
+        GameStatus result = executor.performMove(game, new Move(new Position(1, 4), new Position(2, 4)), null);
         assertThat(result).isEqualTo(GameStatus.ONGOING);
-        assertThat(board.getPiece(5, 4)).isInstanceOf(Pawn.class);
-        assertThat(board.getPiece(6, 4)).isNull();
+        assertThat(board.getPiece(2, 4)).isInstanceOf(Pawn.class);
+        assertThat(board.getPiece(1, 4)).isNull();
         assertThat(game.isWhiteTurn()).isFalse();
     }
 
     @Test
     void moveShouldSetMovedFlag() {
-        board.setPiece(6, 4, new Pawn(Color.WHITE));
-        board.setPiece(1, 0, new Pawn(Color.BLACK));
-        executor.performMove(game, new Move(new Position(6, 4), new Position(5, 4)), null);
-        assertThat(board.getPiece(5, 4).hasMoved()).isTrue();
+        board.setPiece(1, 4, new Pawn(Color.WHITE));
+        board.setPiece(6, 0, new Pawn(Color.BLACK));
+        executor.performMove(game, new Move(new Position(1, 4), new Position(2, 4)), null);
+        assertThat(board.getPiece(2, 4).hasMoved()).isTrue();
     }
 
     @Test
     void doublePawnPushShouldSetEnPassantTarget() {
-        board.setPiece(6, 4, new Pawn(Color.WHITE));
-        board.setPiece(1, 0, new Pawn(Color.BLACK));
-        executor.performMove(game, new Move(new Position(6, 4), new Position(4, 4)), null);
-        assertThat(game.getEnPassantTarget()).isEqualTo(new Position(5, 4));
+        board.setPiece(1, 4, new Pawn(Color.WHITE));
+        board.setPiece(6, 0, new Pawn(Color.BLACK));
+        executor.performMove(game, new Move(new Position(1, 4), new Position(3, 4)), null);
+        assertThat(game.getEnPassantTarget()).isEqualTo(new Position(2, 4));
     }
 
     @Test
     void nonDoublePushShouldClearEnPassantTarget() {
-        game.setEnPassantTarget(new Position(5, 3));
-        board.setPiece(6, 4, new Pawn(Color.WHITE));
-        board.setPiece(1, 0, new Pawn(Color.BLACK));
-        executor.performMove(game, new Move(new Position(6, 4), new Position(5, 4)), null);
+        game.setEnPassantTarget(new Position(2, 3));
+        board.setPiece(1, 4, new Pawn(Color.WHITE));
+        board.setPiece(6, 0, new Pawn(Color.BLACK));
+        executor.performMove(game, new Move(new Position(1, 4), new Position(2, 4)), null);
         assertThat(game.getEnPassantTarget()).isNull();
     }
 
@@ -110,38 +110,38 @@ class MoveExecutorTest {
 
     @Test
     void whiteEnPassantShouldCaptureBlackPawn() {
-        board.setPiece(3, 4, new Pawn(Color.WHITE));
-        board.setPiece(3, 5, new Pawn(Color.BLACK));
-        board.setPiece(1, 0, new King(Color.BLACK));
-        game.setEnPassantTarget(new Position(2, 5));
-        game.setBlackKingPosition(new Position(1, 0));
+        board.setPiece(4, 4, new Pawn(Color.WHITE));
+        board.setPiece(4, 5, new Pawn(Color.BLACK));
+        board.setPiece(6, 0, new King(Color.BLACK));
+        game.setEnPassantTarget(new Position(5, 5));
+        game.setBlackKingPosition(new Position(6, 0));
 
-        GameStatus result = executor.performMove(game, new Move(new Position(3, 4), new Position(2, 5)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(4, 4), new Position(5, 5)), null);
 
         assertThat(result).isNotNull();
-        assertThat(board.getPiece(3, 5)).isNull();
-        assertThat(board.getPiece(2, 5)).isInstanceOf(Pawn.class);
+        assertThat(board.getPiece(4, 5)).isNull();
+        assertThat(board.getPiece(5, 5)).isInstanceOf(Pawn.class);
     }
 
     @Test
     void blackEnPassantShouldCaptureWhitePawn() {
         game.switchTurn();
-        board.setPiece(4, 4, new Pawn(Color.BLACK));
-        board.setPiece(4, 3, new Pawn(Color.WHITE));
-        board.setPiece(6, 0, new King(Color.WHITE));
-        game.setEnPassantTarget(new Position(5, 3));
-        game.setWhiteKingPosition(new Position(6, 0));
+        board.setPiece(3, 4, new Pawn(Color.BLACK));
+        board.setPiece(3, 3, new Pawn(Color.WHITE));
+        board.setPiece(1, 0, new King(Color.WHITE));
+        game.setEnPassantTarget(new Position(2, 3));
+        game.setWhiteKingPosition(new Position(1, 0));
 
-        GameStatus result = executor.performMove(game, new Move(new Position(4, 4), new Position(5, 3)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(3, 4), new Position(2, 3)), null);
 
         assertThat(result).isNotNull();
-        assertThat(board.getPiece(4, 3)).isNull();
-        assertThat(board.getPiece(5, 3)).isInstanceOf(Pawn.class);
+        assertThat(board.getPiece(3, 3)).isNull();
+        assertThat(board.getPiece(2, 3)).isInstanceOf(Pawn.class);
     }
 
     // --- Pawn promotion ---
-    // Use col=2 so promotion square (0,2) isn't blocked by the @BeforeEach black king at (0,4).
-    // Use setMoved() on the pawn to avoid the double-push path hitting row -1.
+    // Use col=2 so white promotion square (7,2) isn't blocked by the @BeforeEach black king at (7,4).
+    // Use setMoved() on the pawn to avoid the double-push path going out of bounds.
 
     private Pawn movedWhitePawn() {
         Pawn p = new Pawn(Color.WHITE);
@@ -157,103 +157,103 @@ class MoveExecutorTest {
 
     @Test
     void whitePawnShouldPromoteToQueen() {
-        board.setPiece(1, 2, movedWhitePawn());
-        GameStatus result = executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2)), PieceType.QUEEN);
+        board.setPiece(6, 2, movedWhitePawn());
+        GameStatus result = executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2)), PieceType.QUEEN);
         assertThat(result).isNotNull();
-        assertThat(board.getPiece(0, 2)).isInstanceOf(Queen.class).extracting(Piece::getColor).isEqualTo(Color.WHITE);
+        assertThat(board.getPiece(7, 2)).isInstanceOf(Queen.class).extracting(Piece::getColor).isEqualTo(Color.WHITE);
     }
 
     @Test
     void whitePawnShouldPromoteToRook() {
-        board.setPiece(1, 2, movedWhitePawn());
-        executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2)), PieceType.ROOK);
-        assertThat(board.getPiece(0, 2)).isInstanceOf(Rook.class);
+        board.setPiece(6, 2, movedWhitePawn());
+        executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2)), PieceType.ROOK);
+        assertThat(board.getPiece(7, 2)).isInstanceOf(Rook.class);
     }
 
     @Test
     void whitePawnShouldPromoteToBishop() {
-        board.setPiece(1, 2, movedWhitePawn());
-        executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2)), PieceType.BISHOP);
-        assertThat(board.getPiece(0, 2)).isInstanceOf(Bishop.class);
+        board.setPiece(6, 2, movedWhitePawn());
+        executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2)), PieceType.BISHOP);
+        assertThat(board.getPiece(7, 2)).isInstanceOf(Bishop.class);
     }
 
     @Test
     void whitePawnShouldPromoteToKnight() {
-        board.setPiece(1, 2, movedWhitePawn());
-        executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2)), PieceType.KNIGHT);
-        assertThat(board.getPiece(0, 2)).isInstanceOf(Knight.class);
+        board.setPiece(6, 2, movedWhitePawn());
+        executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2)), PieceType.KNIGHT);
+        assertThat(board.getPiece(7, 2)).isInstanceOf(Knight.class);
     }
 
     @Test
     void whitePawnPromotionWithoutPieceShouldThrow() {
-        board.setPiece(1, 2, movedWhitePawn());
-        assertThatThrownBy(() ->
-                executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2)), null)
-        ).isInstanceOf(InvalidPromotionException.class);
-    }
-
-    @Test
-    void blackPawnShouldPromoteToQueen() {
-        game.switchTurn();
-        board.setPiece(7, 4, null);
-        board.setPiece(7, 0, new King(Color.WHITE));
-        game.setWhiteKingPosition(new Position(7, 0));
-        board.setPiece(6, 2, movedBlackPawn());
-        GameStatus result = executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2)), PieceType.QUEEN);
-        assertThat(result).isNotNull();
-        assertThat(board.getPiece(7, 2)).isInstanceOf(Queen.class).extracting(Piece::getColor).isEqualTo(Color.BLACK);
-    }
-
-    @Test
-    void blackPawnShouldPromoteToRook() {
-        game.switchTurn();
-        board.setPiece(7, 4, null);
-        board.setPiece(7, 0, new King(Color.WHITE));
-        game.setWhiteKingPosition(new Position(7, 0));
-        board.setPiece(6, 2, movedBlackPawn());
-        executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2)), PieceType.ROOK);
-        assertThat(board.getPiece(7, 2)).isInstanceOf(Rook.class).extracting(Piece::getColor).isEqualTo(Color.BLACK);
-    }
-
-    @Test
-    void blackPawnShouldPromoteToBishop() {
-        game.switchTurn();
-        board.setPiece(7, 4, null);
-        board.setPiece(7, 0, new King(Color.WHITE));
-        game.setWhiteKingPosition(new Position(7, 0));
-        board.setPiece(6, 2, movedBlackPawn());
-        executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2)), PieceType.BISHOP);
-        assertThat(board.getPiece(7, 2)).isInstanceOf(Bishop.class).extracting(Piece::getColor).isEqualTo(Color.BLACK);
-    }
-
-    @Test
-    void blackPawnShouldPromoteToKnight() {
-        game.switchTurn();
-        board.setPiece(7, 4, null);
-        board.setPiece(7, 0, new King(Color.WHITE));
-        game.setWhiteKingPosition(new Position(7, 0));
-        board.setPiece(6, 2, movedBlackPawn());
-        executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2)), PieceType.KNIGHT);
-        assertThat(board.getPiece(7, 2)).isInstanceOf(Knight.class).extracting(Piece::getColor).isEqualTo(Color.BLACK);
-    }
-
-    @Test
-    void blackPawnPromotionWithoutPieceShouldThrow() {
-        game.switchTurn();
-        board.setPiece(7, 4, null);
-        board.setPiece(7, 0, new King(Color.WHITE));
-        game.setWhiteKingPosition(new Position(7, 0));
-        board.setPiece(6, 2, movedBlackPawn());
+        board.setPiece(6, 2, movedWhitePawn());
         assertThatThrownBy(() ->
                 executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2)), null)
         ).isInstanceOf(InvalidPromotionException.class);
     }
 
     @Test
-    void promotionToKingShouldThrow() {
-        board.setPiece(1, 2, movedWhitePawn());
+    void blackPawnShouldPromoteToQueen() {
+        game.switchTurn();
+        board.setPiece(0, 4, null);
+        board.setPiece(0, 6, new King(Color.WHITE));
+        game.setWhiteKingPosition(new Position(0, 6));
+        board.setPiece(1, 2, movedBlackPawn());
+        GameStatus result = executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2)), PieceType.QUEEN);
+        assertThat(result).isNotNull();
+        assertThat(board.getPiece(0, 2)).isInstanceOf(Queen.class).extracting(Piece::getColor).isEqualTo(Color.BLACK);
+    }
+
+    @Test
+    void blackPawnShouldPromoteToRook() {
+        game.switchTurn();
+        board.setPiece(0, 4, null);
+        board.setPiece(0, 6, new King(Color.WHITE));
+        game.setWhiteKingPosition(new Position(0, 6));
+        board.setPiece(1, 2, movedBlackPawn());
+        executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2)), PieceType.ROOK);
+        assertThat(board.getPiece(0, 2)).isInstanceOf(Rook.class).extracting(Piece::getColor).isEqualTo(Color.BLACK);
+    }
+
+    @Test
+    void blackPawnShouldPromoteToBishop() {
+        game.switchTurn();
+        board.setPiece(0, 4, null);
+        board.setPiece(0, 6, new King(Color.WHITE));
+        game.setWhiteKingPosition(new Position(0, 6));
+        board.setPiece(1, 2, movedBlackPawn());
+        executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2)), PieceType.BISHOP);
+        assertThat(board.getPiece(0, 2)).isInstanceOf(Bishop.class).extracting(Piece::getColor).isEqualTo(Color.BLACK);
+    }
+
+    @Test
+    void blackPawnShouldPromoteToKnight() {
+        game.switchTurn();
+        board.setPiece(0, 4, null);
+        board.setPiece(0, 6, new King(Color.WHITE));
+        game.setWhiteKingPosition(new Position(0, 6));
+        board.setPiece(1, 2, movedBlackPawn());
+        executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2)), PieceType.KNIGHT);
+        assertThat(board.getPiece(0, 2)).isInstanceOf(Knight.class).extracting(Piece::getColor).isEqualTo(Color.BLACK);
+    }
+
+    @Test
+    void blackPawnPromotionWithoutPieceShouldThrow() {
+        game.switchTurn();
+        board.setPiece(0, 4, null);
+        board.setPiece(0, 6, new King(Color.WHITE));
+        game.setWhiteKingPosition(new Position(0, 6));
+        board.setPiece(1, 2, movedBlackPawn());
         assertThatThrownBy(() ->
-                executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2)), PieceType.KING)
+                executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2)), null)
+        ).isInstanceOf(InvalidPromotionException.class);
+    }
+
+    @Test
+    void promotionToKingShouldThrow() {
+        board.setPiece(6, 2, movedWhitePawn());
+        assertThatThrownBy(() ->
+                executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2)), PieceType.KING)
         ).isInstanceOf(InvalidPromotionException.class);
     }
 
@@ -263,43 +263,9 @@ class MoveExecutorTest {
     void whiteKingShouldCastleKingside() {
         King king = new King(Color.WHITE);
         Rook rook = new Rook(Color.WHITE);
-        board.setPiece(7, 4, king);
-        board.setPiece(7, 7, rook);
-        board.setPiece(1, 0, new Pawn(Color.BLACK));
-
-        GameStatus result = executor.performMove(game, new Move(new Position(7, 4), new Position(7, 6)), null);
-
-        assertThat(result).isNotNull();
-        assertThat(board.getPiece(7, 6)).isInstanceOf(King.class);
-        assertThat(board.getPiece(7, 5)).isInstanceOf(Rook.class);
-        assertThat(board.getPiece(7, 7)).isNull();
-        assertThat(board.getPiece(7, 4)).isNull();
-    }
-
-    @Test
-    void whiteKingShouldCastleQueenside() {
-        King king = new King(Color.WHITE);
-        Rook rook = new Rook(Color.WHITE);
-        board.setPiece(7, 4, king);
-        board.setPiece(7, 0, rook);
-        board.setPiece(1, 0, new Pawn(Color.BLACK));
-
-        executor.performMove(game, new Move(new Position(7, 4), new Position(7, 2)), null);
-
-        assertThat(board.getPiece(7, 2)).isInstanceOf(King.class);
-        assertThat(board.getPiece(7, 3)).isInstanceOf(Rook.class);
-        assertThat(board.getPiece(7, 0)).isNull();
-    }
-
-    @Test
-    void blackKingShouldCastleKingside() {
-        game.switchTurn();
-        board.setPiece(7, 4, null);
-        board.setPiece(7, 0, new King(Color.WHITE));
-        game.setWhiteKingPosition(new Position(7, 0));
-        board.setPiece(0, 4, new King(Color.BLACK));
-        board.setPiece(0, 7, new Rook(Color.BLACK));
-        board.setPiece(6, 0, new Pawn(Color.WHITE));
+        board.setPiece(0, 4, king);
+        board.setPiece(0, 7, rook);
+        board.setPiece(6, 0, new Pawn(Color.BLACK));
 
         GameStatus result = executor.performMove(game, new Move(new Position(0, 4), new Position(0, 6)), null);
 
@@ -311,47 +277,81 @@ class MoveExecutorTest {
     }
 
     @Test
-    void castlingShouldLeaveRookUnmovedWhenTransitIsAttackedByIndirectPiece() {
-        // Knight at (6,3) attacks (7,5) — the transit square — but not (7,4) or (7,6).
-        // So castling appears in pseudo-legal moves and kingLeftInCheck passes,
-        // but canCastle's second attacker check denies the rook relocation.
-        board.setPiece(7, 4, new King(Color.WHITE));
-        board.setPiece(7, 7, new Rook(Color.WHITE));
-        board.setPiece(6, 3, new Knight(Color.BLACK));
+    void whiteKingShouldCastleQueenside() {
+        King king = new King(Color.WHITE);
+        Rook rook = new Rook(Color.WHITE);
+        board.setPiece(0, 4, king);
+        board.setPiece(0, 0, rook);
+        board.setPiece(6, 0, new Pawn(Color.BLACK));
+
+        executor.performMove(game, new Move(new Position(0, 4), new Position(0, 2)), null);
+
+        assertThat(board.getPiece(0, 2)).isInstanceOf(King.class);
+        assertThat(board.getPiece(0, 3)).isInstanceOf(Rook.class);
+        assertThat(board.getPiece(0, 0)).isNull();
+    }
+
+    @Test
+    void blackKingShouldCastleKingside() {
+        game.switchTurn();
+        board.setPiece(0, 4, null);
+        board.setPiece(0, 0, new King(Color.WHITE));
+        game.setWhiteKingPosition(new Position(0, 0));
+        board.setPiece(7, 4, new King(Color.BLACK));
+        board.setPiece(7, 7, new Rook(Color.BLACK));
+        board.setPiece(1, 0, new Pawn(Color.WHITE));
 
         GameStatus result = executor.performMove(game, new Move(new Position(7, 4), new Position(7, 6)), null);
 
         assertThat(result).isNotNull();
         assertThat(board.getPiece(7, 6)).isInstanceOf(King.class);
-        assertThat(board.getPiece(7, 7)).isInstanceOf(Rook.class);
-        assertThat(board.getPiece(7, 5)).isNull();
+        assertThat(board.getPiece(7, 5)).isInstanceOf(Rook.class);
+        assertThat(board.getPiece(7, 7)).isNull();
+        assertThat(board.getPiece(7, 4)).isNull();
+    }
+
+    @Test
+    void castlingShouldLeaveRookUnmovedWhenTransitIsAttackedByIndirectPiece() {
+        // Knight at (1,3) attacks (0,5) — the transit square — but not (0,4) or (0,6).
+        // So castling appears in pseudo-legal moves and kingLeftInCheck passes,
+        // but canCastle's second attacker check denies the rook relocation.
+        board.setPiece(0, 4, new King(Color.WHITE));
+        board.setPiece(0, 7, new Rook(Color.WHITE));
+        board.setPiece(1, 3, new Knight(Color.BLACK));
+
+        GameStatus result = executor.performMove(game, new Move(new Position(0, 4), new Position(0, 6)), null);
+
+        assertThat(result).isNotNull();
+        assertThat(board.getPiece(0, 6)).isInstanceOf(King.class);
+        assertThat(board.getPiece(0, 7)).isInstanceOf(Rook.class);
+        assertThat(board.getPiece(0, 5)).isNull();
     }
 
     @Test
     void castlingShouldLeaveRookUnmovedWhenKingsSourceSquareIsAttacked() {
-        // Rook at (6,4) attacks king's source square (7,4) along column 4 but not (7,6).
+        // Rook at (1,4) attacks king's source square (0,4) along column 4 but not (0,6).
         // canCastle's first attacker check short-circuits to false, skipping the rook move.
-        board.setPiece(7, 4, new King(Color.WHITE));
-        board.setPiece(7, 7, new Rook(Color.WHITE));
-        board.setPiece(6, 4, new Rook(Color.BLACK));
+        board.setPiece(0, 4, new King(Color.WHITE));
+        board.setPiece(0, 7, new Rook(Color.WHITE));
+        board.setPiece(1, 4, new Rook(Color.BLACK));
 
-        GameStatus result = executor.performMove(game, new Move(new Position(7, 4), new Position(7, 6)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(0, 4), new Position(0, 6)), null);
 
         assertThat(result).isNotNull();
-        assertThat(board.getPiece(7, 6)).isInstanceOf(King.class);
-        assertThat(board.getPiece(7, 7)).isInstanceOf(Rook.class);
-        assertThat(board.getPiece(7, 5)).isNull();
+        assertThat(board.getPiece(0, 6)).isInstanceOf(King.class);
+        assertThat(board.getPiece(0, 7)).isInstanceOf(Rook.class);
+        assertThat(board.getPiece(0, 5)).isNull();
     }
 
     @Test
     void castlingShouldNotOccurWhenTransitSquareIsAttacked() {
         King king = new King(Color.WHITE);
         Rook rook = new Rook(Color.WHITE);
-        board.setPiece(7, 4, king);
-        board.setPiece(7, 7, rook);
-        board.setPiece(7, 5, new Rook(Color.BLACK));
+        board.setPiece(0, 4, king);
+        board.setPiece(0, 7, rook);
+        board.setPiece(0, 5, new Rook(Color.BLACK));
 
-        GameStatus result = executor.performMove(game, new Move(new Position(7, 4), new Position(7, 6)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(0, 4), new Position(0, 6)), null);
         assertThat(result).isNull();
     }
 
@@ -359,12 +359,12 @@ class MoveExecutorTest {
     void castlingShouldNotOccurWhenKingIsInCheck() {
         King king = new King(Color.WHITE);
         Rook rook = new Rook(Color.WHITE);
-        board.setPiece(7, 4, king);
-        board.setPiece(7, 7, rook);
-        board.setPiece(7, 1, new Rook(Color.BLACK));
-        game.setWhiteKingPosition(new Position(7, 4));
+        board.setPiece(0, 4, king);
+        board.setPiece(0, 7, rook);
+        board.setPiece(0, 1, new Rook(Color.BLACK));
+        game.setWhiteKingPosition(new Position(0, 4));
 
-        GameStatus result = executor.performMove(game, new Move(new Position(7, 4), new Position(7, 6)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(0, 4), new Position(0, 6)), null);
         assertThat(result).isNull();
     }
 
@@ -372,64 +372,64 @@ class MoveExecutorTest {
 
     @Test
     void whiteKingMoveShouldUpdateKingPosition() {
-        board.setPiece(7, 4, new King(Color.WHITE));
-        board.setPiece(1, 0, new Pawn(Color.BLACK));
-        executor.performMove(game, new Move(new Position(7, 4), new Position(7, 3)), null);
-        assertThat(game.getWhiteKingPosition()).isEqualTo(new Position(7, 3));
+        board.setPiece(0, 4, new King(Color.WHITE));
+        board.setPiece(6, 0, new Pawn(Color.BLACK));
+        executor.performMove(game, new Move(new Position(0, 4), new Position(0, 3)), null);
+        assertThat(game.getWhiteKingPosition()).isEqualTo(new Position(0, 3));
     }
 
     @Test
     void blackKingMoveShouldUpdateKingPosition() {
         game.switchTurn();
-        board.setPiece(0, 4, new King(Color.BLACK));
-        board.setPiece(6, 0, new Pawn(Color.WHITE));
-        executor.performMove(game, new Move(new Position(0, 4), new Position(0, 3)), null);
-        assertThat(game.getBlackKingPosition()).isEqualTo(new Position(0, 3));
+        board.setPiece(7, 4, new King(Color.BLACK));
+        board.setPiece(1, 0, new Pawn(Color.WHITE));
+        executor.performMove(game, new Move(new Position(7, 4), new Position(7, 3)), null);
+        assertThat(game.getBlackKingPosition()).isEqualTo(new Position(7, 3));
     }
 
     // --- Game over: checkmate and stalemate ---
 
     @Test
     void checkmatedBlackKingShouldReturnWhiteWin() {
-        board.setPiece(7, 4, null);
         board.setPiece(0, 4, null);
-        board.setPiece(3, 6, new Queen(Color.WHITE));
-        board.setPiece(2, 5, new King(Color.WHITE));
-        board.setPiece(0, 7, new King(Color.BLACK));
-        game.setWhiteKingPosition(new Position(2, 5));
-        game.setBlackKingPosition(new Position(0, 7));
+        board.setPiece(7, 4, null);
+        board.setPiece(4, 6, new Queen(Color.WHITE));
+        board.setPiece(5, 5, new King(Color.WHITE));
+        board.setPiece(7, 7, new King(Color.BLACK));
+        game.setWhiteKingPosition(new Position(5, 5));
+        game.setBlackKingPosition(new Position(7, 7));
 
-        GameStatus result = executor.performMove(game, new Move(new Position(3, 6), new Position(1, 6)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(4, 6), new Position(6, 6)), null);
         assertThat(result).isEqualTo(GameStatus.WHITE_WIN);
     }
 
     @Test
     void checkmatedWhiteKingShouldReturnBlackWin() {
-        board.setPiece(7, 4, null);
         board.setPiece(0, 4, null);
-        board.setPiece(2, 6, new Queen(Color.BLACK));
-        board.setPiece(7, 0, new Rook(Color.BLACK));
-        board.setPiece(0, 0, new King(Color.BLACK));
-        board.setPiece(7, 7, new King(Color.WHITE));
-        game.setBlackKingPosition(new Position(0, 0));
-        game.setWhiteKingPosition(new Position(7, 7));
+        board.setPiece(7, 4, null);
+        board.setPiece(5, 6, new Queen(Color.BLACK));
+        board.setPiece(0, 0, new Rook(Color.BLACK));
+        board.setPiece(7, 0, new King(Color.BLACK));
+        board.setPiece(0, 7, new King(Color.WHITE));
+        game.setBlackKingPosition(new Position(7, 0));
+        game.setWhiteKingPosition(new Position(0, 7));
         game.switchTurn();
 
-        GameStatus result = executor.performMove(game, new Move(new Position(2, 6), new Position(7, 6)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(5, 6), new Position(0, 6)), null);
         assertThat(result).isEqualTo(GameStatus.BLACK_WIN);
     }
 
     @Test
     void stalemateShouldReturnDraw() {
-        board.setPiece(7, 4, null);
         board.setPiece(0, 4, null);
-        board.setPiece(4, 1, new Queen(Color.WHITE));
-        board.setPiece(2, 3, new King(Color.WHITE));
-        board.setPiece(0, 2, new King(Color.BLACK));
-        game.setWhiteKingPosition(new Position(2, 3));
-        game.setBlackKingPosition(new Position(0, 2));
+        board.setPiece(7, 4, null);
+        board.setPiece(3, 1, new Queen(Color.WHITE));
+        board.setPiece(5, 3, new King(Color.WHITE));
+        board.setPiece(7, 2, new King(Color.BLACK));
+        game.setWhiteKingPosition(new Position(5, 3));
+        game.setBlackKingPosition(new Position(7, 2));
 
-        GameStatus result = executor.performMove(game, new Move(new Position(4, 1), new Position(2, 1)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(3, 1), new Position(5, 1)), null);
         assertThat(result).isEqualTo(GameStatus.DRAW);
     }
 }

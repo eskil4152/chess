@@ -65,8 +65,8 @@ public class GameService {
         ));
 
         Game game = new Game(gameEntity.getId(), whitePlayer.getId(), whitePlayer.getUsername(), blackPlayer.getId(), blackPlayer.getUsername());
-        game.setWhiteKingPosition(new Position(7, 4));
-        game.setBlackKingPosition(new Position(0, 4));
+        game.setWhiteKingPosition(new Position(0, 4));
+        game.setBlackKingPosition(new Position(7, 4));
 
         games.put(game.getId(), game);
 

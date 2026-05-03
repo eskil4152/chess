@@ -25,8 +25,8 @@ class SquareAttackedTest {
         moveGenerator = new MoveGenerator();
         squareAttacked = new SquareAttacked(moveGenerator);
         game = new Game(UUID.randomUUID(), UUID.randomUUID(), "w", UUID.randomUUID(), "b");
-        game.setWhiteKingPosition(new Position(7, 4));
-        game.setBlackKingPosition(new Position(0, 4));
+        game.setWhiteKingPosition(new Position(0, 4));
+        game.setBlackKingPosition(new Position(7, 4));
         board = game.getBoard();
         clearBoard();
     }
@@ -63,31 +63,31 @@ class SquareAttackedTest {
 
     @Test
     void whiteKingShouldBeInCheck() {
-        board.setPiece(7, 4, new King(Color.WHITE));
-        board.setPiece(7, 0, new Rook(Color.BLACK));
-        game.setWhiteKingPosition(new Position(7, 4));
+        board.setPiece(0, 4, new King(Color.WHITE));
+        board.setPiece(0, 0, new Rook(Color.BLACK));
+        game.setWhiteKingPosition(new Position(0, 4));
         assertThat(squareAttacked.isInCheck(game, Color.WHITE)).isTrue();
     }
 
     @Test
     void whiteKingShouldNotBeInCheck() {
-        board.setPiece(7, 4, new King(Color.WHITE));
-        game.setWhiteKingPosition(new Position(7, 4));
+        board.setPiece(0, 4, new King(Color.WHITE));
+        game.setWhiteKingPosition(new Position(0, 4));
         assertThat(squareAttacked.isInCheck(game, Color.WHITE)).isFalse();
     }
 
     @Test
     void blackKingShouldBeInCheck() {
-        board.setPiece(0, 4, new King(Color.BLACK));
-        board.setPiece(7, 4, new Rook(Color.WHITE));
-        game.setBlackKingPosition(new Position(0, 4));
+        board.setPiece(7, 4, new King(Color.BLACK));
+        board.setPiece(0, 4, new Rook(Color.WHITE));
+        game.setBlackKingPosition(new Position(7, 4));
         assertThat(squareAttacked.isInCheck(game, Color.BLACK)).isTrue();
     }
 
     @Test
     void blackKingShouldNotBeInCheck() {
-        board.setPiece(0, 4, new King(Color.BLACK));
-        game.setBlackKingPosition(new Position(0, 4));
+        board.setPiece(7, 4, new King(Color.BLACK));
+        game.setBlackKingPosition(new Position(7, 4));
         assertThat(squareAttacked.isInCheck(game, Color.BLACK)).isFalse();
     }
 }

@@ -1,7 +1,11 @@
 package com.blikeng.chess.model.piece;
 
+import lombok.Getter;
+
 public abstract class Piece {
+    @Getter
     protected Color color;
+
     protected boolean moved = false;
 
     public Piece(Color color) {
@@ -9,10 +13,6 @@ public abstract class Piece {
     }
 
     public abstract PieceType getPieceType();
-
-    public Color getColor() {
-        return color;
-    }
 
     public boolean hasMoved() {
         return moved;
