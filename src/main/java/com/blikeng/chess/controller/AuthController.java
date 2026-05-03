@@ -23,7 +23,7 @@ public class AuthController {
         this.environment = environment;
     }
 
-    private final static Long maxAge = (long) 24 * 60 * 60;
+    private static final Long maxAge = (long) 24 * 60 * 60;
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginDTO loginDTO) {

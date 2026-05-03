@@ -5,6 +5,8 @@ import com.blikeng.chess.model.piece.*;
 import static com.blikeng.chess.model.piece.Color.*;
 
 public class SetupBoard {
+    private SetupBoard() {}
+
     public static void setupBoard(Piece[][] squares) {
         squares[0][0] = new Rook(BLACK);
         squares[0][1] = new Knight(BLACK);

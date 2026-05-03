@@ -67,6 +67,6 @@ public class JwtService {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null) return null;
 
-        return (JwtPrincipal) auth.getPrincipal();
+        return auth.getPrincipal() instanceof JwtPrincipal p ? p : null;
     }
 }

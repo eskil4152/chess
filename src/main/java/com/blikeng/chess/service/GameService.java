@@ -125,6 +125,12 @@ public class GameService {
                 .anyMatch(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId));
     }
 
+    public Optional<Game> getActiveGame(UUID userId) {
+        return games.values().stream()
+                .filter(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId))
+                .findFirst();
+    }
+
     public void onSessionConnected(UUID userId, WebSocketSession session) {
         games.values().stream()
                 .filter(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId))

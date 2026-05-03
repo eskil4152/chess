@@ -105,8 +105,6 @@ public class MoveExecutor {
     }
 
     private void handleCastling(Board board, Game game, Move move, Piece piece) {
-        if (piece.getPieceType() != PieceType.KING) return;
-
         int colDiff = move.to().col() - move.from().col();
         if (Math.abs(colDiff) != 2) return;
 
@@ -138,14 +136,12 @@ public class MoveExecutor {
     }
 
     private void updateKingPosition(Game game, Piece piece, Move move) {
-        if (piece.getPieceType() == PieceType.KING) {
-            Position newKingPosition = new Position(move.to().row(), move.to().col());
+        Position newKingPosition = new Position(move.to().row(), move.to().col());
 
-            if (game.isWhiteTurn()) {
-                game.setWhiteKingPosition(newKingPosition);
-            } else {
-                game.setBlackKingPosition(newKingPosition);
-            }
+        if (game.isWhiteTurn()) {
+            game.setWhiteKingPosition(newKingPosition);
+        } else {
+            game.setBlackKingPosition(newKingPosition);
         }
     }
 
@@ -159,23 +155,16 @@ public class MoveExecutor {
     }
 
     private Piece checkIfPawnPromotion(Piece piece, Move move, PieceType promotionPiece) {
-        if (piece.getPieceType() == PieceType.PAWN) {
-            switch (piece.getColor()){
-                case WHITE -> {
-                    if (move.to().row() == 0){
-                        if (promotionPiece == null) throw new InvalidPromotionException();
-                        piece = createPromotionPiece(promotionPiece, Color.WHITE);
-                    }
-                }
+        if (piece.getPieceType() != PieceType.PAWN) return piece;
 
-                case BLACK -> {
-                    if (move.to().row() == 7){
-                        if (promotionPiece == null) throw new InvalidPromotionException();
+        if (piece.getColor() == Color.WHITE && move.to().row() == 0) {
+            if (promotionPiece == null) throw new InvalidPromotionException();
+            return createPromotionPiece(promotionPiece, Color.WHITE);
+        }
 
-                        piece = createPromotionPiece(promotionPiece, Color.BLACK);
-                    }
-                }
-            }
+        if (piece.getColor() == Color.BLACK && move.to().row() == 7) {
+            if (promotionPiece == null) throw new InvalidPromotionException();
+            return createPromotionPiece(promotionPiece, Color.BLACK);
         }
 
         return piece;
