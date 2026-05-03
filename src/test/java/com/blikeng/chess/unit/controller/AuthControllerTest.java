@@ -23,6 +23,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.hamcrest.Matchers.containsString;
@@ -44,7 +45,8 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginDTO("user", "pass"))))
+                        .content(objectMapper.writeValueAsString(new LoginDTO("user", "pass")))
+                        .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("Set-Cookie"));
     }
@@ -55,7 +57,8 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginDTO("user", "wrong"))))
+                        .content(objectMapper.writeValueAsString(new LoginDTO("user", "wrong")))
+                        .with(csrf()))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -65,14 +68,15 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginDTO("newuser", "password1"))))
+                        .content(objectMapper.writeValueAsString(new LoginDTO("newuser", "password1")))
+                        .with(csrf()))
                 .andExpect(status().isCreated())
                 .andExpect(header().exists("Set-Cookie"));
     }
 
     @Test
     void shouldLogOut() throws Exception {
-        mockMvc.perform(post("/api/auth/logout"))
+        mockMvc.perform(post("/api/auth/logout").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("Set-Cookie"));
     }
@@ -96,7 +100,8 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginDTO("user", "pass"))))
+                        .content(objectMapper.writeValueAsString(new LoginDTO("user", "pass")))
+                        .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Set-Cookie", containsString("Secure")));
     }
