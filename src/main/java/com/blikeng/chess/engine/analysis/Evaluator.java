@@ -1,4 +1,4 @@
-package com.blikeng.chess.engine.analysis.eval;
+package com.blikeng.chess.engine.analysis;
 
 import com.blikeng.chess.engine.MoveExecutor;
 import com.blikeng.chess.engine.MoveGenerator;
@@ -16,11 +16,12 @@ public class Evaluator {
     private static final MoveGenerator moveGenerator = new MoveGenerator();
     private static final MoveExecutor moveExecutor = new MoveExecutor();
 
-    public static int miniMax(Game game, int depth) {
+    public static int miniMax(Game game, int depth, int alpha, int beta) {
         if (depth == 0) return evaluate(game);
 
         int best = game.isWhiteTurn() ? Integer.MIN_VALUE : Integer.MAX_VALUE;
 
+        outer:
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 Piece piece = game.getBoard().getPiece(row, col);
@@ -41,13 +42,17 @@ public class Evaluator {
                     for (PieceType promo : promotions) {
                         Game copy = new Game(game);
                         if (moveExecutor.performMove(copy, move, promo) == null) continue;
-                        int current = miniMax(copy, depth - 1);
+                        int current = miniMax(copy, depth - 1, alpha, beta);
 
                         if (game.isWhiteTurn()) {
                             best = Math.max(best, current);
+                            alpha = Math.max(alpha, current);
                         } else {
                             best = Math.min(best, current);
+                            beta = Math.min(beta, current);
                         }
+
+                        if (beta <= alpha) break outer;
                     }
                 }
             }
@@ -59,8 +64,14 @@ public class Evaluator {
     public static MoveEval getBestMove(Game game, int depth) {
         Move bestMove = null;
         PieceType bestPromo = null;
+
+        boolean isWhite = game.isWhiteTurn();
         int best = game.isWhiteTurn() ? Integer.MIN_VALUE : Integer.MAX_VALUE;
 
+        int alpha = Integer.MIN_VALUE;
+        int beta = Integer.MAX_VALUE;
+
+        outer:
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 Piece piece = game.getBoard().getPiece(row, col);
@@ -71,7 +82,7 @@ public class Evaluator {
                 for (Position legalMove : legalMoves) {
                     Move move = new Move(new Position(row, col), legalMove);
                     boolean isPromotion = piece.getPieceType() == PieceType.PAWN
-                            && (game.isWhiteTurn() ? legalMove.row() == 7 : legalMove.row() == 0);
+                            && (isWhite ? legalMove.row() == 7 : legalMove.row() == 0);
 
                     PieceType[] promotions = isPromotion
                             ? new PieceType[]{PieceType.QUEEN, PieceType.ROOK, PieceType.BISHOP, PieceType.KNIGHT}
@@ -80,13 +91,21 @@ public class Evaluator {
                     for (PieceType promo : promotions) {
                         Game copy = new Game(game);
                         if (moveExecutor.performMove(copy, move, promo) == null) continue;
-                        int score = miniMax(copy, depth - 1);
+                        int score = miniMax(copy, depth - 1, alpha, beta);
 
-                        if (game.isWhiteTurn() ? score > best : score < best) {
+                        if (isWhite ? score > best : score < best) {
                             best = score;
                             bestMove = move;
                             bestPromo = promo;
                         }
+
+                        if (isWhite) {
+                            alpha = Math.max(alpha, score);
+                        } else {
+                            beta = Math.min(beta, score);
+                        }
+
+                        if (beta <= alpha) break outer;
                     }
                 }
             }
