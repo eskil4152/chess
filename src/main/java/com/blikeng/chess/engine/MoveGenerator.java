@@ -109,35 +109,12 @@ public class MoveGenerator {
         Piece king = board.getPiece(position.row(), position.col());
         if (king.getColor() == Color.WHITE) {
             if (!king.hasMoved()) {
-                Piece kingsideRook = board.getPiece(7, 7);
-                if (
-                        kingsideRook != null &&
-                        !kingsideRook.hasMoved() &&
-                        board.getPiece(7, 6) == null &&
-                        board.getPiece(7, 5) == null
-                ) {
-                    moves.add(new Position(7, 6));
-                }
-
-                Piece queensideRook = board.getPiece(7, 0);
-                if (
-                        queensideRook != null &&
-                        !queensideRook.hasMoved() &&
-                        board.getPiece(7, 1) == null &&
-                        board.getPiece(7, 2) == null &&
-                        board.getPiece(7, 3) == null
-                ) {
-                    moves.add(new Position(7, 2));
-                }
-            }
-        } else {
-            if (!king.hasMoved()) {
                 Piece kingsideRook = board.getPiece(0, 7);
                 if (
                         kingsideRook != null &&
                         !kingsideRook.hasMoved() &&
-                        board.getPiece(0, 5) == null &&
-                        board.getPiece(0, 6) == null
+                        board.getPiece(0, 6) == null &&
+                        board.getPiece(0, 5) == null
                 ) {
                     moves.add(new Position(0, 6));
                 }
@@ -151,6 +128,29 @@ public class MoveGenerator {
                         board.getPiece(0, 3) == null
                 ) {
                     moves.add(new Position(0, 2));
+                }
+            }
+        } else {
+            if (!king.hasMoved()) {
+                Piece kingsideRook = board.getPiece(7, 7);
+                if (
+                        kingsideRook != null &&
+                        !kingsideRook.hasMoved() &&
+                        board.getPiece(7, 5) == null &&
+                        board.getPiece(7, 6) == null
+                ) {
+                    moves.add(new Position(7, 6));
+                }
+
+                Piece queensideRook = board.getPiece(7, 0);
+                if (
+                        queensideRook != null &&
+                        !queensideRook.hasMoved() &&
+                        board.getPiece(7, 1) == null &&
+                        board.getPiece(7, 2) == null &&
+                        board.getPiece(7, 3) == null
+                ) {
+                    moves.add(new Position(7, 2));
                 }
             }
         }
@@ -167,51 +167,21 @@ public class MoveGenerator {
 
         if (isWhite) {
             // Walk ahead
-            if (board.getPiece(position.row() - 1, position.col()) == null) moves.add(new Position(position.row() - 1, position.col()));
-
-            // Captures
-            if (
-                    position.col() + 1 < 8 &&
-                    board.getPiece(position.row() - 1, position.col() + 1) != null &&
-                    board.getPiece(position.row() - 1, position.col() + 1).getColor() != Color.WHITE
-            ) moves.add(new Position(position.row() - 1, position.col() + 1));
-
-            if (
-                    position.col() - 1 >= 0 &&
-                    board.getPiece(position.row() - 1, position.col() - 1) != null &&
-                    board.getPiece(position.row() - 1, position.col() - 1).getColor() != Color.WHITE
-            ) moves.add(new Position(position.row() - 1, position.col() - 1));
-
-            if (
-                    !hasMoved &&
-                    board.getPiece(position.row() - 2, position.col()) == null &&
-                    board.getPiece(position.row() - 1, position.col()) == null
-            ) moves.add(new Position(position.row() - 2, position.col()));
-
-            // En passant
-            if (enPassantTarget != null && enPassantTarget.row() == position.row() - 1 &&
-                    Math.abs(enPassantTarget.col() - position.col()) == 1) {
-                moves.add(enPassantTarget);
-            }
-
-        } else {
-            // Walk ahead
             if (board.getPiece(position.row() + 1, position.col()) == null) moves.add(new Position(position.row() + 1, position.col()));
 
             // Captures
             if (
                     position.col() + 1 < 8 &&
                     board.getPiece(position.row() + 1, position.col() + 1) != null &&
-                    board.getPiece(position.row() + 1, position.col() + 1).getColor() != Color.BLACK
+                    board.getPiece(position.row() + 1, position.col() + 1).getColor() != Color.WHITE
             ) moves.add(new Position(position.row() + 1, position.col() + 1));
 
             if (
                     position.col() - 1 >= 0 &&
                     board.getPiece(position.row() + 1, position.col() - 1) != null &&
-                    board.getPiece(position.row() + 1, position.col() - 1).getColor() != Color.BLACK
+                    board.getPiece(position.row() + 1, position.col() - 1).getColor() != Color.WHITE
             ) moves.add(new Position(position.row() + 1, position.col() - 1));
 
-            // First move
             if (
                     !hasMoved &&
                     board.getPiece(position.row() + 2, position.col()) == null &&
@@ -220,6 +190,36 @@ public class MoveGenerator {
 
             // En passant
             if (enPassantTarget != null && enPassantTarget.row() == position.row() + 1 &&
+                    Math.abs(enPassantTarget.col() - position.col()) == 1) {
+                moves.add(enPassantTarget);
+            }
+
+        } else {
+            // Walk ahead
+            if (board.getPiece(position.row() - 1, position.col()) == null) moves.add(new Position(position.row() - 1, position.col()));
+
+            // Captures
+            if (
+                    position.col() + 1 < 8 &&
+                    board.getPiece(position.row() - 1, position.col() + 1) != null &&
+                    board.getPiece(position.row() - 1, position.col() + 1).getColor() != Color.BLACK
+            ) moves.add(new Position(position.row() - 1, position.col() + 1));
+
+            if (
+                    position.col() - 1 >= 0 &&
+                    board.getPiece(position.row() - 1, position.col() - 1) != null &&
+                    board.getPiece(position.row() - 1, position.col() - 1).getColor() != Color.BLACK
+            ) moves.add(new Position(position.row() - 1, position.col() - 1));
+
+            // First move
+            if (
+                    !hasMoved &&
+                    board.getPiece(position.row() - 2, position.col()) == null &&
+                    board.getPiece(position.row() - 1, position.col()) == null
+            ) moves.add(new Position(position.row() - 2, position.col()));
+
+            // En passant
+            if (enPassantTarget != null && enPassantTarget.row() == position.row() - 1 &&
                     Math.abs(enPassantTarget.col() - position.col()) == 1) {
                 moves.add(enPassantTarget);
             }

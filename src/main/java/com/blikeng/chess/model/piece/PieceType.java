@@ -12,4 +12,15 @@ public enum PieceType {
             default -> throw new IllegalArgumentException("Unknown promotion piece: " + c);
         };
     }
+
+    public int getPieceValue() {
+        return switch (this) {
+            case PAWN -> 100;
+            case KNIGHT -> 350;
+            case BISHOP -> 350;
+            case ROOK -> 525;
+            case QUEEN -> 1000;
+            case KING -> 10000;
+        };
+    }
 }
