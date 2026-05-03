@@ -36,7 +36,6 @@ public class SecurityConfig {
 
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
-                .csrf(AbstractHttpConfigurer::disable)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(it ->
                         it.authenticationEntryPoint((request, response, authException) ->
