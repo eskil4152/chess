@@ -31,7 +31,7 @@ public class MoveExecutor {
 
         if (piece.getPieceType() == PieceType.KING){
             handleCastling(board, game, move, piece);
-            updateKingPosition(game, piece, move);
+            updateKingPosition(game, move);
         }
 
         if (isEnPassant) {
@@ -49,6 +49,7 @@ public class MoveExecutor {
 
     private boolean kingLeftInCheck(Board board, Game game, Move move, Piece piece, Color color, boolean isEnPassant) {
         Board copy = new Board(board);
+        piece = checkIfPawnPromotion(piece, move, PieceType.QUEEN);
         copy.setPiece(move.to().row(), move.to().col(), piece);
         copy.setPiece(move.from().row(), move.from().col(), null);
         if (isEnPassant) {
@@ -135,7 +136,7 @@ public class MoveExecutor {
             && !squareAttacked.isSquareAttacked(board, game, new Position(row, transitCol), attacker);
     }
 
-    private void updateKingPosition(Game game, Piece piece, Move move) {
+    private void updateKingPosition(Game game, Move move) {
         Position newKingPosition = new Position(move.to().row(), move.to().col());
 
         if (game.isWhiteTurn()) {

@@ -305,12 +305,11 @@ class MoveGeneratorTest {
     }
 
     @Test
-    void whitePawnShouldNotMoveWhenBlocked() {
+    void whitePawnShouldHaveNoMovesWhenBlocked() {
         board.setPiece(2, 4, new Pawn(Color.WHITE));
         board.setPiece(3, 4, new Pawn(Color.BLACK));
         List<Position> moves = gen.getPseudoLegalMoves(game, board, new Position(2, 4));
-        assertThat(moves).isNotEmpty();
-        assertThat(moves).doesNotContain(new Position(3, 4));
+        assertThat(moves).isEmpty();
     }
 
     @Test
@@ -336,8 +335,7 @@ class MoveGeneratorTest {
         board.setPiece(1, 4, p);
         board.setPiece(2, 4, new Pawn(Color.BLACK));
         List<Position> moves = gen.getPseudoLegalMoves(game, board, new Position(1, 4));
-        assertThat(moves).isNotEmpty();
-        assertThat(moves).doesNotContain(new Position(3, 4));
+        assertThat(moves).isEmpty();
     }
 
     @Test
