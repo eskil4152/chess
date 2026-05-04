@@ -11,6 +11,7 @@ import java.util.UUID;
 
 @Entity
 @Getter
+@Table(name = "games")
 public class GameEntity {
     protected GameEntity() {}
     public GameEntity(
@@ -29,9 +30,11 @@ public class GameEntity {
     private final UUID id = UUID.randomUUID();
 
     @ManyToOne
+    @JoinColumn(name = "white")
     private UserEntity white;
 
     @ManyToOne
+    @JoinColumn(name = "black")
     private UserEntity black;
 
     @Setter

@@ -224,9 +224,12 @@ class GameServiceTest {
         game.setWhiteKingPosition(new Position(5, 5));
         game.setBlackKingPosition(new Position(7, 7));
 
+        when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
+
         gameService.makeMove(white.getId(), new WsMoveDTO(game.getId().toString(), "g5g7"));
 
-        verify(gameRepository).updateGameById(any(), any(), any());
+        verify(gameRepository).findById(game.getId());
+        verify(gameRepository, atLeast(2)).save(any());
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
         assertThat(captor.getAllValues()).anyMatch(e -> e instanceof MatchEndedEvent);

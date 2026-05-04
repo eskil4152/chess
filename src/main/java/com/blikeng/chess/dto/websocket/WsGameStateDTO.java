@@ -13,6 +13,6 @@ public record WsGameStateDTO(
         List<String> moves
 ) {
     public WsGameStateDTO(UUID gameId, UUID whiteId, String whiteUsername, UUID blackId, String blackUsername, List<String> moves) {
-        this(WsMessageType.GAME_STARTED, gameId, whiteId, whiteUsername, blackId, blackUsername, moves);
+        this(WsMessageType.GAME_STATE, gameId, whiteId, whiteUsername, blackId, blackUsername, moves);
     }
 }
