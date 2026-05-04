@@ -78,11 +78,13 @@ public class GameService {
                 blackPlayer.getUsername()
         ));
 
-        logger.info("Game started: {}. Black: {}. White: {}", game.getId(), whitePlayer.getUsername(), blackPlayer.getUsername());
+        logger.info("Game started: {}. White: {}. Black: {}", game.getId(), whitePlayer.getUsername(), blackPlayer.getUsername());
     }
 
     @Transactional
     public void makeMove(UUID userId, WsMoveDTO moveDTO) {
+        System.out.println("Got a move. " + moveDTO.move());
+
         Game game = getGame(moveDTO.gameId()).orElseThrow(GameNotFoundException::new);
 
         ReentrantLock lock = game.lockGame();
@@ -165,11 +167,15 @@ public class GameService {
     }
 
     private void handleGameEnd(Game game, GameStatus gameStatus) {
-        gameRepository.updateGameById(game.getId(), game.getMoves(), gameStatus);
+        gameRepository.findById(game.getId()).ifPresent(entity -> {
+            entity.setMoves(game.getMoves());
+            entity.setStatus(gameStatus);
+            gameRepository.save(entity);
+        });
         eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus));
         games.remove(game.getId());
 
-        userService.updateUserElo(game.getWhiteId(), game.getBlackId(), game.getStatus());
+        userService.updateUserElo(game.getWhiteId(), game.getBlackId(), gameStatus);
 
         logger.info("Game ended: {}. Black: {}. White: {}. Result: {}", game.getId(), game.getWhiteUsername(), game.getBlackUsername(), gameStatus.name());
     }

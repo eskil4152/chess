@@ -3,8 +3,8 @@ spring:
     name: chess
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/chess}
-    username: ${spring.datasource.username:postgres}
-    password: ${spring.datasource.password:}
+    username: ${SPRING_DATASOURCE_USERNAME:eskil}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
 
 app:
   jwt:
