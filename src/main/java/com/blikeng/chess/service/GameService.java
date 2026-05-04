@@ -175,7 +175,7 @@ public class GameService {
         eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus));
         games.remove(game.getId());
 
-        userService.updateUserElo(game.getWhiteId(), game.getBlackId(), game.getStatus());
+        userService.updateUserElo(game.getWhiteId(), game.getBlackId(), gameStatus);
 
         logger.info("Game ended: {}. Black: {}. White: {}. Result: {}", game.getId(), game.getWhiteUsername(), game.getBlackUsername(), gameStatus.name());
     }
