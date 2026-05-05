@@ -5,3 +5,7 @@ public record WsResignDTO(
         String gameId
 ) {
 }
+    public WsResignDTO(String gameId) {
+        this(WsMessageType.RESIGN, gameId);
+    }
+}

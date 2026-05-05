@@ -3,6 +3,7 @@ package com.blikeng.chess.service;
 import com.blikeng.chess.dto.websocket.WsDrawDTO;
 import com.blikeng.chess.dto.websocket.WsGameStateDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
+import com.blikeng.chess.dto.websocket.WsResignDTO;
 import com.blikeng.chess.engine.MoveExecutor;
 import com.blikeng.chess.engine.PositionMapper;
 import com.blikeng.chess.entity.GameEntity;
@@ -209,6 +210,7 @@ public class GameService {
                 UUID otherUser = isWhite ? game.getBlackId() : game.getWhiteId();
                 notificationService.sendDrawOffer(game.getId(), otherUser);
             }
+            handleGameEnd(game, gameStatus);
         } finally {
             lock.unlock();
         }

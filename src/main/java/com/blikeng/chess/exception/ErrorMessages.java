@@ -11,5 +11,5 @@ public final class ErrorMessages {
     public static final String INVALID_PROMOTION = "Invalid promotion";
     public static final String USER_NOT_FOUND = "User not found";
     public static final String INVALID_MOVE = "Invalid move";
-    public static final String NOT_ALLOWED = "Not allowed";
+    public static final String NOT_ALLOWED = "You are not allowed to perform this action";
 }
