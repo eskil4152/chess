@@ -5,5 +5,6 @@ public enum WsMessageType {
     GAME_STATE,
     MOVE,
     RESIGN,
+    OFFER_DRAW,
     GAME_ENDED
 }

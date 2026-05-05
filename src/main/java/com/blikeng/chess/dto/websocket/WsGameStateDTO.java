@@ -10,9 +10,11 @@ public record WsGameStateDTO(
         String whiteUsername,
         UUID blackId,
         String blackUsername,
-        List<String> moves
+        List<String> moves,
+        boolean whiteDrawOffer,
+        boolean blackDrawOffer
 ) {
-    public WsGameStateDTO(UUID gameId, UUID whiteId, String whiteUsername, UUID blackId, String blackUsername, List<String> moves) {
-        this(WsMessageType.GAME_STATE, gameId, whiteId, whiteUsername, blackId, blackUsername, moves);
+    public WsGameStateDTO(UUID gameId, UUID whiteId, String whiteUsername, UUID blackId, String blackUsername, List<String> moves, boolean whiteDrawOffer, boolean blackDrawOffer) {
+        this(WsMessageType.GAME_STATE, gameId, whiteId, whiteUsername, blackId, blackUsername, moves, whiteDrawOffer, blackDrawOffer);
     }
 }

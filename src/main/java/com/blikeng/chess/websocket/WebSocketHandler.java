@@ -1,5 +1,6 @@
 package com.blikeng.chess.websocket;
 
+import com.blikeng.chess.dto.websocket.WsDrawDTO;
 import com.blikeng.chess.dto.websocket.WsErrorDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
 import com.blikeng.chess.dto.websocket.WsResignDTO;
@@ -74,7 +75,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 }
 
                 case "OFFER_DRAW" -> {
-                    // Offer draw
+                    gameService.handleDraw(userId, objectMapper.treeToValue(json, WsDrawDTO.class));
                 }
 
                 default -> {

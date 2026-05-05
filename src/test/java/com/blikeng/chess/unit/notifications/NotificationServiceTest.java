@@ -1,5 +1,6 @@
 package com.blikeng.chess.unit.notifications;
 
+import com.blikeng.chess.model.EndedBy;
 import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.notifications.events.MatchEndedEvent;
 import com.blikeng.chess.notifications.events.MatchStartedEvent;
@@ -80,7 +81,7 @@ class NotificationServiceTest {
         when(presenceService.getSessions(whiteId)).thenReturn(Set.of(ws));
         when(presenceService.getSessions(blackId)).thenReturn(Set.of(bs));
 
-        notificationService.onMatchEnded(new MatchEndedEvent(gameId, whiteId, blackId, GameStatus.WHITE_WIN));
+        notificationService.onMatchEnded(new MatchEndedEvent(gameId, whiteId, blackId, GameStatus.WHITE_WIN, EndedBy.CHECKMATE));
 
         verify(ws).sendMessage(any(TextMessage.class));
         verify(bs).sendMessage(any(TextMessage.class));

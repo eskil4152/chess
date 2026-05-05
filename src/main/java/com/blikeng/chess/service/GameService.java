@@ -1,5 +1,6 @@
 package com.blikeng.chess.service;
 
+import com.blikeng.chess.dto.websocket.WsDrawDTO;
 import com.blikeng.chess.dto.websocket.WsGameStateDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
 import com.blikeng.chess.dto.websocket.WsResignDTO;
@@ -111,13 +112,20 @@ public class GameService {
             if (gameStatus == GameStatus.ONGOING) {
                 game.addMove(moveDTO.move());
 
+                game.setWhiteDraw(false);
+                game.setBlackDraw(false);
+
                 eventPublisher.publishEvent(new MoveMadeEvent(
                         game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move()
                 ));
             } else if (gameStatus != null) {
                 game.addMove(moveDTO.move());
 
-                handleGameEnd(game, gameStatus);
+                EndedBy endedBy;
+                if (gameStatus == GameStatus.DRAW)  endedBy = EndedBy.STALEMATE;
+                else endedBy = EndedBy.CHECKMATE;
+
+                handleGameEnd(game, gameStatus, endedBy);
             }
         } finally {
             lock.unlock();
@@ -147,7 +155,9 @@ public class GameService {
                                 game.getWhiteUsername(),
                                 game.getBlackId(),
                                 game.getBlackUsername(),
-                                game.getMoves()
+                                game.getMoves(),
+                                game.isWhiteDraw(),
+                                game.isBlackDraw()
                         ));
                         notificationService.sendToSession(session, payload);
                     } catch (JsonProcessingException e) {
@@ -170,7 +180,35 @@ public class GameService {
 
             boolean isWhite = game.getWhiteId().equals(userId);
             GameStatus gameStatus = isWhite ? GameStatus.BLACK_WIN : GameStatus.WHITE_WIN;
-            handleGameEnd(game, gameStatus);
+            handleGameEnd(game, gameStatus, EndedBy.RESIGNATION);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Transactional
+    public void handleDraw(UUID userId, WsDrawDTO drawDTO) {
+        Game game = getGame(drawDTO.gameId()).orElseThrow(GameNotFoundException::new);
+
+        ReentrantLock lock = game.lockGame();
+        lock.lock();
+
+        try {
+            if (!game.getWhiteId().equals(userId) && !game.getBlackId().equals(userId)) {
+                throw new NotAllowedException();
+            }
+
+            boolean isWhite = game.getWhiteId().equals(userId);
+
+            if (isWhite) game.setWhiteDraw(true);
+            else game.setBlackDraw(true);
+
+            if (game.isWhiteDraw() && game.isBlackDraw()) {
+                handleGameEnd(game, GameStatus.DRAW, EndedBy.AGREEMENT);
+            } else {
+                UUID otherUser = isWhite ? game.getBlackId() : game.getWhiteId();
+                notificationService.sendDrawOffer(game.getId(), otherUser);
+            }
         } finally {
             lock.unlock();
         }
@@ -188,13 +226,14 @@ public class GameService {
         }
     }
 
-    private void handleGameEnd(Game game, GameStatus gameStatus) {
+    private void handleGameEnd(Game game, GameStatus gameStatus, EndedBy endedBy) {
         gameRepository.findById(game.getId()).ifPresent(entity -> {
             entity.setMoves(game.getMoves());
             entity.setStatus(gameStatus);
             gameRepository.save(entity);
         });
-        eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus));
+
+        eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, endedBy));
         games.remove(game.getId());
 
         userService.updateUserElo(game.getWhiteId(), game.getBlackId(), gameStatus);
