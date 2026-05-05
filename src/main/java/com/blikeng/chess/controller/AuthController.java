@@ -1,6 +1,7 @@
 package com.blikeng.chess.controller;
 
 import com.blikeng.chess.dto.AuthDTO;
+import com.blikeng.chess.dto.AuthResult;
 import com.blikeng.chess.dto.LoginDTO;
 import com.blikeng.chess.service.AuthService;
 import org.springframework.core.env.Environment;
@@ -26,27 +27,27 @@ public class AuthController {
     private static final Long maxAge = (long) 24 * 60 * 60;
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginDTO loginDTO) {
-        String token = authService.login(loginDTO);
+    public ResponseEntity<AuthDTO> login(@RequestBody LoginDTO loginDTO) {
+        AuthResult authResult = authService.login(loginDTO);
 
-        ResponseCookie cookie = makeCookie(token, maxAge);
+        ResponseCookie cookie = makeCookie(authResult.token(), maxAge);
 
         return ResponseEntity
                 .ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body("User logged in successfully");
+                .body(authResult.user());
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody LoginDTO loginDTO) {
-        String token = authService.register(loginDTO);
+    public ResponseEntity<AuthDTO> register(@RequestBody LoginDTO loginDTO) {
+        AuthResult authResult = authService.register(loginDTO);
 
-        ResponseCookie cookie = makeCookie(token, maxAge);
+        ResponseCookie cookie = makeCookie(authResult.token(), maxAge);
 
         return ResponseEntity
                 .status(201)
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body("User registered successfully");
+                .body(authResult.user());
     }
 
     @PostMapping("/logout")
