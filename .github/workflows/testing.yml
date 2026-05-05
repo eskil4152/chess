@@ -6,13 +6,11 @@ on:
     paths-ignore:
       - "README.md"
       - "docs/**"
-      - "ROADMAP.md"
   push:
     branches: [ "main" ]
     paths-ignore:
       - 'docs/**'
       - 'README.md'
-      - 'ROADMAP.md'
 
 jobs:
   test-and-update-sonar:

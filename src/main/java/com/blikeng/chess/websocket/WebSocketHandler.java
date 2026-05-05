@@ -2,6 +2,7 @@ package com.blikeng.chess.websocket;
 
 import com.blikeng.chess.dto.websocket.WsErrorDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
+import com.blikeng.chess.dto.websocket.WsResignDTO;
 import com.blikeng.chess.exception.ApiException;
 import com.blikeng.chess.notifications.NotificationService;
 import com.blikeng.chess.service.GameService;
@@ -69,7 +70,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 }
 
                 case "RESIGN" -> {
-                    // Resign
+                    gameService.resignGame(userId, objectMapper.treeToValue(json, WsResignDTO.class));
                 }
 
                 case "OFFER_DRAW" -> {

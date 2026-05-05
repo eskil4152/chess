@@ -4,5 +4,6 @@ public enum WsMessageType {
     GAME_STARTED,
     GAME_STATE,
     MOVE,
+    RESIGN,
     GAME_ENDED
 }

@@ -2,6 +2,7 @@ package com.blikeng.chess.service;
 
 import com.blikeng.chess.dto.websocket.WsGameStateDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
+import com.blikeng.chess.dto.websocket.WsResignDTO;
 import com.blikeng.chess.engine.MoveExecutor;
 import com.blikeng.chess.engine.PositionMapper;
 import com.blikeng.chess.entity.GameEntity;
@@ -9,6 +10,7 @@ import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.errorTypes.GameNotFoundException;
 import com.blikeng.chess.exception.errorTypes.InvalidMoveException;
 import com.blikeng.chess.exception.errorTypes.InvalidUUIDException;
+import com.blikeng.chess.exception.errorTypes.NotAllowedException;
 import com.blikeng.chess.model.*;
 import com.blikeng.chess.model.piece.PieceType;
 import com.blikeng.chess.notifications.NotificationService;
@@ -152,6 +154,26 @@ public class GameService {
                         logger.error("Error serializing game state for game {}: ", game.getId(), e);
                     }
                 });
+    }
+
+    @Transactional
+    public void resignGame(UUID userId, WsResignDTO resignDTO) {
+        Game game = getGame(resignDTO.gameId()).orElseThrow(GameNotFoundException::new);
+
+        ReentrantLock lock = game.lockGame();
+        lock.lock();
+
+        try {
+            if (!game.getWhiteId().equals(userId) && !game.getBlackId().equals(userId)) {
+                throw new NotAllowedException();
+            }
+
+            boolean isWhite = game.getWhiteId().equals(userId);
+            GameStatus gameStatus = isWhite ? GameStatus.BLACK_WIN : GameStatus.WHITE_WIN;
+            handleGameEnd(game, gameStatus);
+        } finally {
+            lock.unlock();
+        }
     }
 
     private boolean isUserTurn(Game game, UUID userId) {
