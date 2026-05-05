@@ -44,6 +44,11 @@ public class Game {
     private final String blackUsername;
 
     @Setter
+    private boolean whiteDraw = false;
+    @Setter
+    private boolean blackDraw = false;
+
+    @Setter
     private Position whiteKingPosition;
 
     @Setter

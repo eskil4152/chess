@@ -1,5 +1,6 @@
 package com.blikeng.chess.notifications;
 
+import com.blikeng.chess.dto.websocket.WsDrawDTO;
 import com.blikeng.chess.dto.websocket.WsGameEndedDTO;
 import com.blikeng.chess.dto.websocket.WsGameStartedDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
@@ -18,6 +19,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -52,6 +54,11 @@ public class NotificationService {
         String payload = serialize(new WsGameEndedDTO(event.gameId(), event.status(), event.endedBy()));
         sendToUser(event.whiteId(), payload);
         sendToUser(event.blackId(), payload);
+    }
+
+    public void sendDrawOffer(UUID gameId, UUID userId){
+        String payload = serialize(new WsDrawDTO(gameId.toString()));
+        sendToUser(userId, payload);
     }
 
     public void sendToSession(WebSocketSession session, String payload) {

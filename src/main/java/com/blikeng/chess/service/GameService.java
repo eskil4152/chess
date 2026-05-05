@@ -1,5 +1,6 @@
 package com.blikeng.chess.service;
 
+import com.blikeng.chess.dto.websocket.WsDrawDTO;
 import com.blikeng.chess.dto.websocket.WsGameStateDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
 import com.blikeng.chess.engine.MoveExecutor;
@@ -109,6 +110,9 @@ public class GameService {
             if (gameStatus == GameStatus.ONGOING) {
                 game.addMove(moveDTO.move());
 
+                game.setWhiteDraw(false);
+                game.setBlackDraw(false);
+
                 eventPublisher.publishEvent(new MoveMadeEvent(
                         game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move()
                 ));
@@ -149,7 +153,9 @@ public class GameService {
                                 game.getWhiteUsername(),
                                 game.getBlackId(),
                                 game.getBlackUsername(),
-                                game.getMoves()
+                                game.getMoves(),
+                                game.isWhiteDraw(),
+                                game.isBlackDraw()
                         ));
                         notificationService.sendToSession(session, payload);
                     } catch (JsonProcessingException e) {
@@ -176,6 +182,7 @@ public class GameService {
             entity.setStatus(gameStatus);
             gameRepository.save(entity);
         });
+
         eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, endedBy));
         games.remove(game.getId());
 
