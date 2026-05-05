@@ -4,8 +4,8 @@ public record WsResignDTO(
         WsMessageType type,
         String gameId
 ) {
-}
     public WsResignDTO(String gameId) {
         this(WsMessageType.RESIGN, gameId);
     }
 }
+

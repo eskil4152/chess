@@ -8,7 +8,6 @@ import com.blikeng.chess.engine.MoveExecutor;
 import com.blikeng.chess.engine.PositionMapper;
 import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.entity.UserEntity;
-import com.blikeng.chess.dto.websocket.WsResignDTO;
 import com.blikeng.chess.exception.errorTypes.GameNotFoundException;
 import com.blikeng.chess.exception.errorTypes.InvalidMoveException;
 import com.blikeng.chess.exception.errorTypes.InvalidUUIDException;
@@ -210,7 +209,6 @@ public class GameService {
                 UUID otherUser = isWhite ? game.getBlackId() : game.getWhiteId();
                 notificationService.sendDrawOffer(game.getId(), otherUser);
             }
-            handleGameEnd(game, gameStatus);
         } finally {
             lock.unlock();
         }
