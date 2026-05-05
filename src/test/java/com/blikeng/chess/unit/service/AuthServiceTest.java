@@ -1,6 +1,7 @@
 package com.blikeng.chess.unit.service;
 
 import com.blikeng.chess.dto.AuthDTO;
+import com.blikeng.chess.dto.AuthResult;
 import com.blikeng.chess.dto.LoginDTO;
 import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.errorTypes.*;
@@ -56,8 +57,9 @@ class AuthServiceTest {
         when(passwordService.checkPassword("pass", "hashed")).thenReturn(true);
         when(jwtService.generateToken(user)).thenReturn("jwt");
 
-        String token = authService.login(new LoginDTO("testuser", "pass"));
-        assertThat(token).isEqualTo("jwt");
+        AuthResult result = authService.login(new LoginDTO("testuser", "pass"));
+        assertThat(result.token()).isEqualTo("jwt");
+        assertThat(result.user().username()).isEqualTo("testuser");
     }
 
     @Test
@@ -84,8 +86,9 @@ class AuthServiceTest {
         when(authRepository.save(any())).thenReturn(user);
         when(jwtService.generateToken(user)).thenReturn("jwt");
 
-        String token = authService.register(new LoginDTO("newuser", "password1"));
-        assertThat(token).isEqualTo("jwt");
+        AuthResult result = authService.register(new LoginDTO("newuser", "password1"));
+        assertThat(result.token()).isEqualTo("jwt");
+        assertThat(result.user().username()).isEqualTo("testuser");
     }
 
     @Test
@@ -120,7 +123,7 @@ class AuthServiceTest {
         when(passwordService.hashPassword("password1")).thenReturn("hashed");
         when(authRepository.save(any())).thenReturn(user);
         when(jwtService.generateToken(user)).thenReturn("jwt");
-        assertThat(authService.register(new LoginDTO("abc", "password1"))).isEqualTo("jwt");
+        assertThat(authService.register(new LoginDTO("abc", "password1")).token()).isEqualTo("jwt");
     }
 
     @Test
@@ -130,7 +133,7 @@ class AuthServiceTest {
         when(passwordService.hashPassword("password1")).thenReturn("hashed");
         when(authRepository.save(any())).thenReturn(user);
         when(jwtService.generateToken(user)).thenReturn("jwt");
-        assertThat(authService.register(new LoginDTO(maxName, "password1"))).isEqualTo("jwt");
+        assertThat(authService.register(new LoginDTO(maxName, "password1")).token()).isEqualTo("jwt");
     }
 
     @Test
@@ -139,7 +142,7 @@ class AuthServiceTest {
         when(passwordService.hashPassword("exactly8")).thenReturn("hashed");
         when(authRepository.save(any())).thenReturn(user);
         when(jwtService.generateToken(user)).thenReturn("jwt");
-        assertThat(authService.register(new LoginDTO("validname", "exactly8"))).isEqualTo("jwt");
+        assertThat(authService.register(new LoginDTO("validname", "exactly8")).token()).isEqualTo("jwt");
     }
 
     @Test
@@ -149,7 +152,7 @@ class AuthServiceTest {
         when(passwordService.hashPassword(maxPass)).thenReturn("hashed");
         when(authRepository.save(any())).thenReturn(user);
         when(jwtService.generateToken(user)).thenReturn("jwt");
-        assertThat(authService.register(new LoginDTO("validname", maxPass))).isEqualTo("jwt");
+        assertThat(authService.register(new LoginDTO("validname", maxPass)).token()).isEqualTo("jwt");
     }
 
     @Test

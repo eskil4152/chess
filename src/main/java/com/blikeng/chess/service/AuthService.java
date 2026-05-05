@@ -1,6 +1,7 @@
 package com.blikeng.chess.service;
 
 import com.blikeng.chess.dto.AuthDTO;
+import com.blikeng.chess.dto.AuthResult;
 import com.blikeng.chess.dto.LoginDTO;
 import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.errorTypes.*;
@@ -34,7 +35,7 @@ public class AuthService {
         this.passwordService = passwordService;
     }
 
-    public String login(LoginDTO loginDTO) {
+    public AuthResult login(LoginDTO loginDTO) {
         Optional<UserEntity> user = authRepository.findByUsernameIgnoreCase(loginDTO.username());
 
         if (user.isEmpty()) throw new InvalidCredentialsException();
@@ -44,10 +45,15 @@ public class AuthService {
             throw new InvalidCredentialsException();
         }
 
-        return jwtService.generateToken(user.get());
+        String token = jwtService.generateToken(user.get());
+        AuthDTO authDTO = new AuthDTO(
+                user.get().getId(), user.get().getUsername(), UserRole.USER
+        );
+
+        return new AuthResult(token, authDTO);
     }
 
-    public String register(LoginDTO loginDTO) {
+    public AuthResult register(LoginDTO loginDTO) {
         String trimmedUsername = loginDTO.username().trim();
         String trimmedPassword = loginDTO.password().trim();
 
@@ -58,7 +64,12 @@ public class AuthService {
 
         UserEntity user = authRepository.save(new UserEntity(trimmedUsername, passwordService.hashPassword(trimmedPassword)));
 
-        return jwtService.generateToken(user);
+        String token = jwtService.generateToken(user);
+        AuthDTO authDTO = new AuthDTO(
+                user.getId(), user.getUsername(), UserRole.USER
+        );
+
+        return new AuthResult(token, authDTO);
     }
 
     public AuthDTO authenticate(){
