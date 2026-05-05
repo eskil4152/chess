@@ -1,6 +1,7 @@
 package com.blikeng.chess.unit.controller;
 
 import com.blikeng.chess.dto.AuthDTO;
+import com.blikeng.chess.dto.AuthResult;
 import com.blikeng.chess.dto.LoginDTO;
 import com.blikeng.chess.exception.errorTypes.InvalidCredentialsException;
 import com.blikeng.chess.security.JwtService;
@@ -41,14 +42,18 @@ class AuthControllerTest {
 
     @Test
     void shouldLogIn() throws Exception {
-        when(authService.login(any(LoginDTO.class))).thenReturn("jwt-token");
+        UUID userId = UUID.randomUUID();
+        when(authService.login(any(LoginDTO.class)))
+                .thenReturn(new AuthResult("jwt-token", new AuthDTO(userId, "user", UserRole.USER)));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new LoginDTO("user", "pass")))
                         .with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(header().exists("Set-Cookie"));
+                .andExpect(header().exists("Set-Cookie"))
+                .andExpect(jsonPath("$.userId").value(userId.toString()))
+                .andExpect(jsonPath("$.username").value("user"));
     }
 
     @Test
@@ -64,14 +69,18 @@ class AuthControllerTest {
 
     @Test
     void shouldRegister() throws Exception {
-        when(authService.register(any(LoginDTO.class))).thenReturn("jwt-token");
+        UUID userId = UUID.randomUUID();
+        when(authService.register(any(LoginDTO.class)))
+                .thenReturn(new AuthResult("jwt-token", new AuthDTO(userId, "newuser", UserRole.USER)));
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new LoginDTO("newuser", "password1")))
                         .with(csrf()))
                 .andExpect(status().isCreated())
-                .andExpect(header().exists("Set-Cookie"));
+                .andExpect(header().exists("Set-Cookie"))
+                .andExpect(jsonPath("$.userId").value(userId.toString()))
+                .andExpect(jsonPath("$.username").value("newuser"));
     }
 
     @Test
@@ -95,7 +104,8 @@ class AuthControllerTest {
 
     @Test
     void cookieShouldBeSecureWhenProdProfile() throws Exception {
-        when(authService.login(any(LoginDTO.class))).thenReturn("jwt-token");
+        when(authService.login(any(LoginDTO.class)))
+                .thenReturn(new AuthResult("jwt-token", new AuthDTO(UUID.randomUUID(), "user", UserRole.USER)));
         when(environment.matchesProfiles("prod")).thenReturn(true);
 
         mockMvc.perform(post("/api/auth/login")
