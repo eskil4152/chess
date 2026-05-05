@@ -51,23 +51,19 @@ class WebSocketHandlerTest {
 
     // After connection established
     @Test
-    @Disabled
     void shouldSaveSessionAndQueuePlayerIfNotInExistingGame() {
-        // TODO: Fix
-        //when(gameService.isInGame(userId)).thenReturn(false);
+        when(gameService.isInGame(userId)).thenReturn(false);
 
         handler.afterConnectionEstablished(session);
 
         verify(presenceService).saveSession(userId, session);
-        verify(gameService).sendGameStateIfPresent(userId, session);
+        verify(gameService).onSessionConnected(userId, session);
         verify(matchmakingService).queuePlayer(userId);
     }
 
     @Test
-    @Disabled
     void shouldSaveSessionAndNotQueueIfPlayerIsInGame() {
-        // TODO: Fix
-        //when(gameService.isInGame(userId)).thenReturn(true);
+        when(gameService.isInGame(userId)).thenReturn(true);
 
         handler.afterConnectionEstablished(session);
 

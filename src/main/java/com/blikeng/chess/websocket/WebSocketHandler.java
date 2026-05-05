@@ -45,7 +45,10 @@ public class WebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) {
         UUID userId = getUserId(session);
         presenceService.saveSession(userId, session);
-        gameService.sendGameStateIfPresent(userId, session);
+        gameService.onSessionConnected(userId, session);
+        if (!gameService.isInGame(userId)) {
+            matchmakingService.queuePlayer(userId);
+        }
 
         logger.debug("New connection for user: {}", userId);
     }
@@ -73,12 +76,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
                 case "OFFER_DRAW" -> {
                     gameService.handleDraw(userId, objectMapper.treeToValue(json, WsDrawDTO.class));
-                }
-
-                case "QUEUE" -> {
-                    if (!gameService.sendGameStateIfPresent(userId, session)) {
-                        matchmakingService.queuePlayer(userId);
-                    }
                 }
 
                 default -> {

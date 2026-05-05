@@ -132,15 +132,22 @@ public class GameService {
         }
     }
 
+    public boolean isInGame(UUID userId) {
+        return games.values().stream()
+                .anyMatch(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId));
+    }
+
     public Optional<Game> getActiveGame(UUID userId) {
         return games.values().stream()
                 .filter(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId))
                 .findFirst();
     }
 
-    public boolean sendGameStateIfPresent(UUID userId, WebSocketSession session) {
-        Optional<Game> activeGame = getActiveGame(userId);
-        activeGame.ifPresent(game -> {
+    public void onSessionConnected(UUID userId, WebSocketSession session) {
+        games.values().stream()
+                .filter(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId))
+                .findFirst()
+                .ifPresent(game -> {
                     try {
                         String payload = objectMapper.writeValueAsString(new WsGameStateDTO(
                                 game.getId(),
@@ -157,7 +164,6 @@ public class GameService {
                         logger.error("Error serializing game state for game {}: ", game.getId(), e);
                     }
                 });
-        return activeGame.isPresent();
     }
 
     @Transactional

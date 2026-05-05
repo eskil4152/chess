@@ -89,24 +89,21 @@ class GameServiceTest {
     void beginGameShouldAddBothPlayersToActiveGames() {
         stubSave();
         gameService.beginGame(white, black);
-        // TODO: Fix
-        //assertThat(gameService.isInGame(white.getId())).isTrue();
-        //assertThat(gameService.isInGame(black.getId())).isTrue();
+        assertThat(gameService.isInGame(white.getId())).isTrue();
+        assertThat(gameService.isInGame(black.getId())).isTrue();
     }
 
 
     // --- Is In Game ---
     @Test
     void isInGameShouldReturnFalseWhenPlayerHasNoGame() {
-        // TODO: Fix
-        //assertThat(gameService.isInGame(UUID.randomUUID())).isFalse();
+        assertThat(gameService.isInGame(UUID.randomUUID())).isFalse();
     }
 
     @Test
     void isInGameShouldReturnFalseWhenPlayerNotInExistingGame() {
         beginAndGetGame();
-        // TODO: Fix
-        //assertThat(gameService.isInGame(UUID.randomUUID())).isFalse();
+        assertThat(gameService.isInGame(UUID.randomUUID())).isFalse();
     }
 
     // --- Get Active Game ---
@@ -236,8 +233,7 @@ class GameServiceTest {
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
         assertThat(captor.getAllValues()).anyMatch(e -> e instanceof MatchEndedEvent);
-        // TODO: Fix
-        // assertThat(gameService.isInGame(white.getId())).isFalse();
+        assertThat(gameService.isInGame(white.getId())).isFalse();
     }
 
 
@@ -246,7 +242,7 @@ class GameServiceTest {
     void onSessionConnectedShouldSendGameStateWhenPlayerIsInGame() {
         beginAndGetGame();
         WebSocketSession session = mock(WebSocketSession.class);
-        gameService.sendGameStateIfPresent(white.getId(), session);
+        gameService.onSessionConnected(white.getId(), session);
         verify(notificationService).sendToSession(eq(session), any(String.class));
     }
 
@@ -254,14 +250,14 @@ class GameServiceTest {
     void onSessionConnectedShouldSendGameStateForBlackPlayer() {
         beginAndGetGame();
         WebSocketSession session = mock(WebSocketSession.class);
-        gameService.sendGameStateIfPresent(black.getId(), session);
+        gameService.onSessionConnected(black.getId(), session);
         verify(notificationService).sendToSession(eq(session), any(String.class));
     }
 
     @Test
     void onSessionConnectedShouldDoNothingWhenPlayerNotInGame() {
         WebSocketSession session = mock(WebSocketSession.class);
-        gameService.sendGameStateIfPresent(UUID.randomUUID(), session);
+        gameService.onSessionConnected(UUID.randomUUID(), session);
         verifyNoInteractions(notificationService);
     }
 
@@ -269,7 +265,7 @@ class GameServiceTest {
     void onSessionConnectedShouldDoNothingWhenPlayerNotInExistingGame() {
         beginAndGetGame();
         WebSocketSession session = mock(WebSocketSession.class);
-        gameService.sendGameStateIfPresent(UUID.randomUUID(), session);
+        gameService.onSessionConnected(UUID.randomUUID(), session);
         verifyNoInteractions(notificationService);
     }
 
@@ -281,7 +277,7 @@ class GameServiceTest {
         ReflectionTestUtils.setField(gameService, "objectMapper", failingMapper);
 
         WebSocketSession session = mock(WebSocketSession.class);
-        gameService.sendGameStateIfPresent(white.getId(), session);
+        gameService.onSessionConnected(white.getId(), session);
         verifyNoInteractions(notificationService);
     }
 }
