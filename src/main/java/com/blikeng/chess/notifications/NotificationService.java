@@ -49,7 +49,7 @@ public class NotificationService {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onMatchEnded(MatchEndedEvent event) {
-        String payload = serialize(new WsGameEndedDTO(event.gameId(), event.status()));
+        String payload = serialize(new WsGameEndedDTO(event.gameId(), event.status(), event.endedBy()));
         sendToUser(event.whiteId(), payload);
         sendToUser(event.blackId(), payload);
     }

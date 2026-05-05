@@ -115,7 +115,11 @@ public class GameService {
             } else if (gameStatus != null) {
                 game.addMove(moveDTO.move());
 
-                handleGameEnd(game, gameStatus);
+                EndedBy endedBy;
+                if (gameStatus == GameStatus.DRAW)  endedBy = EndedBy.STALEMATE;
+                else endedBy = EndedBy.CHECKMATE;
+
+                handleGameEnd(game, gameStatus, endedBy);
             }
         } finally {
             lock.unlock();
@@ -166,13 +170,13 @@ public class GameService {
         }
     }
 
-    private void handleGameEnd(Game game, GameStatus gameStatus) {
+    private void handleGameEnd(Game game, GameStatus gameStatus, EndedBy endedBy) {
         gameRepository.findById(game.getId()).ifPresent(entity -> {
             entity.setMoves(game.getMoves());
             entity.setStatus(gameStatus);
             gameRepository.save(entity);
         });
-        eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus));
+        eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, endedBy));
         games.remove(game.getId());
 
         userService.updateUserElo(game.getWhiteId(), game.getBlackId(), gameStatus);
