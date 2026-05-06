@@ -85,8 +85,6 @@ public class GameService {
 
     @Transactional
     public void makeMove(UUID userId, WsMoveDTO moveDTO) {
-        System.out.println("Got a move. " + moveDTO.move());
-
         Game game = getGame(moveDTO.gameId()).orElseThrow(GameNotFoundException::new);
 
         ReentrantLock lock = game.lockGame();
@@ -215,6 +213,12 @@ public class GameService {
             entity.setStatus(gameStatus);
             gameRepository.save(entity);
         });
+
+        if (!game.getMoves().isEmpty()) {
+            eventPublisher.publishEvent(new MoveMadeEvent(
+                    game.getId(), game.getWhiteId(), game.getBlackId(), game.getMoves().getLast()
+            ));
+        }
 
         eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, endedBy));
         games.remove(game.getId());
