@@ -4,10 +4,12 @@ import com.blikeng.chess.config.SecurityConfig;
 import com.blikeng.chess.controller.GameController;
 import com.blikeng.chess.dto.GameDTO;
 import com.blikeng.chess.dto.GamePreviewDTO;
+import com.blikeng.chess.dto.GameStateDTO;
 import com.blikeng.chess.exception.errorTypes.GameNotFoundException;
 import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.service.GameHistoryService;
+import com.blikeng.chess.service.GameService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -28,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser
 class GameControllerTest {
     @Autowired MockMvc mockMvc;
+    @MockitoBean GameService gameService;
     @MockitoBean GameHistoryService gameHistoryService;
     @MockitoBean JwtService jwtService;
 
@@ -59,6 +62,28 @@ class GameControllerTest {
         when(gameHistoryService.getGame(id)).thenThrow(new GameNotFoundException());
 
         mockMvc.perform(get("/api/games/{id}", id))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldGetActiveGameState() throws Exception {
+        UUID gameId = UUID.randomUUID();
+        UUID whiteId = UUID.randomUUID();
+        UUID blackId = UUID.randomUUID();
+        when(gameService.restoreGameState())
+                .thenReturn(new GameStateDTO(gameId, whiteId, "white", blackId, "black", List.of(), false, false));
+
+        mockMvc.perform(get("/api/games/active"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.whiteUsername").value("white"))
+                .andExpect(jsonPath("$.blackUsername").value("black"));
+    }
+
+    @Test
+    void shouldReturn404WhenNoActiveGame() throws Exception {
+        when(gameService.restoreGameState()).thenThrow(new GameNotFoundException());
+
+        mockMvc.perform(get("/api/games/active"))
                 .andExpect(status().isNotFound());
     }
 }

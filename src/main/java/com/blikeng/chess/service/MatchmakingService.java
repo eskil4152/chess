@@ -1,6 +1,10 @@
 package com.blikeng.chess.service;
 
 import com.blikeng.chess.entity.UserEntity;
+import com.blikeng.chess.exception.errorTypes.ExistingGameException;
+import com.blikeng.chess.exception.errorTypes.InvalidUserException;
+import com.blikeng.chess.security.JwtPrincipal;
+import com.blikeng.chess.security.JwtService;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -19,12 +23,18 @@ public class MatchmakingService {
 
     private final ConcurrentHashMap<UUID, UserEntity> queue = new ConcurrentHashMap<>();
 
-    public void queuePlayer(UUID userId) {
+    public void queuePlayer() {
+        JwtPrincipal jwtPrincipal = JwtService.getCurrentUser();
+        if (jwtPrincipal == null) throw new InvalidUserException();
+
+        UUID userId = jwtPrincipal.userId();
+
         UserEntity user = authService.findUserById(userId).orElseThrow();
 
         UserEntity matched;
 
         synchronized (queue) {
+            if (gameService.isInGame(userId)) throw new ExistingGameException();
             if (queue.containsKey(userId)) return;
 
             var best = queue.entrySet().stream()
@@ -44,7 +54,20 @@ public class MatchmakingService {
         }
     }
 
+    public void dequeuePlayer() {
+        JwtPrincipal jwtPrincipal = JwtService.getCurrentUser();
+        if (jwtPrincipal == null) throw new InvalidUserException();
+
+        UUID userId = jwtPrincipal.userId();
+
+        synchronized (queue) {
+            queue.remove(userId);
+        }
+    }
+
     public void dequeuePlayer(UUID userId) {
-        queue.remove(userId);
+        synchronized (queue) {
+            queue.remove(userId);
+        }
     }
 }

@@ -1,21 +1,29 @@
 package com.blikeng.chess.unit.service;
 
 import com.blikeng.chess.entity.UserEntity;
+import com.blikeng.chess.exception.errorTypes.ExistingGameException;
+import com.blikeng.chess.exception.errorTypes.InvalidUserException;
+import com.blikeng.chess.security.JwtPrincipal;
+import com.blikeng.chess.service.AuthService;
+import com.blikeng.chess.service.GameService;
+import com.blikeng.chess.service.MatchmakingService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import com.blikeng.chess.service.AuthService;
-import com.blikeng.chess.service.GameService;
-import com.blikeng.chess.service.MatchmakingService;
 
 @ExtendWith(MockitoExtension.class)
 class MatchmakingServiceTest {
@@ -33,21 +41,34 @@ class MatchmakingServiceTest {
         user2 = new UserEntity("user2", "h");
     }
 
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
+    private void setupSecurityContext(UUID userId) {
+        var principal = new JwtPrincipal(userId, "testuser");
+        var auth = new UsernamePasswordAuthenticationToken(principal, null);
+        SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+
     @Test
     void queuePlayerShouldAddToQueueWhenEmpty() {
+        setupSecurityContext(user1.getId());
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
 
-        matchmakingService.queuePlayer(user1.getId());
+        matchmakingService.queuePlayer();
 
         verify(gameService, never()).beginGame(any(), any());
     }
 
     @Test
     void queuePlayerShouldBeNoOpWhenAlreadyQueued() {
+        setupSecurityContext(user1.getId());
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
 
-        matchmakingService.queuePlayer(user1.getId());
-        matchmakingService.queuePlayer(user1.getId());
+        matchmakingService.queuePlayer();
+        matchmakingService.queuePlayer();
 
         verify(authService, times(2)).findUserById(user1.getId());
         verify(gameService, never()).beginGame(any(), any());
@@ -61,8 +82,10 @@ class MatchmakingServiceTest {
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
         when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
 
-        matchmakingService.queuePlayer(user1.getId());
-        matchmakingService.queuePlayer(user2.getId());
+        setupSecurityContext(user1.getId());
+        matchmakingService.queuePlayer();
+        setupSecurityContext(user2.getId());
+        matchmakingService.queuePlayer();
 
         verify(gameService).beginGame(user1, user2);
     }
@@ -75,8 +98,10 @@ class MatchmakingServiceTest {
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
         when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
 
-        matchmakingService.queuePlayer(user1.getId());
-        matchmakingService.queuePlayer(user2.getId());
+        setupSecurityContext(user1.getId());
+        matchmakingService.queuePlayer();
+        setupSecurityContext(user2.getId());
+        matchmakingService.queuePlayer();
 
         verify(gameService, never()).beginGame(any(), any());
     }
@@ -92,9 +117,12 @@ class MatchmakingServiceTest {
         when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
         when(authService.findUserById(user3.getId())).thenReturn(Optional.of(user3));
 
-        matchmakingService.queuePlayer(user1.getId()); // queued (empty)
-        matchmakingService.queuePlayer(user2.getId()); // diff to user1 = 250 > 200, queued
-        matchmakingService.queuePlayer(user3.getId()); // min picks user2 (100) over user1 (150)
+        setupSecurityContext(user1.getId());
+        matchmakingService.queuePlayer(); // queued (empty)
+        setupSecurityContext(user2.getId());
+        matchmakingService.queuePlayer(); // diff to user1 = 250 > 200, queued
+        setupSecurityContext(user3.getId());
+        matchmakingService.queuePlayer(); // min picks user2 (100) over user1 (150)
 
         verify(gameService).beginGame(user2, user3);
         verify(gameService, never()).beginGame(eq(user1), any());
@@ -102,22 +130,62 @@ class MatchmakingServiceTest {
 
     @Test
     void queuePlayerShouldThrowWhenUserNotFound() {
+        setupSecurityContext(user1.getId());
         when(authService.findUserById(user1.getId())).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> matchmakingService.queuePlayer(user1.getId()))
+        assertThatThrownBy(() -> matchmakingService.queuePlayer())
                 .isInstanceOf(java.util.NoSuchElementException.class);
     }
 
     @Test
-    void dequeuePlayerShouldRemoveFromQueue() {
+    void queuePlayerShouldThrowWhenUserIsAlreadyInGame() {
+        setupSecurityContext(user1.getId());
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
-        when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
+        when(gameService.isInGame(user1.getId())).thenReturn(true);
+        assertThatThrownBy(() -> matchmakingService.queuePlayer())
+                .isInstanceOf(ExistingGameException.class);
+    }
+
+    @Test
+    void queuePlayerShouldThrowWhenNotAuthenticated() {
+        assertThatThrownBy(() -> matchmakingService.queuePlayer())
+                .isInstanceOf(InvalidUserException.class);
+    }
+
+    @Test
+    void dequeuePlayerShouldRemoveFromQueue() {
         user1.setElo(800);
         user2.setElo(810);
+        when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
+        when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
 
-        matchmakingService.queuePlayer(user1.getId());
+        setupSecurityContext(user1.getId());
+        matchmakingService.queuePlayer();
         matchmakingService.dequeuePlayer(user1.getId());
-        matchmakingService.queuePlayer(user2.getId());
+        setupSecurityContext(user2.getId());
+        matchmakingService.queuePlayer();
 
         verify(gameService, never()).beginGame(any(), any());
+    }
+
+    @Test
+    void dequeuePlayerByHttpShouldRemoveFromQueue() {
+        user1.setElo(800);
+        user2.setElo(810);
+        when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
+        when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
+
+        setupSecurityContext(user1.getId());
+        matchmakingService.queuePlayer();
+        matchmakingService.dequeuePlayer();
+        setupSecurityContext(user2.getId());
+        matchmakingService.queuePlayer();
+
+        verify(gameService, never()).beginGame(any(), any());
+    }
+
+    @Test
+    void dequeuePlayerByHttpShouldThrowWhenNotAuthenticated() {
+        assertThatThrownBy(() -> matchmakingService.dequeuePlayer())
+                .isInstanceOf(InvalidUserException.class);
     }
 }

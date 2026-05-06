@@ -166,6 +166,7 @@ public class MoveGenerator {
         Position enPassantTarget = game.getEnPassantTarget();
 
         if (isWhite) {
+            if (position.row() >= 7) return moves;
             // Walk ahead
             if (board.getPiece(position.row() + 1, position.col()) == null) moves.add(new Position(position.row() + 1, position.col()));
 
@@ -195,6 +196,7 @@ public class MoveGenerator {
             }
 
         } else {
+            if (position.row() <= 0) return moves;
             // Walk ahead
             if (board.getPiece(position.row() - 1, position.col()) == null) moves.add(new Position(position.row() - 1, position.col()));
 

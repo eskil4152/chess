@@ -1,13 +1,14 @@
 package com.blikeng.chess.unit.websocket;
 
+import com.blikeng.chess.dto.websocket.WsDrawDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
+import com.blikeng.chess.dto.websocket.WsResignDTO;
 import com.blikeng.chess.exception.errorTypes.InvalidMoveException;
 import com.blikeng.chess.notifications.NotificationService;
 import com.blikeng.chess.service.GameService;
 import com.blikeng.chess.service.MatchmakingService;
 import com.blikeng.chess.service.PresenceService;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -51,24 +52,11 @@ class WebSocketHandlerTest {
 
     // After connection established
     @Test
-    void shouldSaveSessionAndQueuePlayerIfNotInExistingGame() {
-        when(gameService.isInGame(userId)).thenReturn(false);
-
+    void shouldSaveSessionOnConnectionEstablished() {
         handler.afterConnectionEstablished(session);
 
         verify(presenceService).saveSession(userId, session);
-        verify(gameService).onSessionConnected(userId, session);
-        verify(matchmakingService).queuePlayer(userId);
-    }
-
-    @Test
-    void shouldSaveSessionAndNotQueueIfPlayerIsInGame() {
-        when(gameService.isInGame(userId)).thenReturn(true);
-
-        handler.afterConnectionEstablished(session);
-
-        verify(presenceService).saveSession(userId, session);
-        verify(matchmakingService, never()).queuePlayer(any());
+        verifyNoInteractions(gameService, matchmakingService);
     }
 
 
@@ -83,7 +71,25 @@ class WebSocketHandlerTest {
         verify(gameService).makeMove(eq(userId), any(WsMoveDTO.class));
     }
 
-    // TODO: Add tests for message, draw and resign types
+    @Test
+    void shouldHandleMessageOfTypeResign() {
+        String gameId = UUID.randomUUID().toString();
+        String payload = String.format("{\"type\":\"RESIGN\",\"gameId\":\"%s\"}", gameId);
+
+        handler.handleTextMessage(session, new TextMessage(payload));
+
+        verify(gameService).resignGame(eq(userId), any(WsResignDTO.class));
+    }
+
+    @Test
+    void shouldHandleMessageOfTypeOfferDraw() {
+        String gameId = UUID.randomUUID().toString();
+        String payload = String.format("{\"type\":\"OFFER_DRAW\",\"gameId\":\"%s\"}", gameId);
+
+        handler.handleTextMessage(session, new TextMessage(payload));
+
+        verify(gameService).handleDraw(eq(userId), any(WsDrawDTO.class));
+    }
 
     @Test
     void shouldHandleTextMessageOfUnknownTypeByIgnoring() {
