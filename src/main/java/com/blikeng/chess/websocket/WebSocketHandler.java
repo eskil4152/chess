@@ -58,25 +58,13 @@ public class WebSocketHandler extends TextWebSocketHandler {
             String type = json.path("type").asText("");
 
             switch (type) {
-                case "MOVE" -> {
-                    gameService.makeMove(userId, objectMapper.treeToValue(json, WsMoveDTO.class));
-                }
+                case "MOVE" -> gameService.makeMove(userId, objectMapper.treeToValue(json, WsMoveDTO.class));
 
-                case "MESSAGE" -> {
-                    // Send message
-                }
+                case "RESIGN" -> gameService.resignGame(userId, objectMapper.treeToValue(json, WsResignDTO.class));
 
-                case "RESIGN" -> {
-                    gameService.resignGame(userId, objectMapper.treeToValue(json, WsResignDTO.class));
-                }
+                case "OFFER_DRAW" -> gameService.handleDraw(userId, objectMapper.treeToValue(json, WsDrawDTO.class));
 
-                case "OFFER_DRAW" -> {
-                    gameService.handleDraw(userId, objectMapper.treeToValue(json, WsDrawDTO.class));
-                }
-
-                default -> {
-                    /* ignore */
-                }
+                default -> { /* ignore */ }
             }
         } catch (ApiException e) {
            sendError(session, e.getStatus().value(), e.getMessage());

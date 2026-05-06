@@ -238,6 +238,16 @@ class MoveGeneratorTest {
     }
 
     @Test
+    void whiteKingShouldNotCastleQueensideWhenCol2Occupied() {
+        board.setPiece(0, 4, new King(Color.WHITE));
+        board.setPiece(0, 0, new Rook(Color.WHITE));
+        board.setPiece(0, 2, new Bishop(Color.WHITE));
+        List<Position> moves = gen.getPseudoLegalMoves(game, board, new Position(0, 4));
+        assertThat(moves).isNotEmpty();
+        assertThat(moves).doesNotContain(new Position(0, 2));
+    }
+
+    @Test
     void blackKingShouldIncludeKingsideCastleWhenAllowed() {
         King king = new King(Color.BLACK);
         Rook rook = new Rook(Color.BLACK);

@@ -113,6 +113,19 @@ class NotificationServiceTest {
     }
 
     @Test
+    void shouldSendDrawOfferToTargetPlayer() throws IOException {
+        UUID targetId = UUID.randomUUID();
+        WebSocketSession session = openSession();
+        when(presenceService.getSessions(targetId)).thenReturn(Set.of(session));
+
+        notificationService.sendDrawOffer(gameId, targetId);
+
+        ArgumentCaptor<TextMessage> captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session).sendMessage(captor.capture());
+        assertThat(captor.getValue().getPayload()).contains(gameId.toString());
+    }
+
+    @Test
     void matchStartedPayloadShouldContainGameId() throws IOException {
         WebSocketSession ws = openSession();
         when(presenceService.getSessions(whiteId)).thenReturn(Set.of(ws));

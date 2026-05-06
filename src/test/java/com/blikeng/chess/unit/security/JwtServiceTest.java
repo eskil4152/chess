@@ -88,4 +88,12 @@ class JwtServiceTest {
 
         assertThat(JwtService.getCurrentUser()).isNull();
     }
+
+    @Test
+    void getCurrentUserShouldReturnNullWhenPrincipalIsNotJwtPrincipal() {
+        var auth = new UsernamePasswordAuthenticationToken("some-string-principal", null, List.of());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        assertThat(JwtService.getCurrentUser()).isNull();
+    }
 }

@@ -1,11 +1,16 @@
 package com.blikeng.chess.unit.service;
 
+import com.blikeng.chess.dto.GameStateDTO;
+import com.blikeng.chess.dto.websocket.WsDrawDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
+import com.blikeng.chess.dto.websocket.WsResignDTO;
 import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.errorTypes.GameNotFoundException;
 import com.blikeng.chess.exception.errorTypes.InvalidMoveException;
 import com.blikeng.chess.exception.errorTypes.InvalidUUIDException;
+import com.blikeng.chess.exception.errorTypes.InvalidUserException;
+import com.blikeng.chess.exception.errorTypes.NotAllowedException;
 import com.blikeng.chess.model.Game;
 import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.model.Position;
@@ -18,27 +23,30 @@ import com.blikeng.chess.notifications.events.MatchEndedEvent;
 import com.blikeng.chess.notifications.events.MatchStartedEvent;
 import com.blikeng.chess.notifications.events.MoveMadeEvent;
 import com.blikeng.chess.repository.GameRepository;
+import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.service.GameService;
 import com.blikeng.chess.service.UserService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.socket.WebSocketSession;
 
 import java.time.Instant;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -61,14 +69,22 @@ class GameServiceTest {
         savedEntity = new GameEntity(white, black, GameStatus.ONGOING, Instant.now());
     }
 
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     private void stubSave() {
         when(gameRepository.save(any())).thenReturn(savedEntity);
     }
 
+    @SuppressWarnings("unchecked")
     private Game beginAndGetGame() {
         stubSave();
         gameService.beginGame(white, black);
-        return gameService.getActiveGame(white.getId()).orElseThrow();
+        ConcurrentHashMap<UUID, Game> gamesMap = (ConcurrentHashMap<UUID, Game>)
+                ReflectionTestUtils.getField(gameService, "games");
+        return gamesMap.values().iterator().next();
     }
 
 
@@ -105,25 +121,6 @@ class GameServiceTest {
         beginAndGetGame();
         assertThat(gameService.isInGame(UUID.randomUUID())).isFalse();
     }
-
-    // --- Get Active Game ---
-    @Test
-    void getActiveGameShouldReturnGameForBlackPlayer() {
-        beginAndGetGame();
-        assertThat(gameService.getActiveGame(black.getId())).isPresent();
-    }
-
-    @Test
-    void getActiveGameShouldReturnEmptyWhenNoGamesExist() {
-        assertThat(gameService.getActiveGame(UUID.randomUUID())).isEmpty();
-    }
-
-    @Test
-    void getActiveGameShouldReturnEmptyWhenPlayerNotInExistingGame() {
-        beginAndGetGame();
-        assertThat(gameService.getActiveGame(UUID.randomUUID())).isEmpty();
-    }
-
 
     // --- Is User Turn ---
     @Test
@@ -211,6 +208,32 @@ class GameServiceTest {
 
     // --- Game End ---
     @Test
+    void makeMoveShouldPublishMatchEndedWithStalemateWhenDraw() {
+        Game game = beginAndGetGame();
+
+        for (int r = 0; r < 8; r++)
+            for (int c = 0; c < 8; c++)
+                game.getBoard().setPiece(r, c, null);
+
+        // White queen at d7, white king at c6, black king at a8
+        // d7c7 → queen to c7, covering all black king escape squares → stalemate
+        game.getBoard().setPiece(6, 3, new Queen(Color.WHITE)); // d7
+        game.getBoard().setPiece(5, 2, new King(Color.WHITE));  // c6
+        game.getBoard().setPiece(7, 0, new King(Color.BLACK));  // a8
+        game.setWhiteKingPosition(new Position(5, 2));
+        game.setBlackKingPosition(new Position(7, 0));
+
+        when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
+
+        gameService.makeMove(white.getId(), new WsMoveDTO(game.getId().toString(), "d7c7"));
+
+        ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
+        assertThat(captor.getAllValues()).anyMatch(e -> e instanceof MatchEndedEvent);
+        assertThat(gameService.isInGame(white.getId())).isFalse();
+    }
+
+    @Test
     void makeMoveShouldPublishMatchEndedAndRemoveGameWhenOver() {
         Game game = beginAndGetGame();
 
@@ -237,47 +260,127 @@ class GameServiceTest {
     }
 
 
-    // --- Session Connected ---
+    // --- Resign ---
     @Test
-    void onSessionConnectedShouldSendGameStateWhenPlayerIsInGame() {
-        beginAndGetGame();
-        WebSocketSession session = mock(WebSocketSession.class);
-        gameService.onSessionConnected(white.getId(), session);
-        verify(notificationService).sendToSession(eq(session), any(String.class));
+    void resignGameShouldThrowWhenUserNotInGame() {
+        Game game = beginAndGetGame();
+        WsResignDTO dto = new WsResignDTO(game.getId().toString());
+        assertThatThrownBy(() -> gameService.resignGame(UUID.randomUUID(), dto))
+                .isInstanceOf(NotAllowedException.class);
     }
 
     @Test
-    void onSessionConnectedShouldSendGameStateForBlackPlayer() {
-        beginAndGetGame();
-        WebSocketSession session = mock(WebSocketSession.class);
-        gameService.onSessionConnected(black.getId(), session);
-        verify(notificationService).sendToSession(eq(session), any(String.class));
+    void resignGameShouldEndGameWithBlackWinWhenWhiteResigns() {
+        Game game = beginAndGetGame();
+        when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
+
+        gameService.resignGame(white.getId(), new WsResignDTO(game.getId().toString()));
+
+        ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
+        assertThat(captor.getAllValues()).anyMatch(e ->
+                e instanceof MatchEndedEvent ev && ev.status() == GameStatus.BLACK_WIN);
+        assertThat(gameService.isInGame(white.getId())).isFalse();
     }
 
     @Test
-    void onSessionConnectedShouldDoNothingWhenPlayerNotInGame() {
-        WebSocketSession session = mock(WebSocketSession.class);
-        gameService.onSessionConnected(UUID.randomUUID(), session);
-        verifyNoInteractions(notificationService);
+    void resignGameShouldEndGameWithWhiteWinWhenBlackResigns() {
+        Game game = beginAndGetGame();
+        when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
+
+        gameService.resignGame(black.getId(), new WsResignDTO(game.getId().toString()));
+
+        ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
+        assertThat(captor.getAllValues()).anyMatch(e ->
+                e instanceof MatchEndedEvent ev && ev.status() == GameStatus.WHITE_WIN);
+    }
+
+    // --- Draw ---
+    @Test
+    void handleDrawShouldThrowWhenUserNotInGame() {
+        Game game = beginAndGetGame();
+        WsDrawDTO dto = new WsDrawDTO(game.getId().toString());
+        assertThatThrownBy(() -> gameService.handleDraw(UUID.randomUUID(), dto))
+                .isInstanceOf(NotAllowedException.class);
     }
 
     @Test
-    void onSessionConnectedShouldDoNothingWhenPlayerNotInExistingGame() {
-        beginAndGetGame();
-        WebSocketSession session = mock(WebSocketSession.class);
-        gameService.onSessionConnected(UUID.randomUUID(), session);
-        verifyNoInteractions(notificationService);
+    void handleDrawShouldSendDrawOfferToWhiteWhenBlackOffers() {
+        Game game = beginAndGetGame();
+
+        gameService.handleDraw(black.getId(), new WsDrawDTO(game.getId().toString()));
+
+        verify(notificationService).sendDrawOffer(eq(game.getId()), eq(white.getId()));
+        assertThat(gameService.isInGame(black.getId())).isTrue();
     }
 
     @Test
-    void onSessionConnectedShouldNotSendOnJsonException() throws Exception {
-        beginAndGetGame();
-        ObjectMapper failingMapper = mock(ObjectMapper.class);
-        when(failingMapper.writeValueAsString(any())).thenThrow(new JsonProcessingException("fail") {});
-        ReflectionTestUtils.setField(gameService, "objectMapper", failingMapper);
+    void handleDrawShouldSendDrawOfferWhenOnlyOnePlayerAccepts() {
+        Game game = beginAndGetGame();
 
-        WebSocketSession session = mock(WebSocketSession.class);
-        gameService.onSessionConnected(white.getId(), session);
-        verifyNoInteractions(notificationService);
+        gameService.handleDraw(white.getId(), new WsDrawDTO(game.getId().toString()));
+
+        verify(notificationService).sendDrawOffer(eq(game.getId()), eq(black.getId()));
+        assertThat(gameService.isInGame(white.getId())).isTrue();
+    }
+
+    @Test
+    void handleDrawShouldEndGameWhenBothPlayersAccept() {
+        Game game = beginAndGetGame();
+        when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
+
+        gameService.handleDraw(white.getId(), new WsDrawDTO(game.getId().toString()));
+        gameService.handleDraw(black.getId(), new WsDrawDTO(game.getId().toString()));
+
+        ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
+        assertThat(captor.getAllValues()).anyMatch(e ->
+                e instanceof MatchEndedEvent ev && ev.status() == GameStatus.DRAW);
+        assertThat(gameService.isInGame(white.getId())).isFalse();
+    }
+
+    // --- Restore Game State ---
+    private void setupSecurityContext(UUID userId) {
+        var principal = new JwtPrincipal(userId, "testuser");
+        var auth = new UsernamePasswordAuthenticationToken(principal, null);
+        SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+
+    @Test
+    void restoreGameStateShouldReturnStateWhenPlayerIsInGame() {
+        beginAndGetGame();
+        setupSecurityContext(white.getId());
+        GameStateDTO dto = gameService.restoreGameState();
+        assertThat(dto.whiteId()).isEqualTo(white.getId());
+    }
+
+    @Test
+    void restoreGameStateShouldReturnStateForBlackPlayer() {
+        beginAndGetGame();
+        setupSecurityContext(black.getId());
+        GameStateDTO dto = gameService.restoreGameState();
+        assertThat(dto.blackId()).isEqualTo(black.getId());
+    }
+
+    @Test
+    void restoreGameStateShouldThrowWhenPlayerNotInGame() {
+        setupSecurityContext(UUID.randomUUID());
+        assertThatThrownBy(() -> gameService.restoreGameState())
+                .isInstanceOf(GameNotFoundException.class);
+    }
+
+    @Test
+    void restoreGameStateShouldThrowWhenExistingGameDoesNotBelongToUser() {
+        beginAndGetGame();
+        setupSecurityContext(UUID.randomUUID());
+        assertThatThrownBy(() -> gameService.restoreGameState())
+                .isInstanceOf(GameNotFoundException.class);
+    }
+
+    @Test
+    void restoreGameStateShouldThrowWhenNotAuthenticated() {
+        assertThatThrownBy(() -> gameService.restoreGameState())
+                .isInstanceOf(InvalidUserException.class);
     }
 }

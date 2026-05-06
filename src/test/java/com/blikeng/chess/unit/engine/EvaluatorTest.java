@@ -196,6 +196,20 @@ class EvaluatorTest {
         assertThat(Evaluator.evaluate(game)).isLessThan(0);
     }
 
+    @Test
+    void evaluateShouldHandleWhitePawnAtPromotionRank() {
+        Pawn p = new Pawn(Color.WHITE); p.setMoved();
+        board.setPiece(7, 3, p);
+        assertThat(Evaluator.evaluate(game)).isGreaterThan(0);
+    }
+
+    @Test
+    void evaluateShouldHandleBlackPawnAtBackRank() {
+        Pawn p = new Pawn(Color.BLACK); p.setMoved();
+        board.setPiece(0, 3, p);
+        assertThat(Evaluator.evaluate(game)).isLessThan(0);
+    }
+
 
     // --- miniMax (pawn paths and black's turn) ---
     @Test

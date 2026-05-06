@@ -121,7 +121,7 @@ public class GameService {
                 game.addMove(moveDTO.move());
 
                 EndedBy endedBy;
-                if (gameStatus == GameStatus.DRAW)  endedBy = EndedBy.STALEMATE;
+                if (gameStatus == GameStatus.DRAW) endedBy = EndedBy.STALEMATE;
                 else endedBy = EndedBy.CHECKMATE;
 
                 handleGameEnd(game, gameStatus, endedBy);
