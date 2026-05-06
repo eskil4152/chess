@@ -1,17 +1,14 @@
 package com.blikeng.chess.service;
 
 import com.blikeng.chess.dto.websocket.WsDrawDTO;
-import com.blikeng.chess.dto.websocket.WsGameStateDTO;
+import com.blikeng.chess.dto.GameStateDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
 import com.blikeng.chess.dto.websocket.WsResignDTO;
 import com.blikeng.chess.engine.MoveExecutor;
 import com.blikeng.chess.engine.PositionMapper;
 import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.entity.UserEntity;
-import com.blikeng.chess.exception.errorTypes.GameNotFoundException;
-import com.blikeng.chess.exception.errorTypes.InvalidMoveException;
-import com.blikeng.chess.exception.errorTypes.InvalidUUIDException;
-import com.blikeng.chess.exception.errorTypes.NotAllowedException;
+import com.blikeng.chess.exception.errorTypes.*;
 import com.blikeng.chess.model.*;
 import com.blikeng.chess.model.piece.PieceType;
 import com.blikeng.chess.notifications.NotificationService;
@@ -19,14 +16,16 @@ import com.blikeng.chess.notifications.events.MatchEndedEvent;
 import com.blikeng.chess.notifications.events.MatchStartedEvent;
 import com.blikeng.chess.notifications.events.MoveMadeEvent;
 import com.blikeng.chess.repository.GameRepository;
+import com.blikeng.chess.security.JwtPrincipal;
+import com.blikeng.chess.security.JwtService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.socket.WebSocketSession;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -137,33 +136,29 @@ public class GameService {
                 .anyMatch(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId));
     }
 
-    public Optional<Game> getActiveGame(UUID userId) {
-        return games.values().stream()
-                .filter(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId))
-                .findFirst();
-    }
+    public GameStateDTO restoreGameState() {
+        JwtPrincipal jwtPrincipal = JwtService.getCurrentUser();
+        if (jwtPrincipal == null) throw new InvalidUserException();
 
-    public void onSessionConnected(UUID userId, WebSocketSession session) {
-        games.values().stream()
+        UUID userId = jwtPrincipal.userId();
+
+        GameStateDTO gameNullable =  games.values().stream()
                 .filter(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId))
                 .findFirst()
-                .ifPresent(game -> {
-                    try {
-                        String payload = objectMapper.writeValueAsString(new WsGameStateDTO(
-                                game.getId(),
-                                game.getWhiteId(),
-                                game.getWhiteUsername(),
-                                game.getBlackId(),
-                                game.getBlackUsername(),
-                                game.getMoves(),
-                                game.isWhiteDraw(),
-                                game.isBlackDraw()
-                        ));
-                        notificationService.sendToSession(session, payload);
-                    } catch (JsonProcessingException e) {
-                        logger.error("Error serializing game state for game {}: ", game.getId(), e);
-                    }
-                });
+                .map(game -> new GameStateDTO(
+                        game.getId(),
+                        game.getWhiteId(),
+                        game.getWhiteUsername(),
+                        game.getBlackId(),
+                        game.getBlackUsername(),
+                        game.getMoves(),
+                        game.isWhiteDraw(),
+                        game.isBlackDraw()
+                ))
+                .orElse(null);
+
+        if (gameNullable == null) throw new GameNotFoundException();
+        else return gameNullable;
     }
 
     @Transactional
@@ -214,18 +209,6 @@ public class GameService {
         }
     }
 
-    private boolean isUserTurn(Game game, UUID userId) {
-        return game.isWhiteTurn() ? game.getWhiteId().equals(userId) : game.getBlackId().equals(userId);
-    }
-
-    private Optional<Game> getGame(String gameString) {
-        try {
-            return Optional.ofNullable(games.get(UUID.fromString(gameString)));
-        } catch (IllegalArgumentException _) {
-            throw new InvalidUUIDException();
-        }
-    }
-
     private void handleGameEnd(Game game, GameStatus gameStatus, EndedBy endedBy) {
         gameRepository.findById(game.getId()).ifPresent(entity -> {
             entity.setMoves(game.getMoves());
@@ -239,5 +222,17 @@ public class GameService {
         userService.updateUserElo(game.getWhiteId(), game.getBlackId(), gameStatus);
 
         logger.info("Game ended: {}. Black: {}. White: {}. Result: {}", game.getId(), game.getWhiteUsername(), game.getBlackUsername(), gameStatus.name());
+    }
+
+    private Optional<Game> getGame(String gameString) {
+        try {
+            return Optional.ofNullable(games.get(UUID.fromString(gameString)));
+        } catch (IllegalArgumentException _) {
+            throw new InvalidUUIDException();
+        }
+    }
+
+    private boolean isUserTurn(Game game, UUID userId) {
+        return game.isWhiteTurn() ? game.getWhiteId().equals(userId) : game.getBlackId().equals(userId);
     }
 }

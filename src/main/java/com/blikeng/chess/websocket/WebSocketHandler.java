@@ -45,10 +45,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) {
         UUID userId = getUserId(session);
         presenceService.saveSession(userId, session);
-        gameService.onSessionConnected(userId, session);
-        if (!gameService.isInGame(userId)) {
-            matchmakingService.queuePlayer(userId);
-        }
 
         logger.debug("New connection for user: {}", userId);
     }

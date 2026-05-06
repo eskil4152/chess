@@ -12,4 +12,5 @@ public final class ErrorMessages {
     public static final String USER_NOT_FOUND = "User not found";
     public static final String INVALID_MOVE = "Invalid move";
     public static final String NOT_ALLOWED = "You are not allowed to perform this action";
+    public static final String ALREADY_QUEUED = "You are already queued";
 }
