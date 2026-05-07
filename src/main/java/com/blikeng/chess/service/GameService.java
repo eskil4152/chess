@@ -59,7 +59,19 @@ public class GameService {
     }
 
     @Transactional
-    public void beginGame(UserEntity whitePlayer, UserEntity blackPlayer) {
+    public void beginGame(UserEntity player1, UserEntity player2) {
+        UserEntity whitePlayer;
+        UserEntity blackPlayer;
+
+        double random = Math.random();
+        if (random < 0.5) {
+            whitePlayer = player1;
+            blackPlayer = player2;
+        } else {
+            whitePlayer = player2;
+            blackPlayer = player1;
+        }
+
         GameEntity gameEntity = gameRepository.save(new GameEntity(
                 whitePlayer,
                 blackPlayer,
