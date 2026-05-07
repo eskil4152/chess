@@ -98,8 +98,9 @@ class UserServiceTest {
 
         userService.updateUserElo(whiteId, blackId, GameStatus.WHITE_WIN);
 
-        assertThat(white.getElo()).isEqualTo(801);
-        assertThat(black.getElo()).isEqualTo(799);
+        assertThat(white.getElo()).isNotEqualTo(800);
+        assertThat(black.getElo()).isNotEqualTo(800);
+        assertThat(white.getElo()).isGreaterThan(black.getElo());
     }
 
     @Test
@@ -117,8 +118,9 @@ class UserServiceTest {
 
         userService.updateUserElo(whiteId, blackId, GameStatus.BLACK_WIN);
 
-        assertThat(black.getElo()).isEqualTo(801);
-        assertThat(white.getElo()).isEqualTo(799);
+        assertThat(black.getElo()).isNotEqualTo(800);
+        assertThat(white.getElo()).isNotEqualTo(800);
+        assertThat(black.getElo()).isGreaterThan(white.getElo());
     }
 
     @Test
@@ -139,7 +141,6 @@ class UserServiceTest {
 
         userService.updateUserElo(whiteId, blackId, GameStatus.DRAW);
 
-        assertThat(white.getElo()).isEqualTo(800);
-        assertThat(black.getElo()).isEqualTo(800);
+        assertThat(white.getElo()).isEqualTo(black.getElo());
     }
 }

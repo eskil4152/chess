@@ -55,7 +55,7 @@ class NotificationServiceTest {
         when(presenceService.getSessions(whiteId)).thenReturn(Set.of(ws));
         when(presenceService.getSessions(blackId)).thenReturn(Set.of(bs));
 
-        notificationService.onMatchStarted(new MatchStartedEvent(gameId, whiteId, "white", blackId, "black"));
+        notificationService.onMatchStarted(new MatchStartedEvent(gameId, whiteId, "white", blackId, "black", 100, 100));
 
         verify(ws).sendMessage(any(TextMessage.class));
         verify(bs).sendMessage(any(TextMessage.class));
@@ -81,7 +81,7 @@ class NotificationServiceTest {
         when(presenceService.getSessions(whiteId)).thenReturn(Set.of(ws));
         when(presenceService.getSessions(blackId)).thenReturn(Set.of(bs));
 
-        notificationService.onMatchEnded(new MatchEndedEvent(gameId, whiteId, blackId, GameStatus.WHITE_WIN, EndedBy.CHECKMATE));
+        notificationService.onMatchEnded(new MatchEndedEvent(gameId, whiteId, blackId, GameStatus.WHITE_WIN, EndedBy.CHECKMATE, 100, 100));
 
         verify(ws).sendMessage(any(TextMessage.class));
         verify(bs).sendMessage(any(TextMessage.class));
@@ -118,7 +118,7 @@ class NotificationServiceTest {
         when(presenceService.getSessions(whiteId)).thenReturn(Set.of(ws));
         when(presenceService.getSessions(blackId)).thenReturn(Set.of());
 
-        notificationService.onMatchStarted(new MatchStartedEvent(gameId, whiteId, "white", blackId, "black"));
+        notificationService.onMatchStarted(new MatchStartedEvent(gameId, whiteId, "white", blackId, "black", 100, 100));
 
         ArgumentCaptor<TextMessage> captor = ArgumentCaptor.forClass(TextMessage.class);
         verify(ws).sendMessage(captor.capture());

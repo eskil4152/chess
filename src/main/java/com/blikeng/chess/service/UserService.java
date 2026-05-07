@@ -32,7 +32,7 @@ public class UserService {
     public int[] updateUserElo(UUID whiteId, UUID blackId, GameStatus status){
         return switch (status) {
             case WHITE_WIN -> updateElo(whiteId, blackId, true, false);
-            case BLACK_WIN -> updateElo(blackId, whiteId, false, false);
+            case BLACK_WIN -> updateElo(whiteId, blackId, false, false);
             case DRAW -> updateElo(whiteId, blackId, false, true);
             default -> new int[0];
         };

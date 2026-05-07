@@ -81,8 +81,9 @@ class GameServiceTest {
         verify(gameRepository).save(any());
         ArgumentCaptor<MatchStartedEvent> captor = ArgumentCaptor.forClass(MatchStartedEvent.class);
         verify(eventPublisher).publishEvent(captor.capture());
-        assertThat(captor.getValue().whiteUsername()).isEqualTo("white");
-        assertThat(captor.getValue().blackUsername()).isEqualTo("black");
+        assertThat(captor.getValue().whiteUsername()).isIn("white", "black");
+        assertThat(captor.getValue().blackUsername()).isIn("white", "black");
+        assertThat(captor.getValue().whiteUsername()).isNotEqualTo(captor.getValue().blackUsername());
     }
 
     @Test
@@ -129,8 +130,8 @@ class GameServiceTest {
     @Test
     void makeMoveShouldAllowBlackMoveWhenItIsBlacksTurn() {
         Game game = beginAndGetGame();
-        gameService.makeMove(white.getId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
-        gameService.makeMove(black.getId(), new WsMoveDTO(game.getId().toString(), "e7e5"));
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
+        gameService.makeMove(game.getBlackId(), new WsMoveDTO(game.getId().toString(), "e7e5"));
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(3)).publishEvent(captor.capture());
@@ -156,7 +157,7 @@ class GameServiceTest {
     void makeMoveShouldThrowWhenMoveTooShort() {
         Game game = beginAndGetGame();
         WsMoveDTO dto = new WsMoveDTO(game.getId().toString(), "e2");
-        assertThatThrownBy(() -> gameService.makeMove(white.getId(), dto))
+        assertThatThrownBy(() -> gameService.makeMove(game.getWhiteId(), dto))
                 .isInstanceOf(InvalidMoveException.class);
     }
 
@@ -164,7 +165,7 @@ class GameServiceTest {
     void makeMoveShouldReturnEarlyWhenNotPlayersTurn() {
         Game game = beginAndGetGame();
         WsMoveDTO dto = new WsMoveDTO(game.getId().toString(), "e7e5");
-        gameService.makeMove(black.getId(), dto);
+        gameService.makeMove(game.getBlackId(), dto);
         verify(eventPublisher, times(1)).publishEvent(any(MatchStartedEvent.class));
     }
 
@@ -172,7 +173,7 @@ class GameServiceTest {
     void makeMoveShouldPublishMoveMadeEventForValidMove() {
         Game game = beginAndGetGame();
         WsMoveDTO dto = new WsMoveDTO(game.getId().toString(), "e2e4");
-        gameService.makeMove(white.getId(), dto);
+        gameService.makeMove(game.getWhiteId(), dto);
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
@@ -183,7 +184,7 @@ class GameServiceTest {
     void makeMoveShouldNotPublishEventForInvalidMove() {
         Game game = beginAndGetGame();
         WsMoveDTO dto = new WsMoveDTO(game.getId().toString(), "e2d3");
-        gameService.makeMove(white.getId(), dto);
+        gameService.makeMove(game.getWhiteId(), dto);
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(1)).publishEvent(captor.capture());
@@ -203,7 +204,7 @@ class GameServiceTest {
         game.getBoard().setPiece(7, 7, new King(Color.BLACK));
         game.setBlackKingPosition(new Position(7, 7));
 
-        gameService.makeMove(white.getId(), new WsMoveDTO(game.getId().toString(), "c7c8q"));
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "c7c8q"));
 
         assertThat(game.getBoard().getPiece(7, 2)).isInstanceOf(Queen.class);
     }
@@ -225,15 +226,16 @@ class GameServiceTest {
         game.setBlackKingPosition(new Position(7, 7));
 
         when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
+        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
 
-        gameService.makeMove(white.getId(), new WsMoveDTO(game.getId().toString(), "g5g7"));
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "g5g7"));
 
         verify(gameRepository).findById(game.getId());
         verify(gameRepository, atLeast(2)).save(any());
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
         assertThat(captor.getAllValues()).anyMatch(e -> e instanceof MatchEndedEvent);
-        assertThat(gameService.isInGame(white.getId())).isFalse();
+        assertThat(gameService.isInGame(game.getWhiteId())).isFalse();
     }
 
 
