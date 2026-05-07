@@ -12,7 +12,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<String> handleException(ApiException ex) {
-        logger.warn("API exception: {} {}", ex.getStatus(), ex.getMessage(), ex);
+        logger.warn("API exception: {} {}", ex.getStatus(), ex.getMessage());
 
         return ResponseEntity
                 .status(ex.getStatus())
