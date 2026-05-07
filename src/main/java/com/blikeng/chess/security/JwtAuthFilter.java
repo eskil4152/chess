@@ -44,11 +44,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (token != null && !token.isBlank()
                 && SecurityContextHolder.getContext().getAuthentication() == null) {
-            JwtPrincipal username = jwtService.validateToken(token);
+            JwtPrincipal jwtPrincipal = jwtService.validateToken(token);
 
-            if (username != null) {
+            if (jwtPrincipal != null) {
                 UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(username, null, List.of());
+                        new UsernamePasswordAuthenticationToken(jwtPrincipal, null, List.of());
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } else {
                 logger.warn("Invalid JWT token in request to {}", request.getRequestURI());

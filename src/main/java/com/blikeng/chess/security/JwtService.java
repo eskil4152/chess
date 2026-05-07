@@ -39,6 +39,7 @@ public class JwtService {
         return Jwts.builder()
                 .setSubject(user.getId().toString())
                 .claim("username", user.getUsername())
+                .claim("role", user.getRole())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000))
                 .signWith(key(), SignatureAlgorithm.HS512)
@@ -55,8 +56,9 @@ public class JwtService {
 
             UUID userId = UUID.fromString(claims.getSubject());
             String username = claims.get("username", String.class);
+            UserRole role = UserRole.valueOf(claims.get("role", String.class));
 
-            return new JwtPrincipal(userId, username);
+            return new JwtPrincipal(userId, username, role);
         } catch (Exception e) {
             logger.error("Invalid token: {}", e.getMessage());
             return null;

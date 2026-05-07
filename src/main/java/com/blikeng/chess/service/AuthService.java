@@ -47,7 +47,7 @@ public class AuthService {
 
         String token = jwtService.generateToken(user.get());
         AuthDTO authDTO = new AuthDTO(
-                user.get().getId(), user.get().getUsername(), UserRole.USER
+                user.get().getId(), user.get().getUsername(), user.get().getRole()
         );
 
         return new AuthResult(token, authDTO);
@@ -66,7 +66,7 @@ public class AuthService {
 
         String token = jwtService.generateToken(user);
         AuthDTO authDTO = new AuthDTO(
-                user.getId(), user.getUsername(), UserRole.USER
+                user.getId(), user.getUsername(), user.getRole()
         );
 
         return new AuthResult(token, authDTO);
@@ -79,7 +79,7 @@ public class AuthService {
         return new AuthDTO(
                 principal.userId(),
                 principal.username(),
-                UserRole.USER
+                principal.role()
         );
     }
 

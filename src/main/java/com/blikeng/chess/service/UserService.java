@@ -31,28 +31,50 @@ public class UserService {
     public void updateUserElo(UUID whiteId, UUID blackId, GameStatus status){
         if (status == GameStatus.ONGOING) return;
 
-        if (status == GameStatus.BLACK_WIN) {
-            updateElo(blackId, true, false);
-            updateElo(whiteId, false, false);
-        } else if (status == GameStatus.WHITE_WIN) {
-            updateElo(blackId, false, false);
-            updateElo(whiteId, true, false);
-        } else {
-            updateElo(blackId, false, true);
-            updateElo(whiteId, false, true);
+        switch (status) {
+            case WHITE_WIN -> updateElo(whiteId, blackId, true, false);
+            case BLACK_WIN -> updateElo(blackId, whiteId, false, false);
+            case DRAW -> updateElo(whiteId, blackId, false, true);
         }
     }
 
-    private void updateElo(UUID userId, boolean won, boolean draw){
-        UserEntity user = userRepository.findById(userId).orElseThrow();
+    private void updateElo(UUID whiteId, UUID blackId, boolean whiteWin, boolean draw){
+        UserEntity white = userRepository.findById(whiteId).orElseThrow();
+        UserEntity black = userRepository.findById(blackId).orElseThrow();
 
-        int elo = user.getElo();
+        int whiteElo = calculateNewElo(
+                white.getElo(),
+                black.getElo(),
+                whiteWin ? 1.0 : draw ? 0.5 : 0.0,
+                getKFactor(white.getGames(), white.isBeen2400())
+        );
+        int blackElo = calculateNewElo(
+                black.getElo(),
+                white.getElo(),
+                whiteWin ? 0.0 : draw ? 0.5 : 1.0,
+                getKFactor(black.getGames(), black.isBeen2400())
+        );
 
-        if (won) elo += 1;
-        else if (draw) elo += 0;
-        else elo -= 1;
+        white.setGames(white.getGames() + 1);
+        if (whiteElo > 2399) white.setBeen2400(true);
+        white.setElo(whiteElo);
 
-        user.setElo(elo);
-        userRepository.save(user);
+        black.setGames(black.getGames() + 1);
+        if (blackElo > 2399) black.setBeen2400(true);
+        black.setElo(blackElo);
+
+        userRepository.save(white);
+        userRepository.save(black);
+    }
+
+    private int calculateNewElo(int playerElo, int opponentElo, double score, int kFactor) {
+        double expected = 1.0 / (1 + Math.pow(10, (opponentElo - playerElo) / 400.0));
+        return (int) Math.round(playerElo + kFactor * (score - expected));
+    }
+
+    private int getKFactor(int gamesPlayed, boolean been2400) {
+        if (been2400) return 10;
+
+        return gamesPlayed >= 30 ? 20 : 40;
     }
 }
