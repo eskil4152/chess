@@ -62,7 +62,7 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .csrf(csrf -> {
                         CookieCsrfTokenRepository csrfRepo = CookieCsrfTokenRepository.withHttpOnlyFalse();
-                        csrfRepo.setCookieCustomizer(cookie -> cookie.domain(".blikeng.com"));
+                        csrfRepo.setCookieCustomizer(cookie -> cookie.domain("blikeng.com"));
                         csrf.csrfTokenRepository(csrfRepo)
                             .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler());
                 })
