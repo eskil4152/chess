@@ -3,6 +3,7 @@ package com.blikeng.chess.unit.security;
 import com.blikeng.chess.security.AuthHandshakeInterceptor;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
+import com.blikeng.chess.security.UserRole;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -70,7 +71,7 @@ class AuthHandshakeInterceptorTest {
     @Test
     void beforeHandshakeShouldSetAttributesAndReturnTrueOnValidToken() {
         UUID userId = UUID.randomUUID();
-        JwtPrincipal principal = new JwtPrincipal(userId, "user");
+        JwtPrincipal principal = new JwtPrincipal(userId, "user", UserRole.USER);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setCookies(new Cookie("AUTH", "valid-token"));
         when(jwtService.validateToken("valid-token")).thenReturn(principal);

@@ -1,6 +1,7 @@
 package com.blikeng.chess.unit.security;
 
 import com.blikeng.chess.entity.UserEntity;
+import com.blikeng.chess.security.UserRole;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -71,7 +72,7 @@ class JwtServiceTest {
 
     @Test
     void getCurrentUserShouldReturnJwtPrincipal() {
-        JwtPrincipal principal = new JwtPrincipal(user.getId(), "testuser");
+        JwtPrincipal principal = new JwtPrincipal(user.getId(), "testuser", UserRole.USER);
         var auth = new UsernamePasswordAuthenticationToken(principal, null, List.of());
         SecurityContextHolder.getContext().setAuthentication(auth);
 

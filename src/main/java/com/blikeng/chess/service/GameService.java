@@ -58,7 +58,19 @@ public class GameService {
     }
 
     @Transactional
-    public void beginGame(UserEntity whitePlayer, UserEntity blackPlayer) {
+    public void beginGame(UserEntity player1, UserEntity player2) {
+        UserEntity whitePlayer;
+        UserEntity blackPlayer;
+
+        double random = Math.random();
+        if (random < 0.5) {
+            whitePlayer = player1;
+            blackPlayer = player2;
+        } else {
+            whitePlayer = player2;
+            blackPlayer = player1;
+        }
+
         GameEntity gameEntity = gameRepository.save(new GameEntity(
                 whitePlayer,
                 blackPlayer,
@@ -77,7 +89,9 @@ public class GameService {
                 whitePlayer.getId(),
                 whitePlayer.getUsername(),
                 blackPlayer.getId(),
-                blackPlayer.getUsername()
+                blackPlayer.getUsername(),
+                whitePlayer.getElo(),
+                blackPlayer.getElo()
         ));
 
         logger.info("Game started: {}. White: {}. Black: {}", game.getId(), whitePlayer.getUsername(), blackPlayer.getUsername());
@@ -220,10 +234,10 @@ public class GameService {
             ));
         }
 
-        eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, endedBy));
-        games.remove(game.getId());
+        int[] newElo = userService.updateUserElo(game.getWhiteId(), game.getBlackId(), gameStatus);
 
-        userService.updateUserElo(game.getWhiteId(), game.getBlackId(), gameStatus);
+        eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, endedBy, newElo[0], newElo[1]));
+        games.remove(game.getId());
 
         logger.info("Game ended: {}. Black: {}. White: {}. Result: {}", game.getId(), game.getWhiteUsername(), game.getBlackUsername(), gameStatus.name());
     }

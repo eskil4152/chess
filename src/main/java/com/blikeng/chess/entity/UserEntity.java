@@ -1,9 +1,7 @@
 package com.blikeng.chess.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.blikeng.chess.security.UserRole;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -38,4 +36,14 @@ public class UserEntity {
 
     @Setter
     private int elo = 800;
+
+    @Setter
+    private boolean been2400 = false;
+
+    @Setter
+    @Enumerated(EnumType.STRING)
+    private UserRole role = UserRole.USER;
+
+    @Setter
+    private int games = 0;
 }

@@ -1,5 +1,6 @@
 package com.blikeng.chess.unit.security;
 
+import com.blikeng.chess.security.UserRole;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
@@ -72,7 +73,7 @@ class JwtAuthFilterTest {
 
     @Test
     void shouldSetAuthenticationWhenTokenIsValid() throws Exception {
-        JwtPrincipal principal = new JwtPrincipal(UUID.randomUUID(), "user");
+        JwtPrincipal principal = new JwtPrincipal(UUID.randomUUID(), "user", UserRole.USER);
         when(jwtService.validateToken("valid-token")).thenReturn(principal);
         request.setCookies(new Cookie("AUTH", "valid-token"));
 
@@ -97,7 +98,7 @@ class JwtAuthFilterTest {
 
     @Test
     void shouldSkipValidationWhenAuthAlreadyExists() throws Exception {
-        JwtPrincipal principal = new JwtPrincipal(UUID.randomUUID(), "user");
+        JwtPrincipal principal = new JwtPrincipal(UUID.randomUUID(), "user", UserRole.USER);
         var existingAuth = new UsernamePasswordAuthenticationToken(principal, null, List.of());
         SecurityContextHolder.getContext().setAuthentication(existingAuth);
 

@@ -9,9 +9,11 @@ public record WsGameEndedDTO(
         WsMessageType type,
         UUID gameId,
         GameStatus status,
-        EndedBy endedBy
+        EndedBy endedBy,
+        int whiteElo,
+        int blackElo
 ) {
-    public WsGameEndedDTO(UUID gameId, GameStatus status, EndedBy endedBy) {
-        this(WsMessageType.GAME_ENDED, gameId, status, endedBy);
+    public WsGameEndedDTO(UUID gameId, GameStatus status, EndedBy endedBy, int whiteElo, int blackElo) {
+        this(WsMessageType.GAME_ENDED, gameId, status, endedBy, whiteElo, blackElo);
     }
 }

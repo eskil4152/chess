@@ -19,7 +19,6 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -36,7 +35,7 @@ public class NotificationService {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onMatchStarted(MatchStartedEvent event) {
         String payload = serialize(new WsGameStartedDTO(
-                event.gameId(), event.whiteId(), event.whiteUsername(), event.blackId(), event.blackUsername()
+                event.gameId(), event.whiteId(), event.whiteUsername(), event.blackId(), event.blackUsername(), event.whiteElo(), event.blackElo()
         ));
         sendToUser(event.whiteId(), payload);
         sendToUser(event.blackId(), payload);
@@ -51,7 +50,7 @@ public class NotificationService {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onMatchEnded(MatchEndedEvent event) {
-        String payload = serialize(new WsGameEndedDTO(event.gameId(), event.status(), event.endedBy()));
+        String payload = serialize(new WsGameEndedDTO(event.gameId(), event.status(), event.endedBy(), event.whiteElo(), event.blackElo()));
         sendToUser(event.whiteId(), payload);
         sendToUser(event.blackId(), payload);
     }

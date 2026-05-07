@@ -9,6 +9,7 @@ import com.blikeng.chess.repository.AuthRepository;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.PasswordService;
+import com.blikeng.chess.security.UserRole;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -167,7 +168,7 @@ class AuthServiceTest {
     @Test
     void authenticateShouldReturnAuthDTOForValidPrincipal() {
         UUID id = UUID.randomUUID();
-        JwtPrincipal principal = new JwtPrincipal(id, "user");
+        JwtPrincipal principal = new JwtPrincipal(id, "user", UserRole.USER);
         var auth = new UsernamePasswordAuthenticationToken(principal, null, List.of());
         SecurityContextHolder.getContext().setAuthentication(auth);
 

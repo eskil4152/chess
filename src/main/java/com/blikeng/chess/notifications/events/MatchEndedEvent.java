@@ -10,6 +10,8 @@ public record MatchEndedEvent(
         UUID whiteId,
         UUID blackId,
         GameStatus status,
-        EndedBy endedBy
+        EndedBy endedBy,
+        int whiteElo,
+        int blackElo
 ) {
 }
