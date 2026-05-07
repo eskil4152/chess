@@ -5,6 +5,7 @@ import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.errorTypes.UserNotFoundException;
 import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.repository.UserRepository;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -28,17 +29,16 @@ public class UserService {
                 .orElseThrow(UserNotFoundException::new);
     }
 
-    public void updateUserElo(UUID whiteId, UUID blackId, GameStatus status){
-        if (status == GameStatus.ONGOING) return;
-
-        switch (status) {
+    public int[] updateUserElo(UUID whiteId, UUID blackId, GameStatus status){
+        return switch (status) {
             case WHITE_WIN -> updateElo(whiteId, blackId, true, false);
             case BLACK_WIN -> updateElo(blackId, whiteId, false, false);
             case DRAW -> updateElo(whiteId, blackId, false, true);
-        }
+            default -> new int[0];
+        };
     }
 
-    private void updateElo(UUID whiteId, UUID blackId, boolean whiteWin, boolean draw){
+    private int[] updateElo(UUID whiteId, UUID blackId, boolean whiteWin, boolean draw){
         UserEntity white = userRepository.findById(whiteId).orElseThrow();
         UserEntity black = userRepository.findById(blackId).orElseThrow();
 
@@ -65,6 +65,8 @@ public class UserService {
 
         userRepository.save(white);
         userRepository.save(black);
+
+        return new int[]{whiteElo, blackElo};
     }
 
     private int calculateNewElo(int playerElo, int opponentElo, double score, int kFactor) {

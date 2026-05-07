@@ -90,7 +90,9 @@ public class GameService {
                 whitePlayer.getId(),
                 whitePlayer.getUsername(),
                 blackPlayer.getId(),
-                blackPlayer.getUsername()
+                blackPlayer.getUsername(),
+                whitePlayer.getElo(),
+                blackPlayer.getElo()
         ));
 
         logger.info("Game started: {}. White: {}. Black: {}", game.getId(), whitePlayer.getUsername(), blackPlayer.getUsername());
@@ -249,10 +251,10 @@ public class GameService {
             ));
         }
 
-        eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, endedBy));
-        games.remove(game.getId());
+        int[] newElo = userService.updateUserElo(game.getWhiteId(), game.getBlackId(), gameStatus);
 
-        userService.updateUserElo(game.getWhiteId(), game.getBlackId(), gameStatus);
+        eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, endedBy, newElo[0], newElo[1]));
+        games.remove(game.getId());
 
         logger.info("Game ended: {}. Black: {}. White: {}. Result: {}", game.getId(), game.getWhiteUsername(), game.getBlackUsername(), gameStatus.name());
     }

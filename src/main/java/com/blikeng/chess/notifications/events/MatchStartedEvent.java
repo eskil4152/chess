@@ -7,6 +7,8 @@ public record MatchStartedEvent(
         UUID whiteId,
         String whiteUsername,
         UUID blackId,
-        String blackUsername
+        String blackUsername,
+        int whiteElo,
+        int blackElo
 ) {
 }
