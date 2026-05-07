@@ -143,4 +143,76 @@ class UserServiceTest {
 
         assertThat(white.getElo()).isEqualTo(black.getElo());
     }
+
+    // --- been2400 ---
+    @Test
+    void updateUserEloShouldSetBeen2400WhenWhiteCrosses2400() {
+        UserEntity white = new UserEntity("white", "h");
+        UserEntity black = new UserEntity("black", "h");
+        white.setElo(2399);
+        black.setElo(2399);
+
+        when(userRepository.findById(white.getId())).thenReturn(Optional.of(white));
+        when(userRepository.findById(black.getId())).thenReturn(Optional.of(black));
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        userService.updateUserElo(white.getId(), black.getId(), GameStatus.WHITE_WIN);
+
+        assertThat(white.isBeen2400()).isTrue();
+        assertThat(black.isBeen2400()).isFalse();
+    }
+
+    @Test
+    void updateUserEloShouldSetBeen2400WhenBlackCrosses2400() {
+        UserEntity white = new UserEntity("white", "h");
+        UserEntity black = new UserEntity("black", "h");
+        white.setElo(2399);
+        black.setElo(2399);
+
+        when(userRepository.findById(white.getId())).thenReturn(Optional.of(white));
+        when(userRepository.findById(black.getId())).thenReturn(Optional.of(black));
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        userService.updateUserElo(white.getId(), black.getId(), GameStatus.BLACK_WIN);
+
+        assertThat(black.isBeen2400()).isTrue();
+        assertThat(white.isBeen2400()).isFalse();
+    }
+
+    // --- KFactor ---
+    @Test
+    void updateUserEloShouldUseKFactor10WhenBeen2400() {
+        // equal ELO → expected=0.5, K=10 win: delta = round(10*0.5) = 5
+        UserEntity white = new UserEntity("white", "h");
+        UserEntity black = new UserEntity("black", "h");
+        white.setElo(1000);
+        black.setElo(1000);
+        white.setBeen2400(true);
+
+        when(userRepository.findById(white.getId())).thenReturn(Optional.of(white));
+        when(userRepository.findById(black.getId())).thenReturn(Optional.of(black));
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        userService.updateUserElo(white.getId(), black.getId(), GameStatus.WHITE_WIN);
+
+        assertThat(white.getElo()).isEqualTo(1005);
+    }
+
+    @Test
+    void updateUserEloShouldUseKFactor20WhenOver30Games() {
+        // equal ELO → expected=0.5, K=20 win: delta = round(20*0.5) = 10
+        UserEntity white = new UserEntity("white", "h");
+        UserEntity black = new UserEntity("black", "h");
+        white.setElo(1000);
+        black.setElo(1000);
+        white.setGames(30);
+
+        when(userRepository.findById(white.getId())).thenReturn(Optional.of(white));
+        when(userRepository.findById(black.getId())).thenReturn(Optional.of(black));
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        userService.updateUserElo(white.getId(), black.getId(), GameStatus.WHITE_WIN);
+
+        assertThat(white.getElo()).isEqualTo(1010);
+    }
 }

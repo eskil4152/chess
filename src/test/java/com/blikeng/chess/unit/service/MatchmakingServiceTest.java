@@ -4,6 +4,7 @@ import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.errorTypes.ExistingGameException;
 import com.blikeng.chess.exception.errorTypes.InvalidUserException;
 import com.blikeng.chess.security.JwtPrincipal;
+import com.blikeng.chess.security.UserRole;
 import com.blikeng.chess.service.AuthService;
 import com.blikeng.chess.service.GameService;
 import com.blikeng.chess.service.MatchmakingService;
@@ -47,7 +48,7 @@ class MatchmakingServiceTest {
     }
 
     private void setupSecurityContext(UUID userId) {
-        var principal = new JwtPrincipal(userId, "testuser");
+        var principal = new JwtPrincipal(userId, "testuser", UserRole.USER);
         var auth = new UsernamePasswordAuthenticationToken(principal, null);
         SecurityContextHolder.getContext().setAuthentication(auth);
     }

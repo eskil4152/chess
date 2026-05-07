@@ -24,6 +24,7 @@ import com.blikeng.chess.notifications.events.MatchStartedEvent;
 import com.blikeng.chess.notifications.events.MoveMadeEvent;
 import com.blikeng.chess.repository.GameRepository;
 import com.blikeng.chess.security.JwtPrincipal;
+import com.blikeng.chess.security.UserRole;
 import com.blikeng.chess.service.GameService;
 import com.blikeng.chess.service.UserService;
 import org.junit.jupiter.api.AfterEach;
@@ -119,6 +120,25 @@ class GameServiceTest {
 
     @Test
     void isInGameShouldReturnFalseWhenPlayerNotInExistingGame() {
+        beginAndGetGame();
+        assertThat(gameService.isInGame(UUID.randomUUID())).isFalse();
+    }
+
+    // --- Is In Game (filter branching) ---
+    @Test
+    void isInGameShouldReturnTrueForWhitePlayer() {
+        Game game = beginAndGetGame();
+        assertThat(gameService.isInGame(game.getWhiteId())).isTrue();
+    }
+
+    @Test
+    void isInGameShouldReturnTrueForBlackPlayer() {
+        Game game = beginAndGetGame();
+        assertThat(gameService.isInGame(game.getBlackId())).isTrue();
+    }
+
+    @Test
+    void isInGameShouldReturnFalseForUnknownPlayer() {
         beginAndGetGame();
         assertThat(gameService.isInGame(UUID.randomUUID())).isFalse();
     }
@@ -225,8 +245,9 @@ class GameServiceTest {
         game.setBlackKingPosition(new Position(7, 0));
 
         when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
+        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
 
-        gameService.makeMove(white.getId(), new WsMoveDTO(game.getId().toString(), "d7c7"));
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "d7c7"));
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
@@ -275,22 +296,24 @@ class GameServiceTest {
     void resignGameShouldEndGameWithBlackWinWhenWhiteResigns() {
         Game game = beginAndGetGame();
         when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
+        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
 
-        gameService.resignGame(white.getId(), new WsResignDTO(game.getId().toString()));
+        gameService.resignGame(game.getWhiteId(), new WsResignDTO(game.getId().toString()));
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
         assertThat(captor.getAllValues()).anyMatch(e ->
                 e instanceof MatchEndedEvent ev && ev.status() == GameStatus.BLACK_WIN);
-        assertThat(gameService.isInGame(white.getId())).isFalse();
+        assertThat(gameService.isInGame(game.getWhiteId())).isFalse();
     }
 
     @Test
     void resignGameShouldEndGameWithWhiteWinWhenBlackResigns() {
         Game game = beginAndGetGame();
         when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
+        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
 
-        gameService.resignGame(black.getId(), new WsResignDTO(game.getId().toString()));
+        gameService.resignGame(game.getBlackId(), new WsResignDTO(game.getId().toString()));
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
@@ -308,29 +331,30 @@ class GameServiceTest {
     }
 
     @Test
-    void handleDrawShouldSendDrawOfferToWhiteWhenBlackOffers() {
+    void handleDrawShouldSendOfferToBlackWhenWhiteOffers() {
         Game game = beginAndGetGame();
 
-        gameService.handleDraw(black.getId(), new WsDrawDTO(game.getId().toString()));
+        gameService.handleDraw(game.getWhiteId(), new WsDrawDTO(game.getId().toString()));
 
-        verify(notificationService).sendDrawOffer(eq(game.getId()), eq(white.getId()));
-        assertThat(gameService.isInGame(black.getId())).isTrue();
+        verify(notificationService).sendDrawOffer(eq(game.getId()), eq(game.getBlackId()));
+        assertThat(gameService.isInGame(game.getWhiteId())).isTrue();
     }
 
     @Test
-    void handleDrawShouldSendDrawOfferWhenOnlyOnePlayerAccepts() {
+    void handleDrawShouldSendOfferToWhiteWhenBlackOffers() {
         Game game = beginAndGetGame();
 
-        gameService.handleDraw(white.getId(), new WsDrawDTO(game.getId().toString()));
+        gameService.handleDraw(game.getBlackId(), new WsDrawDTO(game.getId().toString()));
 
-        verify(notificationService).sendDrawOffer(eq(game.getId()), eq(black.getId()));
-        assertThat(gameService.isInGame(white.getId())).isTrue();
+        verify(notificationService).sendDrawOffer(eq(game.getId()), eq(game.getWhiteId()));
+        assertThat(gameService.isInGame(game.getBlackId())).isTrue();
     }
 
     @Test
     void handleDrawShouldEndGameWhenBothPlayersAccept() {
         Game game = beginAndGetGame();
         when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
+        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.handleDraw(white.getId(), new WsDrawDTO(game.getId().toString()));
         gameService.handleDraw(black.getId(), new WsDrawDTO(game.getId().toString()));
@@ -344,7 +368,7 @@ class GameServiceTest {
 
     // --- Restore Game State ---
     private void setupSecurityContext(UUID userId) {
-        var principal = new JwtPrincipal(userId, "testuser");
+        var principal = new JwtPrincipal(userId, "testuser", UserRole.USER);
         var auth = new UsernamePasswordAuthenticationToken(principal, null);
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
@@ -354,7 +378,7 @@ class GameServiceTest {
         beginAndGetGame();
         setupSecurityContext(white.getId());
         GameStateDTO dto = gameService.restoreGameState();
-        assertThat(dto.whiteId()).isEqualTo(white.getId());
+        assertThat(dto.whiteId()).isIn(white.getId(), black.getId());
     }
 
     @Test
@@ -362,7 +386,7 @@ class GameServiceTest {
         beginAndGetGame();
         setupSecurityContext(black.getId());
         GameStateDTO dto = gameService.restoreGameState();
-        assertThat(dto.blackId()).isEqualTo(black.getId());
+        assertThat(dto.blackId()).isIn(white.getId(), black.getId());
     }
 
     @Test

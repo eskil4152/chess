@@ -17,6 +17,7 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,7 +33,7 @@ class QueueControllerTest {
 
     @Test
     void shouldJoinQueue() throws Exception {
-        mockMvc.perform(post("/api/queue"))
+        mockMvc.perform(post("/api/queue").with(csrf()))
                 .andExpect(status().isOk());
 
         verify(matchmakingService).queuePlayer();
@@ -42,13 +43,13 @@ class QueueControllerTest {
     void shouldReturn409WhenAlreadyInGame() throws Exception {
         doThrow(new ExistingGameException()).when(matchmakingService).queuePlayer();
 
-        mockMvc.perform(post("/api/queue"))
+        mockMvc.perform(post("/api/queue").with(csrf()))
                 .andExpect(status().isConflict());
     }
 
     @Test
     void shouldLeaveQueue() throws Exception {
-        mockMvc.perform(delete("/api/queue"))
+        mockMvc.perform(delete("/api/queue").with(csrf()))
                 .andExpect(status().isOk());
 
         verify(matchmakingService).dequeuePlayer();
@@ -57,7 +58,7 @@ class QueueControllerTest {
     @Test
     @WithAnonymousUser
     void shouldReturn401WhenNotAuthenticated() throws Exception {
-        mockMvc.perform(post("/api/queue"))
+        mockMvc.perform(post("/api/queue").with(csrf()))
                 .andExpect(status().isUnauthorized());
     }
 }
