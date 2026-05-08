@@ -5,6 +5,7 @@ import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.errorTypes.UserNotFoundException;
 import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.repository.UserRepository;
+import com.blikeng.chess.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import com.blikeng.chess.service.UserService;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {

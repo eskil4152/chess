@@ -23,7 +23,8 @@ import java.util.UUID;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(GameController.class)
 @Import(SecurityConfig.class)
@@ -71,7 +72,7 @@ class GameControllerTest {
         UUID whiteId = UUID.randomUUID();
         UUID blackId = UUID.randomUUID();
         when(gameService.restoreGameState())
-                .thenReturn(new GameStateDTO(gameId, whiteId, "white", blackId, "black", List.of(), false, false));
+                .thenReturn(new GameStateDTO(gameId, whiteId, "white", blackId, "black", List.of(), false, false, 800, 800));
 
         mockMvc.perform(get("/api/games/active"))
                 .andExpect(status().isOk())

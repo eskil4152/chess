@@ -1,5 +1,6 @@
 package com.blikeng.chess.unit.engine;
 
+import com.blikeng.chess.engine.MoveExecutor;
 import com.blikeng.chess.exception.errorTypes.InvalidPromotionException;
 import com.blikeng.chess.model.*;
 import com.blikeng.chess.model.piece.*;
@@ -10,8 +11,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.blikeng.chess.engine.MoveExecutor;
-import com.blikeng.chess.model.Board;
 
 class MoveExecutorTest {
 

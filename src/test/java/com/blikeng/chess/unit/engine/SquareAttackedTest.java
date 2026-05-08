@@ -1,17 +1,20 @@
 package com.blikeng.chess.unit.engine;
 
+import com.blikeng.chess.engine.MoveGenerator;
+import com.blikeng.chess.engine.SquareAttacked;
 import com.blikeng.chess.model.Board;
 import com.blikeng.chess.model.Game;
 import com.blikeng.chess.model.Position;
-import com.blikeng.chess.model.piece.*;
+import com.blikeng.chess.model.piece.Color;
+import com.blikeng.chess.model.piece.King;
+import com.blikeng.chess.model.piece.Knight;
+import com.blikeng.chess.model.piece.Rook;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.blikeng.chess.engine.MoveGenerator;
-import com.blikeng.chess.engine.SquareAttacked;
 
 class SquareAttackedTest {
 
@@ -24,7 +27,7 @@ class SquareAttackedTest {
     void setup() {
         moveGenerator = new MoveGenerator();
         squareAttacked = new SquareAttacked(moveGenerator);
-        game = new Game(UUID.randomUUID(), UUID.randomUUID(), "w", UUID.randomUUID(), "b");
+        game = new Game(UUID.randomUUID(), UUID.randomUUID(), "w", UUID.randomUUID(), "b", 800, 800);
         game.setWhiteKingPosition(new Position(0, 4));
         game.setBlackKingPosition(new Position(7, 4));
         board = game.getBoard();

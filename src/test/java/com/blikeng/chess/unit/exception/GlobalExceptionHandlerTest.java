@@ -1,13 +1,13 @@
 package com.blikeng.chess.unit.exception;
 
+import com.blikeng.chess.exception.ErrorMessages;
+import com.blikeng.chess.exception.GlobalExceptionHandler;
 import com.blikeng.chess.exception.errorTypes.GameNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.blikeng.chess.exception.GlobalExceptionHandler;
-import com.blikeng.chess.exception.ErrorMessages;
 
 class GlobalExceptionHandlerTest {
     private GlobalExceptionHandler handler;

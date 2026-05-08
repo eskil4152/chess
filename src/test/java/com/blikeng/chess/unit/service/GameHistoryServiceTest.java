@@ -9,6 +9,7 @@ import com.blikeng.chess.exception.errorTypes.InvalidUUIDException;
 import com.blikeng.chess.exception.errorTypes.UserNotFoundException;
 import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.repository.GameRepository;
+import com.blikeng.chess.service.GameHistoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,7 +25,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
-import com.blikeng.chess.service.GameHistoryService;
 
 @ExtendWith(MockitoExtension.class)
 class GameHistoryServiceTest {

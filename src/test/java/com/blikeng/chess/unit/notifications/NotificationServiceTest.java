@@ -2,6 +2,7 @@ package com.blikeng.chess.unit.notifications;
 
 import com.blikeng.chess.model.EndedBy;
 import com.blikeng.chess.model.GameStatus;
+import com.blikeng.chess.notifications.NotificationService;
 import com.blikeng.chess.notifications.events.MatchEndedEvent;
 import com.blikeng.chess.notifications.events.MatchStartedEvent;
 import com.blikeng.chess.notifications.events.MoveMadeEvent;
@@ -23,7 +24,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import com.blikeng.chess.notifications.NotificationService;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {

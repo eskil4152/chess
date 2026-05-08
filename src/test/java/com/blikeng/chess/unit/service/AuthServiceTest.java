@@ -10,6 +10,7 @@ import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.PasswordService;
 import com.blikeng.chess.security.UserRole;
+import com.blikeng.chess.service.AuthService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,8 +29,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import com.blikeng.chess.service.AuthService;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {

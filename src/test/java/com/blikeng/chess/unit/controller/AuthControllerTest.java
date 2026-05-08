@@ -1,5 +1,7 @@
 package com.blikeng.chess.unit.controller;
 
+import com.blikeng.chess.config.SecurityConfig;
+import com.blikeng.chess.controller.AuthController;
 import com.blikeng.chess.dto.AuthDTO;
 import com.blikeng.chess.dto.AuthResult;
 import com.blikeng.chess.dto.LoginDTO;
@@ -7,12 +9,9 @@ import com.blikeng.chess.exception.errorTypes.InvalidCredentialsException;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.UserRole;
 import com.blikeng.chess.service.AuthService;
-import com.blikeng.chess.controller.AuthController;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import com.blikeng.chess.config.SecurityConfig;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
@@ -22,12 +21,13 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.hamcrest.Matchers.containsString;
 
 @WebMvcTest(AuthController.class)
 @Import(SecurityConfig.class)

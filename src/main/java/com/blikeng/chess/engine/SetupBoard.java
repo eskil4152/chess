@@ -2,7 +2,8 @@ package com.blikeng.chess.engine;
 
 import com.blikeng.chess.model.piece.*;
 
-import static com.blikeng.chess.model.piece.Color.*;
+import static com.blikeng.chess.model.piece.Color.BLACK;
+import static com.blikeng.chess.model.piece.Color.WHITE;
 
 public class SetupBoard {
     private SetupBoard() {}

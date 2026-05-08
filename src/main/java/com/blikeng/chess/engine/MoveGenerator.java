@@ -1,9 +1,11 @@
 package com.blikeng.chess.engine;
 
-import com.blikeng.chess.model.Game;
 import com.blikeng.chess.model.Board;
+import com.blikeng.chess.model.Game;
 import com.blikeng.chess.model.Position;
-import com.blikeng.chess.model.piece.*;
+import com.blikeng.chess.model.piece.Color;
+import com.blikeng.chess.model.piece.Piece;
+import com.blikeng.chess.model.piece.PieceType;
 
 import java.util.ArrayList;
 import java.util.List;

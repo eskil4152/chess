@@ -1,5 +1,8 @@
 package com.blikeng.chess.unit.security;
 
+import com.blikeng.chess.security.JwtAuthFilter;
+import com.blikeng.chess.security.JwtPrincipal;
+import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.UserRole;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.Cookie;
@@ -12,18 +15,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.core.context.SecurityContextHolder;
-
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
-import com.blikeng.chess.security.JwtAuthFilter;
-import com.blikeng.chess.security.JwtPrincipal;
-import com.blikeng.chess.security.JwtService;
 
 @ExtendWith(MockitoExtension.class)
 class JwtAuthFilterTest {

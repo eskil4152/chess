@@ -1,7 +1,7 @@
 package com.blikeng.chess.service;
 
-import com.blikeng.chess.dto.websocket.WsDrawDTO;
 import com.blikeng.chess.dto.GameStateDTO;
+import com.blikeng.chess.dto.websocket.WsDrawDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
 import com.blikeng.chess.dto.websocket.WsResignDTO;
 import com.blikeng.chess.engine.MoveExecutor;
@@ -18,12 +18,10 @@ import com.blikeng.chess.notifications.events.MoveMadeEvent;
 import com.blikeng.chess.repository.GameRepository;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
