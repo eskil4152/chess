@@ -31,6 +31,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Service
@@ -62,8 +63,7 @@ public class GameService {
         UserEntity whitePlayer;
         UserEntity blackPlayer;
 
-        double random = Math.random();
-        if (random < 0.5) {
+        if (ThreadLocalRandom.current().nextBoolean()) {
             whitePlayer = player1;
             blackPlayer = player2;
         } else {
