@@ -60,13 +60,7 @@ public class SecurityConfig {
                 })
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
-                .csrf(csrf -> {
-                        CookieCsrfTokenRepository csrfRepo = CookieCsrfTokenRepository.withHttpOnlyFalse();
-                        csrfRepo.setCookieCustomizer(cookie -> cookie.domain("blikeng.com"));
-                        csrf.csrfTokenRepository(csrfRepo)
-                            .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler());
-                })
-                .addFilterAfter(new CsrfCookieFilter(), UsernamePasswordAuthenticationFilter.class)
+                .csrf(AbstractHttpConfigurer::disable)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(it ->
                         it.authenticationEntryPoint((request, response, authException) ->

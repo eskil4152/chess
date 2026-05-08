@@ -78,7 +78,7 @@ public class GameService {
                 Instant.now()
         ));
 
-        Game game = new Game(gameEntity.getId(), whitePlayer.getId(), whitePlayer.getUsername(), blackPlayer.getId(), blackPlayer.getUsername());
+        Game game = new Game(gameEntity.getId(), whitePlayer.getId(), whitePlayer.getUsername(), blackPlayer.getId(), blackPlayer.getUsername(), gameEntity.getWhite().getElo(), gameEntity.getBlack().getElo());
         game.setWhiteKingPosition(new Position(0, 4));
         game.setBlackKingPosition(new Position(7, 4));
 
@@ -165,7 +165,9 @@ public class GameService {
                         game.getBlackUsername(),
                         game.getMoves(),
                         game.isWhiteDraw(),
-                        game.isBlackDraw()
+                        game.isBlackDraw(),
+                        game.getWhiteElo(),
+                        game.getBlackElo()
                 ))
                 .orElse(null);
 

@@ -10,12 +10,14 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Getter
 public class Game {
-    public Game(UUID id, UUID whiteId, String whiteUsername, UUID blackId, String blackUsername) {
+    public Game(UUID id, UUID whiteId, String whiteUsername, UUID blackId, String blackUsername, int whiteElo, int blackElo) {
         this.id = id;
         this.whiteId = whiteId;
         this.whiteUsername = whiteUsername;
         this.blackId = blackId;
         this.blackUsername = blackUsername;
+        this.whiteElo = whiteElo;
+        this.blackElo = blackElo;
         this.board = new Board();
     }
 
@@ -31,6 +33,8 @@ public class Game {
         this.blackKingPosition = other.blackKingPosition;
         this.enPassantTarget = other.enPassantTarget;
         this.status = other.status;
+        this.whiteElo = other.whiteElo;
+        this.blackElo = other.blackElo;
     }
 
     private final UUID id;
@@ -47,6 +51,9 @@ public class Game {
     private boolean whiteDraw = false;
     @Setter
     private boolean blackDraw = false;
+
+    private final int whiteElo;
+    private final int blackElo;
 
     @Setter
     private Position whiteKingPosition;
