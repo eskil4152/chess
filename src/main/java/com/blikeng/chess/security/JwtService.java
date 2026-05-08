@@ -36,23 +36,25 @@ public class JwtService {
     }
 
     public String generateToken(UserEntity user) {
-        return Jwts.builder()
-                .setSubject(user.getId().toString())
+        return Jwts
+                .builder()
+                .subject(user.getId().toString())
                 .claim("username", user.getUsername())
                 .claim("role", user.getRole())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000))
-                .signWith(key(), SignatureAlgorithm.HS512)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000))
+                .signWith(key(), Jwts.SIG.HS512)
                 .compact();
     }
 
     public JwtPrincipal validateToken(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(key())
+            Claims claims = Jwts
+                    .parser()
+                    .verifyWith(key())
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseSignedClaims(token)
+                    .getPayload();
 
             UUID userId = UUID.fromString(claims.getSubject());
             String username = claims.get("username", String.class);
