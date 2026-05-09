@@ -19,7 +19,7 @@ class EvaluatorTest {
 
     @BeforeEach
     void setup() {
-        game = new Game(UUID.randomUUID(), UUID.randomUUID(), "w", UUID.randomUUID(), "b");
+        game = new Game(UUID.randomUUID(), UUID.randomUUID(), "w", UUID.randomUUID(), "b", 800, 800);
         game.setWhiteKingPosition(new Position(0, 4));
         game.setBlackKingPosition(new Position(7, 4));
         board = game.getBoard();
@@ -263,7 +263,7 @@ class EvaluatorTest {
         assertThat(result).isLessThan(-500);
     }
 
-    
+
     // --- getBestMove (black's turn) ---
     @Test
     void getBestMoveShouldReturnMoveForBlack() {

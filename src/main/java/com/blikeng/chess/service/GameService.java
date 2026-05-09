@@ -18,7 +18,6 @@ import com.blikeng.chess.notifications.events.MoveMadeEvent;
 import com.blikeng.chess.repository.GameRepository;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -39,7 +38,6 @@ public class GameService {
     private final NotificationService notificationService;
     private final UserService userService;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private final MoveExecutor moveExecutor = new MoveExecutor();
     private final Logger logger = LoggerFactory.getLogger(GameService.class);
 
