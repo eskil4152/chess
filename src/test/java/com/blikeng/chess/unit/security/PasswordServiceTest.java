@@ -1,12 +1,11 @@
 package com.blikeng.chess.unit.security;
 
+import com.blikeng.chess.security.PasswordService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.blikeng.chess.security.PasswordService;
 
 class PasswordServiceTest {
 

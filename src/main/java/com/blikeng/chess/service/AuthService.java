@@ -9,7 +9,6 @@ import com.blikeng.chess.repository.AuthRepository;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.PasswordService;
-import com.blikeng.chess.security.UserRole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

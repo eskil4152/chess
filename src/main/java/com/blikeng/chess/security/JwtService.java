@@ -1,16 +1,15 @@
 package com.blikeng.chess.security;
 
 import com.blikeng.chess.entity.UserEntity;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.Claims;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -36,23 +35,25 @@ public class JwtService {
     }
 
     public String generateToken(UserEntity user) {
-        return Jwts.builder()
-                .setSubject(user.getId().toString())
+        return Jwts
+                .builder()
+                .subject(user.getId().toString())
                 .claim("username", user.getUsername())
                 .claim("role", user.getRole())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000))
-                .signWith(key(), SignatureAlgorithm.HS512)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000))
+                .signWith(key(), Jwts.SIG.HS512)
                 .compact();
     }
 
     public JwtPrincipal validateToken(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(key())
+            Claims claims = Jwts
+                    .parser()
+                    .verifyWith(key())
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseSignedClaims(token)
+                    .getPayload();
 
             UUID userId = UUID.fromString(claims.getSubject());
             String username = claims.get("username", String.class);

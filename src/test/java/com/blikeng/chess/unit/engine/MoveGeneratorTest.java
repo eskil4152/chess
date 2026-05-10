@@ -1,5 +1,6 @@
 package com.blikeng.chess.unit.engine;
 
+import com.blikeng.chess.engine.MoveGenerator;
 import com.blikeng.chess.model.Board;
 import com.blikeng.chess.model.Game;
 import com.blikeng.chess.model.Position;
@@ -11,7 +12,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.blikeng.chess.engine.MoveGenerator;
 
 class MoveGeneratorTest {
 
@@ -22,7 +22,7 @@ class MoveGeneratorTest {
     @BeforeEach
     void setup() {
         gen = new MoveGenerator();
-        game = new Game(UUID.randomUUID(), UUID.randomUUID(), "w", UUID.randomUUID(), "b");
+        game = new Game(UUID.randomUUID(), UUID.randomUUID(), "w", UUID.randomUUID(), "b", 800, 800);
         game.setWhiteKingPosition(new Position(0, 4));
         game.setBlackKingPosition(new Position(7, 4));
         board = game.getBoard();

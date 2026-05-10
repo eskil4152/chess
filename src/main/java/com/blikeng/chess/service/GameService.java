@@ -1,7 +1,7 @@
 package com.blikeng.chess.service;
 
-import com.blikeng.chess.dto.websocket.WsDrawDTO;
 import com.blikeng.chess.dto.GameStateDTO;
+import com.blikeng.chess.dto.websocket.WsDrawDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
 import com.blikeng.chess.dto.websocket.WsResignDTO;
 import com.blikeng.chess.engine.MoveExecutor;
@@ -18,12 +18,9 @@ import com.blikeng.chess.notifications.events.MoveMadeEvent;
 import com.blikeng.chess.repository.GameRepository;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +28,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Service
@@ -40,7 +38,6 @@ public class GameService {
     private final NotificationService notificationService;
     private final UserService userService;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private final MoveExecutor moveExecutor = new MoveExecutor();
     private final Logger logger = LoggerFactory.getLogger(GameService.class);
 
@@ -62,8 +59,7 @@ public class GameService {
         UserEntity whitePlayer;
         UserEntity blackPlayer;
 
-        double random = Math.random();
-        if (random < 0.5) {
+        if (ThreadLocalRandom.current().nextBoolean()) {
             whitePlayer = player1;
             blackPlayer = player2;
         } else {
@@ -78,7 +74,7 @@ public class GameService {
                 Instant.now()
         ));
 
-        Game game = new Game(gameEntity.getId(), whitePlayer.getId(), whitePlayer.getUsername(), blackPlayer.getId(), blackPlayer.getUsername());
+        Game game = new Game(gameEntity.getId(), whitePlayer.getId(), whitePlayer.getUsername(), blackPlayer.getId(), blackPlayer.getUsername(), gameEntity.getWhite().getElo(), gameEntity.getBlack().getElo());
         game.setWhiteKingPosition(new Position(0, 4));
         game.setBlackKingPosition(new Position(7, 4));
 
@@ -165,7 +161,9 @@ public class GameService {
                         game.getBlackUsername(),
                         game.getMoves(),
                         game.isWhiteDraw(),
-                        game.isBlackDraw()
+                        game.isBlackDraw(),
+                        game.getWhiteElo(),
+                        game.getBlackElo()
                 ))
                 .orElse(null);
 

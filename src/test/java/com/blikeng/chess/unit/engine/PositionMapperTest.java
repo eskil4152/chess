@@ -1,10 +1,10 @@
 package com.blikeng.chess.unit.engine;
 
+import com.blikeng.chess.engine.PositionMapper;
 import com.blikeng.chess.model.Position;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.blikeng.chess.engine.PositionMapper;
 
 class PositionMapperTest {
 

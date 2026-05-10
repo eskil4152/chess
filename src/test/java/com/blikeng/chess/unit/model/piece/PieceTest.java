@@ -1,13 +1,6 @@
 package com.blikeng.chess.unit.model.piece;
 
-import com.blikeng.chess.model.piece.Bishop;
-import com.blikeng.chess.model.piece.Color;
-import com.blikeng.chess.model.piece.King;
-import com.blikeng.chess.model.piece.Knight;
-import com.blikeng.chess.model.piece.Pawn;
-import com.blikeng.chess.model.piece.PieceType;
-import com.blikeng.chess.model.piece.Queen;
-import com.blikeng.chess.model.piece.Rook;
+import com.blikeng.chess.model.piece.*;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

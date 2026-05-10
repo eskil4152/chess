@@ -1,5 +1,6 @@
 package com.blikeng.chess.unit.service;
 
+import com.blikeng.chess.service.PresenceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.socket.WebSocketSession;
@@ -8,7 +9,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import com.blikeng.chess.service.PresenceService;
 
 class PresenceServiceTest {
 

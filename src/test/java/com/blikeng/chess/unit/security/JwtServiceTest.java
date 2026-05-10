@@ -1,6 +1,8 @@
 package com.blikeng.chess.unit.security;
 
 import com.blikeng.chess.entity.UserEntity;
+import com.blikeng.chess.security.JwtPrincipal;
+import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.UserRole;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,9 +15,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import com.blikeng.chess.security.JwtPrincipal;
-import com.blikeng.chess.security.JwtService;
 
 class JwtServiceTest {
 

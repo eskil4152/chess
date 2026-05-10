@@ -1,10 +1,11 @@
 package com.blikeng.chess.unit.model;
 
-import com.blikeng.chess.model.piece.*;
+import com.blikeng.chess.model.Board;
+import com.blikeng.chess.model.piece.Color;
+import com.blikeng.chess.model.piece.Queen;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.blikeng.chess.model.Board;
 
 class BoardTest {
 

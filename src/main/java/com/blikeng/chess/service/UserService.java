@@ -5,7 +5,6 @@ import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.errorTypes.UserNotFoundException;
 import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.repository.UserRepository;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;

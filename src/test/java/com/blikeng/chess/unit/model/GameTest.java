@@ -1,5 +1,8 @@
 package com.blikeng.chess.unit.model;
 
+import com.blikeng.chess.model.Game;
+import com.blikeng.chess.model.GameStatus;
+import com.blikeng.chess.model.Position;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -7,9 +10,6 @@ import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.blikeng.chess.model.Game;
-import com.blikeng.chess.model.GameStatus;
-import com.blikeng.chess.model.Position;
 
 class GameTest {
 
@@ -21,7 +21,7 @@ class GameTest {
     void setup() {
         whiteId = UUID.randomUUID();
         blackId = UUID.randomUUID();
-        game = new Game(UUID.randomUUID(), whiteId, "white", blackId, "black");
+        game = new Game(UUID.randomUUID(), whiteId, "white", blackId, "black", 800, 800);
     }
 
     @Test
