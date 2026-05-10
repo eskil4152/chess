@@ -106,14 +106,10 @@ public class GameService {
             if (moveDTO.move().length() < 4) throw new InvalidMoveException();
 
             String move = moveDTO.move();
-            String from = move.substring(0, 2);
-            String to = move.substring(2, 4);
-            PieceType promotion = move.length() > 4 ? PieceType.fromChar(move.charAt(4)) : null;
 
             GameStatus gameStatus = moveExecutor.performMove(
                     game,
-                    new Move(PositionMapper.fromString(from), PositionMapper.fromString(to)),
-                    promotion
+                    PositionMapper.fromUci(move)
             );
 
             if (gameStatus == GameStatus.ONGOING) {

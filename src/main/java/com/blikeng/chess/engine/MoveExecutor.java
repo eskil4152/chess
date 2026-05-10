@@ -10,7 +10,7 @@ public class MoveExecutor {
     private final MoveGenerator moveGenerator = new MoveGenerator();
     private final SquareAttacked squareAttacked = new SquareAttacked(moveGenerator);
 
-    public GameStatus performMove(Game game, Move move, PieceType promotionPiece) {
+    public GameStatus performMove(Game game, Move move) {
         Board board = game.getBoard();
         Piece piece = board.getPiece(move.from().row(), move.from().col());
 
@@ -27,7 +27,7 @@ public class MoveExecutor {
 
         if (kingLeftInCheck(board, game, move, piece, color, isEnPassant)) return null;
 
-        piece = checkIfPawnPromotion(piece, move, promotionPiece);
+        piece = checkIfPawnPromotion(piece, move);
 
         if (piece.getPieceType() == PieceType.KING){
             handleCastling(board, game, move, piece);
@@ -49,7 +49,7 @@ public class MoveExecutor {
 
     private boolean kingLeftInCheck(Board board, Game game, Move move, Piece piece, Color color, boolean isEnPassant) {
         Board copy = new Board(board);
-        piece = checkIfPawnPromotion(piece, move, PieceType.QUEEN);
+        piece = checkIfPawnPromotion(piece, move);
         copy.setPiece(move.to().row(), move.to().col(), piece);
         copy.setPiece(move.from().row(), move.from().col(), null);
         if (isEnPassant) {
@@ -83,7 +83,7 @@ public class MoveExecutor {
 
                 for (Position to : pseudoMoves) {
                     boolean epMove = p.getPieceType() == PieceType.PAWN && to.equals(game.getEnPassantTarget());
-                    if (!kingLeftInCheck(board, game, new Move(from, to), p, opponentColor, epMove)) {
+                    if (!kingLeftInCheck(board, game, new Move(from, to, null), p, opponentColor, epMove)) {
                         hasLegalMove = true;
                         break;
                     }
@@ -155,8 +155,9 @@ public class MoveExecutor {
         }
     }
 
-    private Piece checkIfPawnPromotion(Piece piece, Move move, PieceType promotionPiece) {
+    private Piece checkIfPawnPromotion(Piece piece, Move move) {
         if (piece.getPieceType() != PieceType.PAWN) return piece;
+        PieceType promotionPiece = move.promotionPiece();
 
         if (piece.getColor() == Color.WHITE && move.to().row() == 7) {
             if (promotionPiece == null) throw new InvalidPromotionException();
