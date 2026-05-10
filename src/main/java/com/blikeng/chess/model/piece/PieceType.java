@@ -13,6 +13,16 @@ public enum PieceType {
         };
     }
 
+    public static char toChar(PieceType pieceType) {
+        return switch (pieceType) {
+            case ROOK -> 'R';
+            case KNIGHT -> 'N';
+            case BISHOP -> 'B';
+            case QUEEN -> 'Q';
+            default -> ' ';
+        };
+    }
+
     public int getPieceValue() {
         return switch (this) {
             case PAWN -> 100;

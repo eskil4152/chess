@@ -31,7 +31,7 @@ public class Evaluator {
 
                 List<Position> legalMoves = moveGenerator.getPseudoLegalMoves(game, game.getBoard(), new Position(row, col));
                 for (Position legalMove : legalMoves) {
-                    Move move = new Move(new Position(row, col), legalMove);
+                    Move move = new Move(new Position(row, col), legalMove, null);
                     boolean isPromotion = piece.getPieceType() == PieceType.PAWN
                             && (game.isWhiteTurn() ? legalMove.row() == 7 : legalMove.row() == 0);
 
@@ -41,7 +41,7 @@ public class Evaluator {
 
                     for (PieceType promo : promotions) {
                         Game copy = new Game(game);
-                        if (moveExecutor.performMove(copy, move, promo) == null) continue;
+                        if (moveExecutor.performMove(copy, new Move(move.from(), move.to(), move.promotionPiece())) == null) continue;
                         int current = miniMax(copy, depth - 1, alpha, beta);
 
                         if (game.isWhiteTurn()) {
@@ -80,7 +80,7 @@ public class Evaluator {
 
                 List<Position> legalMoves = moveGenerator.getPseudoLegalMoves(game, game.getBoard(), new Position(row, col));
                 for (Position legalMove : legalMoves) {
-                    Move move = new Move(new Position(row, col), legalMove);
+                    Move move = new Move(new Position(row, col), legalMove, null);
                     boolean isPromotion = piece.getPieceType() == PieceType.PAWN
                             && (isWhite ? legalMove.row() == 7 : legalMove.row() == 0);
 
@@ -90,7 +90,7 @@ public class Evaluator {
 
                     for (PieceType promo : promotions) {
                         Game copy = new Game(game);
-                        if (moveExecutor.performMove(copy, move, promo) == null) continue;
+                        if (moveExecutor.performMove(copy, new Move(move.from(), move.to(), move.promotionPiece())) == null) continue;
                         int score = miniMax(copy, depth - 1, alpha, beta);
 
                         if (isWhite ? score > best : score < best) {
