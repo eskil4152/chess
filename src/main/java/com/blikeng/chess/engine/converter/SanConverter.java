@@ -1,5 +1,6 @@
 package com.blikeng.chess.engine.converter;
 
+import java.util.List;
 import java.util.UUID;
 
 import com.blikeng.chess.engine.MoveExecutor;
@@ -97,11 +98,54 @@ public class SanConverter {
         stringBuilder
                 .append(PieceType.toChar(game.getBoard().getPiece(move.from().row(), move.from().col()).getPieceType()));
 
-        // Check same row and col here
+        handleAmbiguousMove(stringBuilder, game, move);
 
         if (targetPiece != null) stringBuilder.append("x");
 
         stringBuilder.append(PositionMapper.toString(move.to()));
+    }
+
+    private static void handleAmbiguousMove(StringBuilder stringBuilder, Game game, Move move){
+        Piece piece = game.getBoard().getPiece(move.from().row(), move.from().col());
+        PieceType type = piece.getPieceType();
+
+        Position ambiguousPiecePosition = null;
+
+        for (int row = 0; row < 8; row++){
+            for (int col = 0; col < 8; col++){
+                if (
+                        game.getBoard().getPiece(row, col) != null &&
+                        game.getBoard().getPiece(row, col).getPieceType() == type &&
+                        game.getBoard().getPiece(row, col).getColor() == piece.getColor() &&
+                        row != move.from().row() && col != move.from().col()
+                ){
+                    ambiguousPiecePosition = new Position(row, col);
+                    break;
+                }
+            }
+        }
+
+        if (ambiguousPiecePosition != null){
+            List<Position> ambiguousPieceMoves = moveGenerator.getPseudoLegalMoves(
+                    game,
+                    game.getBoard(),
+                    new Position(
+                            ambiguousPiecePosition.row(),
+                            ambiguousPiecePosition.col()
+                    ));
+
+            boolean hasSameMove = ambiguousPieceMoves.contains(move.to());
+
+            if (hasSameMove) {
+                if (ambiguousPiecePosition.row() == move.to().row()){
+                    stringBuilder.append((char)('1' + (8 - move.from().row())));
+                } else if (ambiguousPiecePosition.col() == move.to().col()){
+                    stringBuilder.append((char)('a' + move.from().col()));
+                } else {
+                    stringBuilder.append((char) ('a' + move.from().col()));
+                }
+            }
+        }
     }
 }
 
@@ -116,7 +160,7 @@ public class SanConverter {
 // Check if move is check (Qa8+)
 // Check if move is checkmate (Qa8#)
 // Check if move is stalemate
-
-// Needs:
 // Check if same piece exists on same column or row (e.g. Nef3 / N3f6)
 // Check if same piece exists on same column or row on capture (e.g. Nexf3 / N3xf6)
+
+// Needs:
