@@ -35,6 +35,9 @@ public class Game {
         this.status = other.status;
         this.whiteElo = other.whiteElo;
         this.blackElo = other.blackElo;
+        this.whiteDraw = other.whiteDraw;
+        this.blackDraw = other.blackDraw;
+        this.moves.addAll(other.moves);
     }
 
     private final UUID id;

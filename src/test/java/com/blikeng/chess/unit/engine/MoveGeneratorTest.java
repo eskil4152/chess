@@ -503,4 +503,11 @@ class MoveGeneratorTest {
         List<Position> moves = gen.getPseudoLegalMoves(game, board, new Position(4, 0));
         assertThat(moves).contains(new Position(3, 1));
     }
+
+    @Test
+    void whitePawnAtRow6ShouldNotDoubleMoveEvenIfUnmoved() {
+        board.setPiece(6, 4, new Pawn(Color.WHITE));
+        List<Position> moves = gen.getPseudoLegalMoves(game, board, new Position(6, 4));
+        assertThat(moves).containsExactly(new Position(7, 4));
+    }
 }

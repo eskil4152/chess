@@ -13,6 +13,8 @@ import com.blikeng.chess.model.piece.PieceType;
 import java.util.List;
 
 public class Evaluator {
+    private Evaluator() {}
+
     private static final MoveGenerator moveGenerator = new MoveGenerator();
     private static final MoveExecutor moveExecutor = new MoveExecutor();
 

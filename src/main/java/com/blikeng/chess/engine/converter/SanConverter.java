@@ -135,19 +135,3 @@ public class SanConverter {
         }
     }
 }
-
-// Call from 'toPgn' function. Called on every move.
-
-// Done:
-// Check if move is pawn move (e4 / e5 etc.) or piece move (Nf3 / Bc4 etc.)
-// Check if move is castle (O-O / O-O-O)
-// Check if move is promotion (f8=Q)
-// Check if move is capture promotion (fxe8=Q)
-// Check if move is capture (piece x target, e.g. Nxf3 or exf3)
-// Check if move is check (Qa8+)
-// Check if move is checkmate (Qa8#)
-// Check if move is stalemate
-// Check if same piece exists on same column or row (e.g. Nef3 / N3f6)
-// Check if same piece exists on same column or row on capture (e.g. Nexf3 / N3xf6)
-
-// Needs:
