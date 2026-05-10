@@ -41,7 +41,7 @@ public class Evaluator {
 
                     for (PieceType promo : promotions) {
                         Game copy = new Game(game);
-                        if (moveExecutor.performMove(copy, new Move(move.from(), move.to(), move.promotionPiece())) == null) continue;
+                        if (moveExecutor.performMove(copy, new Move(move.from(), move.to(), promo)) == null) continue;
                         int current = miniMax(copy, depth - 1, alpha, beta);
 
                         if (game.isWhiteTurn()) {
@@ -90,7 +90,7 @@ public class Evaluator {
 
                     for (PieceType promo : promotions) {
                         Game copy = new Game(game);
-                        if (moveExecutor.performMove(copy, new Move(move.from(), move.to(), move.promotionPiece())) == null) continue;
+                        if (moveExecutor.performMove(copy, new Move(move.from(), move.to(), promo)) == null) continue;
                         int score = miniMax(copy, depth - 1, alpha, beta);
 
                         if (isWhite ? score > best : score < best) {

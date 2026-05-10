@@ -41,21 +41,21 @@ class MoveExecutorTest {
 
     @Test
     void shouldReturnNullWhenNoPieceAtFrom() {
-        GameStatus result = executor.performMove(game, new Move(new Position(3, 3), new Position(4, 3)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(3, 3), new Position(4, 3), null));
         assertThat(result).isNull();
     }
 
     @Test
     void shouldReturnNullWhenWrongColorMoves() {
         board.setPiece(6, 4, new Pawn(Color.BLACK));
-        GameStatus result = executor.performMove(game, new Move(new Position(6, 4), new Position(5, 4)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(6, 4), new Position(5, 4), null));
         assertThat(result).isNull();
     }
 
     @Test
     void shouldReturnNullForIllegalMove() {
         board.setPiece(1, 4, new Pawn(Color.WHITE));
-        GameStatus result = executor.performMove(game, new Move(new Position(1, 4), new Position(2, 5)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(1, 4), new Position(2, 5), null));
         assertThat(result).isNull();
     }
 
@@ -63,7 +63,7 @@ class MoveExecutorTest {
     void shouldReturnNullWhenMoveLeavesKingInCheck() {
         board.setPiece(0, 3, new Rook(Color.WHITE));
         board.setPiece(0, 0, new Rook(Color.BLACK));
-        GameStatus result = executor.performMove(game, new Move(new Position(0, 3), new Position(3, 3)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(0, 3), new Position(3, 3), null));
         assertThat(result).isNull();
     }
 
@@ -73,7 +73,7 @@ class MoveExecutorTest {
     void pawnForwardMoveShouldReturnOngoingAndMovePiece() {
         board.setPiece(1, 4, new Pawn(Color.WHITE));
         board.setPiece(6, 0, new Pawn(Color.BLACK));
-        GameStatus result = executor.performMove(game, new Move(new Position(1, 4), new Position(2, 4)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(1, 4), new Position(2, 4), null));
         assertThat(result).isEqualTo(GameStatus.ONGOING);
         assertThat(board.getPiece(2, 4)).isInstanceOf(Pawn.class);
         assertThat(board.getPiece(1, 4)).isNull();
@@ -84,7 +84,7 @@ class MoveExecutorTest {
     void moveShouldSetMovedFlag() {
         board.setPiece(1, 4, new Pawn(Color.WHITE));
         board.setPiece(6, 0, new Pawn(Color.BLACK));
-        executor.performMove(game, new Move(new Position(1, 4), new Position(2, 4)), null);
+        executor.performMove(game, new Move(new Position(1, 4), new Position(2, 4), null));
         assertThat(board.getPiece(2, 4).hasMoved()).isTrue();
     }
 
@@ -92,7 +92,19 @@ class MoveExecutorTest {
     void doublePawnPushShouldSetEnPassantTarget() {
         board.setPiece(1, 4, new Pawn(Color.WHITE));
         board.setPiece(6, 0, new Pawn(Color.BLACK));
-        executor.performMove(game, new Move(new Position(1, 4), new Position(3, 4)), null);
+        executor.performMove(game, new Move(new Position(1, 4), new Position(3, 4), null));
+        assertThat(game.getEnPassantTarget()).isEqualTo(new Position(2, 4));
+    }
+
+    @Test
+    void doublePawnPushWithAdjacentBlackPawnShouldEvaluateEnPassantAsLegalMove() {
+        board.setPiece(1, 4, new Pawn(Color.WHITE));
+        board.setPiece(3, 5, new Pawn(Color.BLACK));
+        // Block the black pawn's forward square so its only pseudo-legal move is the ep capture,
+        // forcing isGameOver to evaluate epMove=true before finding any other legal move.
+        board.setPiece(2, 5, movedWhitePawn());
+        GameStatus result = executor.performMove(game, new Move(new Position(1, 4), new Position(3, 4), null));
+        assertThat(result).isEqualTo(GameStatus.ONGOING);
         assertThat(game.getEnPassantTarget()).isEqualTo(new Position(2, 4));
     }
 
@@ -101,7 +113,7 @@ class MoveExecutorTest {
         game.setEnPassantTarget(new Position(2, 3));
         board.setPiece(1, 4, new Pawn(Color.WHITE));
         board.setPiece(6, 0, new Pawn(Color.BLACK));
-        executor.performMove(game, new Move(new Position(1, 4), new Position(2, 4)), null);
+        executor.performMove(game, new Move(new Position(1, 4), new Position(2, 4), null));
         assertThat(game.getEnPassantTarget()).isNull();
     }
 
@@ -115,7 +127,7 @@ class MoveExecutorTest {
         game.setEnPassantTarget(new Position(5, 5));
         game.setBlackKingPosition(new Position(6, 0));
 
-        GameStatus result = executor.performMove(game, new Move(new Position(4, 4), new Position(5, 5)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(4, 4), new Position(5, 5), null));
 
         assertThat(result).isNotNull();
         assertThat(board.getPiece(4, 5)).isNull();
@@ -131,7 +143,7 @@ class MoveExecutorTest {
         game.setEnPassantTarget(new Position(2, 3));
         game.setWhiteKingPosition(new Position(1, 0));
 
-        GameStatus result = executor.performMove(game, new Move(new Position(3, 4), new Position(2, 3)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(3, 4), new Position(2, 3), null));
 
         assertThat(result).isNotNull();
         assertThat(board.getPiece(3, 3)).isNull();
@@ -157,7 +169,7 @@ class MoveExecutorTest {
     @Test
     void whitePawnShouldPromoteToQueen() {
         board.setPiece(6, 2, movedWhitePawn());
-        GameStatus result = executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2)), PieceType.QUEEN);
+        GameStatus result = executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2), PieceType.QUEEN));
         assertThat(result).isNotNull();
         assertThat(board.getPiece(7, 2)).isInstanceOf(Queen.class).extracting(Piece::getColor).isEqualTo(Color.WHITE);
     }
@@ -165,21 +177,21 @@ class MoveExecutorTest {
     @Test
     void whitePawnShouldPromoteToRook() {
         board.setPiece(6, 2, movedWhitePawn());
-        executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2)), PieceType.ROOK);
+        executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2), PieceType.ROOK));
         assertThat(board.getPiece(7, 2)).isInstanceOf(Rook.class);
     }
 
     @Test
     void whitePawnShouldPromoteToBishop() {
         board.setPiece(6, 2, movedWhitePawn());
-        executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2)), PieceType.BISHOP);
+        executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2), PieceType.BISHOP));
         assertThat(board.getPiece(7, 2)).isInstanceOf(Bishop.class);
     }
 
     @Test
     void whitePawnShouldPromoteToKnight() {
         board.setPiece(6, 2, movedWhitePawn());
-        executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2)), PieceType.KNIGHT);
+        executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2), PieceType.KNIGHT));
         assertThat(board.getPiece(7, 2)).isInstanceOf(Knight.class);
     }
 
@@ -187,7 +199,7 @@ class MoveExecutorTest {
     void whitePawnPromotionWithoutPieceShouldThrow() {
         board.setPiece(6, 2, movedWhitePawn());
         assertThatThrownBy(() ->
-                executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2)), null)
+                executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2), null))
         ).isInstanceOf(InvalidPromotionException.class);
     }
 
@@ -198,7 +210,7 @@ class MoveExecutorTest {
         board.setPiece(0, 6, new King(Color.WHITE));
         game.setWhiteKingPosition(new Position(0, 6));
         board.setPiece(1, 2, movedBlackPawn());
-        GameStatus result = executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2)), PieceType.QUEEN);
+        GameStatus result = executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2), PieceType.QUEEN));
         assertThat(result).isNotNull();
         assertThat(board.getPiece(0, 2)).isInstanceOf(Queen.class).extracting(Piece::getColor).isEqualTo(Color.BLACK);
     }
@@ -210,7 +222,7 @@ class MoveExecutorTest {
         board.setPiece(0, 6, new King(Color.WHITE));
         game.setWhiteKingPosition(new Position(0, 6));
         board.setPiece(1, 2, movedBlackPawn());
-        executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2)), PieceType.ROOK);
+        executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2), PieceType.ROOK));
         assertThat(board.getPiece(0, 2)).isInstanceOf(Rook.class).extracting(Piece::getColor).isEqualTo(Color.BLACK);
     }
 
@@ -221,7 +233,7 @@ class MoveExecutorTest {
         board.setPiece(0, 6, new King(Color.WHITE));
         game.setWhiteKingPosition(new Position(0, 6));
         board.setPiece(1, 2, movedBlackPawn());
-        executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2)), PieceType.BISHOP);
+        executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2), PieceType.BISHOP));
         assertThat(board.getPiece(0, 2)).isInstanceOf(Bishop.class).extracting(Piece::getColor).isEqualTo(Color.BLACK);
     }
 
@@ -232,7 +244,7 @@ class MoveExecutorTest {
         board.setPiece(0, 6, new King(Color.WHITE));
         game.setWhiteKingPosition(new Position(0, 6));
         board.setPiece(1, 2, movedBlackPawn());
-        executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2)), PieceType.KNIGHT);
+        executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2), PieceType.KNIGHT));
         assertThat(board.getPiece(0, 2)).isInstanceOf(Knight.class).extracting(Piece::getColor).isEqualTo(Color.BLACK);
     }
 
@@ -244,7 +256,7 @@ class MoveExecutorTest {
         game.setWhiteKingPosition(new Position(0, 6));
         board.setPiece(1, 2, movedBlackPawn());
         assertThatThrownBy(() ->
-                executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2)), null)
+                executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2), null))
         ).isInstanceOf(InvalidPromotionException.class);
     }
 
@@ -252,7 +264,7 @@ class MoveExecutorTest {
     void promotionToKingShouldThrow() {
         board.setPiece(6, 2, movedWhitePawn());
         assertThatThrownBy(() ->
-                executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2)), PieceType.KING)
+                executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2), PieceType.KING))
         ).isInstanceOf(InvalidPromotionException.class);
     }
 
@@ -266,7 +278,7 @@ class MoveExecutorTest {
         board.setPiece(0, 7, rook);
         board.setPiece(6, 0, new Pawn(Color.BLACK));
 
-        GameStatus result = executor.performMove(game, new Move(new Position(0, 4), new Position(0, 6)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(0, 4), new Position(0, 6), null));
 
         assertThat(result).isNotNull();
         assertThat(board.getPiece(0, 6)).isInstanceOf(King.class);
@@ -283,7 +295,7 @@ class MoveExecutorTest {
         board.setPiece(0, 0, rook);
         board.setPiece(6, 0, new Pawn(Color.BLACK));
 
-        executor.performMove(game, new Move(new Position(0, 4), new Position(0, 2)), null);
+        executor.performMove(game, new Move(new Position(0, 4), new Position(0, 2), null));
 
         assertThat(board.getPiece(0, 2)).isInstanceOf(King.class);
         assertThat(board.getPiece(0, 3)).isInstanceOf(Rook.class);
@@ -300,7 +312,7 @@ class MoveExecutorTest {
         board.setPiece(7, 7, new Rook(Color.BLACK));
         board.setPiece(1, 0, new Pawn(Color.WHITE));
 
-        GameStatus result = executor.performMove(game, new Move(new Position(7, 4), new Position(7, 6)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(7, 4), new Position(7, 6), null));
 
         assertThat(result).isNotNull();
         assertThat(board.getPiece(7, 6)).isInstanceOf(King.class);
@@ -318,7 +330,7 @@ class MoveExecutorTest {
         board.setPiece(0, 7, new Rook(Color.WHITE));
         board.setPiece(1, 3, new Knight(Color.BLACK));
 
-        GameStatus result = executor.performMove(game, new Move(new Position(0, 4), new Position(0, 6)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(0, 4), new Position(0, 6), null));
 
         assertThat(result).isNotNull();
         assertThat(board.getPiece(0, 6)).isInstanceOf(King.class);
@@ -334,7 +346,7 @@ class MoveExecutorTest {
         board.setPiece(0, 7, new Rook(Color.WHITE));
         board.setPiece(1, 4, new Rook(Color.BLACK));
 
-        GameStatus result = executor.performMove(game, new Move(new Position(0, 4), new Position(0, 6)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(0, 4), new Position(0, 6), null));
 
         assertThat(result).isNotNull();
         assertThat(board.getPiece(0, 6)).isInstanceOf(King.class);
@@ -350,7 +362,7 @@ class MoveExecutorTest {
         board.setPiece(0, 7, rook);
         board.setPiece(0, 5, new Rook(Color.BLACK));
 
-        GameStatus result = executor.performMove(game, new Move(new Position(0, 4), new Position(0, 6)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(0, 4), new Position(0, 6), null));
         assertThat(result).isNull();
     }
 
@@ -363,7 +375,7 @@ class MoveExecutorTest {
         board.setPiece(0, 1, new Rook(Color.BLACK));
         game.setWhiteKingPosition(new Position(0, 4));
 
-        GameStatus result = executor.performMove(game, new Move(new Position(0, 4), new Position(0, 6)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(0, 4), new Position(0, 6), null));
         assertThat(result).isNull();
     }
 
@@ -373,7 +385,7 @@ class MoveExecutorTest {
     void whiteKingMoveShouldUpdateKingPosition() {
         board.setPiece(0, 4, new King(Color.WHITE));
         board.setPiece(6, 0, new Pawn(Color.BLACK));
-        executor.performMove(game, new Move(new Position(0, 4), new Position(0, 3)), null);
+        executor.performMove(game, new Move(new Position(0, 4), new Position(0, 3), null));
         assertThat(game.getWhiteKingPosition()).isEqualTo(new Position(0, 3));
     }
 
@@ -382,7 +394,7 @@ class MoveExecutorTest {
         game.switchTurn();
         board.setPiece(7, 4, new King(Color.BLACK));
         board.setPiece(1, 0, new Pawn(Color.WHITE));
-        executor.performMove(game, new Move(new Position(7, 4), new Position(7, 3)), null);
+        executor.performMove(game, new Move(new Position(7, 4), new Position(7, 3), null));
         assertThat(game.getBlackKingPosition()).isEqualTo(new Position(7, 3));
     }
 
@@ -398,7 +410,7 @@ class MoveExecutorTest {
         game.setWhiteKingPosition(new Position(5, 5));
         game.setBlackKingPosition(new Position(7, 7));
 
-        GameStatus result = executor.performMove(game, new Move(new Position(4, 6), new Position(6, 6)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(4, 6), new Position(6, 6), null));
         assertThat(result).isEqualTo(GameStatus.WHITE_WIN);
     }
 
@@ -414,7 +426,7 @@ class MoveExecutorTest {
         game.setWhiteKingPosition(new Position(0, 7));
         game.switchTurn();
 
-        GameStatus result = executor.performMove(game, new Move(new Position(5, 6), new Position(0, 6)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(5, 6), new Position(0, 6), null));
         assertThat(result).isEqualTo(GameStatus.BLACK_WIN);
     }
 
@@ -428,7 +440,7 @@ class MoveExecutorTest {
         game.setWhiteKingPosition(new Position(5, 3));
         game.setBlackKingPosition(new Position(7, 2));
 
-        GameStatus result = executor.performMove(game, new Move(new Position(3, 1), new Position(5, 1)), null);
+        GameStatus result = executor.performMove(game, new Move(new Position(3, 1), new Position(5, 1), null));
         assertThat(result).isEqualTo(GameStatus.DRAW);
     }
 }

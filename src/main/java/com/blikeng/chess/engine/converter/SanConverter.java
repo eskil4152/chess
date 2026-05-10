@@ -1,39 +1,26 @@
 package com.blikeng.chess.engine.converter;
 
 import java.util.List;
-import java.util.UUID;
 
 import com.blikeng.chess.engine.MoveExecutor;
 import com.blikeng.chess.engine.MoveGenerator;
 import com.blikeng.chess.engine.PositionMapper;
 import com.blikeng.chess.engine.SquareAttacked;
-import com.blikeng.chess.model.*;
+import com.blikeng.chess.model.Game;
+import com.blikeng.chess.model.Move;
+import com.blikeng.chess.model.Board;
+import com.blikeng.chess.model.GameStatus;
+import com.blikeng.chess.model.Position;
 import com.blikeng.chess.model.piece.Color;
 import com.blikeng.chess.model.piece.Piece;
 import com.blikeng.chess.model.piece.PieceType;
 
 public class SanConverter {
+    private SanConverter() {}
+
     private static final MoveGenerator moveGenerator = new MoveGenerator();
     private static final MoveExecutor moveExecutor = new MoveExecutor();
     private final static SquareAttacked squareAttacked = new SquareAttacked(moveGenerator);
-
-    static void main(){
-        Move move = new Move(new Position(1, 0), new Position(2, 0), null);
-        Game game = new Game(
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                "white",
-                UUID.randomUUID(),
-                "black",
-                800,
-                800
-        );
-
-        toSan(game, move);
-
-        Move move2 = new Move(new Position(6, 0), new Position(7, 0), PieceType.QUEEN);
-        toSan(game, move2);
-    }
 
     public static String toSan(Game game, Move move) {
         StringBuilder sb = new StringBuilder();

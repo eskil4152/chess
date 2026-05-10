@@ -46,6 +46,16 @@ class PieceTest {
     }
 
     @Test
+    void toCharShouldReturnCorrectCharacter() {
+        assertThat(PieceType.toChar(PieceType.ROOK)).isEqualTo('R');
+        assertThat(PieceType.toChar(PieceType.KNIGHT)).isEqualTo('N');
+        assertThat(PieceType.toChar(PieceType.BISHOP)).isEqualTo('B');
+        assertThat(PieceType.toChar(PieceType.QUEEN)).isEqualTo('Q');
+        assertThat(PieceType.toChar(PieceType.KING)).isEqualTo(' ');
+        assertThat(PieceType.toChar(PieceType.PAWN)).isEqualTo(' ');
+    }
+
+    @Test
     void fromCharShouldReturnCorrectPieceType() {
         assertThat(PieceType.fromChar('r')).isEqualTo(PieceType.ROOK);
         assertThat(PieceType.fromChar('R')).isEqualTo(PieceType.ROOK);
