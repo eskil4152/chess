@@ -117,7 +117,10 @@ public class MoveExecutor {
             }
         }
 
-        game.switchTurn();
+        if (isInsufficientMaterial(board)) {
+            game.setEndedBy(EndedBy.INSUFFICIENT_MATERIAL);
+            return GameStatus.DRAW;
+        }
 
         String key = board.toString() + game.isWhiteTurn() + game.getEnPassantTarget() + Arrays.toString(castlingRights(game));
         HashMap<String, Integer> positionHistory = game.getPositionHistory();
@@ -127,6 +130,8 @@ public class MoveExecutor {
             game.setEndedBy(EndedBy.REPETITION);
             return GameStatus.DRAW;
         }
+
+        game.switchTurn();
 
         return GameStatus.ONGOING;
     }
@@ -263,5 +268,51 @@ public class MoveExecutor {
             case KNIGHT -> new Knight(color);
             default -> throw new InvalidPromotionException();
         };
+    }
+
+    private boolean isInsufficientMaterial(Board board) {
+        int whitePieces = 0;
+        int blackPieces = 0;
+
+        int whiteBishopSquareColor = -1;
+        int blackBishopSquareColor = -1;
+
+        boolean whiteHasBishop = false;
+        boolean whiteHasKnight = false;
+
+        boolean blackHasBishop = false;
+        boolean blackHasKnight = false;
+
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = board.getPiece(row, col);
+                if (piece == null || piece.getPieceType() == PieceType.KING) continue;
+
+                if (piece.getColor() == Color.WHITE) {
+                    whitePieces++;
+                    if (piece.getPieceType() == PieceType.BISHOP) {
+                        whiteHasBishop = true;
+                        whiteBishopSquareColor = (row + col) % 2;
+                    } else if (piece.getPieceType() == PieceType.KNIGHT) {
+                        whiteHasKnight = true;
+                    }
+                } else {
+                    blackPieces++;
+                    if (piece.getPieceType() == PieceType.BISHOP) {
+                        blackHasBishop = true;
+                        blackBishopSquareColor = (row + col) % 2;
+                    } else if (piece.getPieceType() == PieceType.KNIGHT) {
+                        blackHasKnight = true;
+                    }
+                }
+            }
+        }
+
+        if (whitePieces == 0 && blackPieces == 0) return true;
+        if (whitePieces == 1 && blackPieces == 0 && (whiteHasBishop || whiteHasKnight)) return true;
+        if (blackPieces == 1 && whitePieces == 0 && (blackHasBishop || blackHasKnight)) return true;
+
+        return whitePieces == 1 && blackPieces == 1 && whiteHasBishop && blackHasBishop
+                && whiteBishopSquareColor == blackBishopSquareColor;
     }
 }
