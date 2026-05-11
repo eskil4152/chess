@@ -127,76 +127,41 @@ public class MoveGenerator {
         }
     }
 
-    private List<Position> getPawnMoves(Game game, Board board, Position position){
+    private List<Position> getPawnMoves(Game game, Board board, Position position) {
         List<Position> moves = new ArrayList<>();
+        Piece pawn = board.getPiece(position.row(), position.col());
+        boolean isWhite = pawn.getColor() == Color.WHITE;
+        int dir = isWhite ? 1 : -1;
+        int row = position.row();
+        int col = position.col();
+        int fwd = row + dir;
 
-        boolean hasMoved = board.getPiece(position.row(), position.col()).hasMoved();
-        boolean isWhite = board.getPiece(position.row(), position.col()).getColor() == Color.WHITE;
-        Position enPassantTarget = game.getEnPassantTarget();
-
-        if (isWhite) {
-            // Walk ahead
-            if (position.row() + 1 < 8 && board.getPiece(position.row() + 1, position.col()) == null)
-                moves.add(new Position(position.row() + 1, position.col()));
-
-            // Captures
-            if (
-                    position.row() + 1 < 8 && position.col() + 1 < 8 &&
-                    board.getPiece(position.row() + 1, position.col() + 1) != null &&
-                    board.getPiece(position.row() + 1, position.col() + 1).getColor() != Color.WHITE
-            ) moves.add(new Position(position.row() + 1, position.col() + 1));
-
-            if (
-                    position.row() + 1 < 8 && position.col() - 1 >= 0 &&
-                    board.getPiece(position.row() + 1, position.col() - 1) != null &&
-                    board.getPiece(position.row() + 1, position.col() - 1).getColor() != Color.WHITE
-            ) moves.add(new Position(position.row() + 1, position.col() - 1));
-
-            if (
-                    !hasMoved && position.row() + 2 < 8 &&
-                    board.getPiece(position.row() + 2, position.col()) == null &&
-                    board.getPiece(position.row() + 1, position.col()) == null
-            ) moves.add(new Position(position.row() + 2, position.col()));
-
-            // En passant
-            if (enPassantTarget != null && enPassantTarget.row() == position.row() + 1 &&
-                    Math.abs(enPassantTarget.col() - position.col()) == 1) {
-                moves.add(enPassantTarget);
+        if (fwd >= 0 && fwd < 8) {
+            if (board.getPiece(fwd, col) == null) {
+                moves.add(new Position(fwd, col));
+                int dbl = fwd + dir;
+                if (!pawn.hasMoved() && dbl >= 0 && dbl < 8 && board.getPiece(dbl, col) == null)
+                    moves.add(new Position(dbl, col));
             }
-
-        } else {
-            // Walk ahead
-            if (position.row() - 1 >= 0 && board.getPiece(position.row() - 1, position.col()) == null)
-                moves.add(new Position(position.row() - 1, position.col()));
-
-            // Captures
-            if (
-                    position.row() - 1 >= 0 && position.col() + 1 < 8 &&
-                    board.getPiece(position.row() - 1, position.col() + 1) != null &&
-                    board.getPiece(position.row() - 1, position.col() + 1).getColor() != Color.BLACK
-            ) moves.add(new Position(position.row() - 1, position.col() + 1));
-
-            if (
-                    position.row() - 1 >= 0 && position.col() - 1 >= 0 &&
-                    board.getPiece(position.row() - 1, position.col() - 1) != null &&
-                    board.getPiece(position.row() - 1, position.col() - 1).getColor() != Color.BLACK
-            ) moves.add(new Position(position.row() - 1, position.col() - 1));
-
-            // First move
-            if (
-                    !hasMoved && position.row() - 2 >= 0 &&
-                    board.getPiece(position.row() - 2, position.col()) == null &&
-                    board.getPiece(position.row() - 1, position.col()) == null
-            ) moves.add(new Position(position.row() - 2, position.col()));
-
-            // En passant
-            if (enPassantTarget != null && enPassantTarget.row() == position.row() - 1 &&
-                    Math.abs(enPassantTarget.col() - position.col()) == 1) {
-                moves.add(enPassantTarget);
-            }
+            addPawnCaptures(board, fwd, col, pawn.getColor(), moves);
         }
 
+        Position ep = game.getEnPassantTarget();
+        if (ep != null && ep.row() == fwd && Math.abs(ep.col() - col) == 1)
+            moves.add(ep);
+
         return moves;
+    }
+
+    private void addPawnCaptures(Board board, int fwd, int col, Color color, List<Position> moves) {
+        for (int dc : new int[]{-1, 1}) {
+            int captureCol = col + dc;
+            if (captureCol >= 0 && captureCol < 8) {
+                Piece target = board.getPiece(fwd, captureCol);
+                if (target != null && target.getColor() != color)
+                    moves.add(new Position(fwd, captureCol));
+            }
+        }
     }
 
     private List<Position> slideDirection(Board board, Position position, int[][] directions) {
