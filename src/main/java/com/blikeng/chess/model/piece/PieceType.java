@@ -19,7 +19,8 @@ public enum PieceType {
             case KNIGHT -> 'N';
             case BISHOP -> 'B';
             case QUEEN -> 'Q';
-            default -> ' ';
+            case KING -> 'K';
+            case PAWN -> 'P';
         };
     }
 

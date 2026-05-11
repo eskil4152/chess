@@ -51,8 +51,8 @@ class PieceTest {
         assertThat(PieceType.toChar(PieceType.KNIGHT)).isEqualTo('N');
         assertThat(PieceType.toChar(PieceType.BISHOP)).isEqualTo('B');
         assertThat(PieceType.toChar(PieceType.QUEEN)).isEqualTo('Q');
-        assertThat(PieceType.toChar(PieceType.KING)).isEqualTo(' ');
-        assertThat(PieceType.toChar(PieceType.PAWN)).isEqualTo(' ');
+        assertThat(PieceType.toChar(PieceType.KING)).isEqualTo('K');
+        assertThat(PieceType.toChar(PieceType.PAWN)).isEqualTo('P');
     }
 
     @Test
