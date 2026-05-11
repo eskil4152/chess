@@ -63,10 +63,10 @@ public class Game {
     private final int blackElo;
 
     @Setter
-    private Position whiteKingPosition;
+    private Position whiteKingPosition = new Position(0, 4);
 
     @Setter
-    private Position blackKingPosition;
+    private Position blackKingPosition = new Position(7, 4);
 
     private final Board board;
     private boolean isWhiteTurn = true;
