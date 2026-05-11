@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -89,11 +90,13 @@ class AuthHandshakeInterceptorTest {
 
     @Test
     void afterHandshakeShouldDoNothingWhenNoException() {
-        interceptor.afterHandshake(mock(ServerHttpRequest.class), response(), handler(), null);
+        assertThatCode(() -> interceptor.afterHandshake(mock(ServerHttpRequest.class), response(), handler(), null))
+                .doesNotThrowAnyException();
     }
 
     @Test
     void afterHandshakeShouldNotThrowWhenExceptionPresent() {
-        interceptor.afterHandshake(mock(ServerHttpRequest.class), response(), handler(), new RuntimeException("fail"));
+        assertThatCode(() -> interceptor.afterHandshake(mock(ServerHttpRequest.class), response(), handler(), new RuntimeException("fail")))
+                .doesNotThrowAnyException();
     }
 }

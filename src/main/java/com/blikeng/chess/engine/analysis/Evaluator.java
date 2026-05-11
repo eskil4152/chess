@@ -43,18 +43,19 @@ public class Evaluator {
 
                     for (PieceType promo : promotions) {
                         Game copy = new Game(game);
-                        if (moveExecutor.performMove(copy, new Move(move.from(), move.to(), promo)) == null) continue;
-                        int current = miniMax(copy, depth - 1, alpha, beta);
+                        if (moveExecutor.performMove(copy, new Move(move.from(), move.to(), promo)) != null) {
+                            int current = miniMax(copy, depth - 1, alpha, beta);
 
-                        if (game.isWhiteTurn()) {
-                            best = Math.max(best, current);
-                            alpha = Math.max(alpha, current);
-                        } else {
-                            best = Math.min(best, current);
-                            beta = Math.min(beta, current);
+                            if (game.isWhiteTurn()) {
+                                best = Math.max(best, current);
+                                alpha = Math.max(alpha, current);
+                            } else {
+                                best = Math.min(best, current);
+                                beta = Math.min(beta, current);
+                            }
+
+                            if (beta <= alpha) break outer;
                         }
-
-                        if (beta <= alpha) break outer;
                     }
                 }
             }
@@ -92,22 +93,23 @@ public class Evaluator {
 
                     for (PieceType promo : promotions) {
                         Game copy = new Game(game);
-                        if (moveExecutor.performMove(copy, new Move(move.from(), move.to(), promo)) == null) continue;
-                        int score = miniMax(copy, depth - 1, alpha, beta);
+                        if (moveExecutor.performMove(copy, new Move(move.from(), move.to(), promo)) != null) {
+                            int score = miniMax(copy, depth - 1, alpha, beta);
 
-                        if (isWhite ? score > best : score < best) {
-                            best = score;
-                            bestMove = move;
-                            bestPromo = promo;
+                            if (isWhite ? score > best : score < best) {
+                                best = score;
+                                bestMove = move;
+                                bestPromo = promo;
+                            }
+
+                            if (isWhite) {
+                                alpha = Math.max(alpha, score);
+                            } else {
+                                beta = Math.min(beta, score);
+                            }
+
+                            if (beta <= alpha) break outer;
                         }
-
-                        if (isWhite) {
-                            alpha = Math.max(alpha, score);
-                        } else {
-                            beta = Math.min(beta, score);
-                        }
-
-                        if (beta <= alpha) break outer;
                     }
                 }
             }
@@ -182,14 +184,10 @@ public class Evaluator {
 
                 if (piece.getColor() == Color.WHITE) {
                     whitePawnsColumn[col]++;
-
-                    if (row == 7) continue;
-                    if (board.getPiece(row + 1, col) != null) whiteBlockedPawns++;
+                    if (row != 7 && board.getPiece(row + 1, col) != null) whiteBlockedPawns++;
                 } else {
                     blackPawnsColumn[col]++;
-
-                    if (row == 0) continue;
-                    if (board.getPiece(row - 1, col) != null) blackBlockedPawns++;
+                    if (row != 0 && board.getPiece(row - 1, col) != null) blackBlockedPawns++;
                 }
             }
         }

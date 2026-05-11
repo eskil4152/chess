@@ -84,80 +84,50 @@ public class MoveGenerator {
 
     private List<Position> getKingMoves(Board board, Position position) {
         List<Position> moves = new ArrayList<>();
+        addAdjacentKingMoves(board, position, moves);
 
+        Piece king = board.getPiece(position.row(), position.col());
+        if (!king.hasMoved()) {
+            int row = king.getColor() == Color.WHITE ? 0 : 7;
+            addCastlingMoves(board, row, moves);
+        }
+
+        return moves;
+    }
+
+    private void addAdjacentKingMoves(Board board, Position position, List<Position> moves) {
         int[][] directions = {
             {-1, -1}, {-1, 0}, {-1, +1},
             {0, -1}, {0, +1},
             {+1, -1}, {+1, 0}, {+1, +1}
         };
 
+        Piece moving = board.getPiece(position.row(), position.col());
         for (int[] direction : directions) {
             int row = position.row() + direction[0];
             int col = position.col() + direction[1];
 
-            if ((row >= 0 && row < 8 && col >= 0 && col < 8)) {
-                if (board.getPiece(row, col) == null) {
+            if (row >= 0 && row < 8 && col >= 0 && col < 8) {
+                Piece target = board.getPiece(row, col);
+                if (target == null || target.getColor() != moving.getColor()) {
                     moves.add(new Position(row, col));
-                } else {
-                    Piece moving = board.getPiece(position.row(), position.col());
-                    Piece target = board.getPiece(row, col);
-                    if (target.getColor() != moving.getColor()) {
-                        moves.add(new Position(row, col));
-                    }
                 }
             }
         }
+    }
 
-        Piece king = board.getPiece(position.row(), position.col());
-        if (king.getColor() == Color.WHITE) {
-            if (!king.hasMoved()) {
-                Piece kingsideRook = board.getPiece(0, 7);
-                if (
-                        kingsideRook != null &&
-                        !kingsideRook.hasMoved() &&
-                        board.getPiece(0, 6) == null &&
-                        board.getPiece(0, 5) == null
-                ) {
-                    moves.add(new Position(0, 6));
-                }
-
-                Piece queensideRook = board.getPiece(0, 0);
-                if (
-                        queensideRook != null &&
-                        !queensideRook.hasMoved() &&
-                        board.getPiece(0, 1) == null &&
-                        board.getPiece(0, 2) == null &&
-                        board.getPiece(0, 3) == null
-                ) {
-                    moves.add(new Position(0, 2));
-                }
-            }
-        } else {
-            if (!king.hasMoved()) {
-                Piece kingsideRook = board.getPiece(7, 7);
-                if (
-                        kingsideRook != null &&
-                        !kingsideRook.hasMoved() &&
-                        board.getPiece(7, 5) == null &&
-                        board.getPiece(7, 6) == null
-                ) {
-                    moves.add(new Position(7, 6));
-                }
-
-                Piece queensideRook = board.getPiece(7, 0);
-                if (
-                        queensideRook != null &&
-                        !queensideRook.hasMoved() &&
-                        board.getPiece(7, 1) == null &&
-                        board.getPiece(7, 2) == null &&
-                        board.getPiece(7, 3) == null
-                ) {
-                    moves.add(new Position(7, 2));
-                }
-            }
+    private void addCastlingMoves(Board board, int row, List<Position> moves) {
+        Piece kingsideRook = board.getPiece(row, 7);
+        if (kingsideRook != null && !kingsideRook.hasMoved() &&
+                board.getPiece(row, 5) == null && board.getPiece(row, 6) == null) {
+            moves.add(new Position(row, 6));
         }
 
-        return moves;
+        Piece queensideRook = board.getPiece(row, 0);
+        if (queensideRook != null && !queensideRook.hasMoved() &&
+                board.getPiece(row, 1) == null && board.getPiece(row, 2) == null && board.getPiece(row, 3) == null) {
+            moves.add(new Position(row, 2));
+        }
     }
 
     private List<Position> getPawnMoves(Game game, Board board, Position position){

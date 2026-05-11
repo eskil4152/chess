@@ -19,7 +19,7 @@ import java.util.List;
 public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
 
-    private final Logger logger = LoggerFactory.getLogger(JwtAuthFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
 
     public JwtAuthFilter(JwtService jwtService) {
         this.jwtService = jwtService;
@@ -51,7 +51,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(jwtPrincipal, null, List.of());
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } else {
-                logger.warn("Invalid JWT token in request to {}", request.getRequestURI());
+                log.warn("Invalid JWT token in request to {}", request.getRequestURI());
             }
         }
 

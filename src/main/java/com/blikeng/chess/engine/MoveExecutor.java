@@ -87,23 +87,12 @@ public class MoveExecutor {
         Color opponentColor = playerColor == Color.WHITE ? Color.BLACK : Color.WHITE;
         boolean hasLegalMove = false;
 
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
+        for (int row = 0; row < 8 && !hasLegalMove; row++) {
+            for (int col = 0; col < 8 && !hasLegalMove; col++) {
                 Piece p = board.getPiece(row, col);
-                if (p == null || p.getColor() != opponentColor) continue;
-
-                Position from = new Position(row, col);
-                List<Position> pseudoMoves = moveGenerator.getPseudoLegalMoves(game, board, from);
-
-                for (Position to : pseudoMoves) {
-                    boolean epMove = p.getPieceType() == PieceType.PAWN && to.equals(game.getEnPassantTarget());
-                    if (!kingLeftInCheck(board, game, new Move(from, to, null), p, opponentColor, epMove)) {
-                        hasLegalMove = true;
-                        break;
-                    }
+                if (p != null && p.getColor() == opponentColor) {
+                    hasLegalMove = hasAnyLegalMove(board, game, p, new Position(row, col), opponentColor);
                 }
-
-                if (hasLegalMove) break;
             }
         }
 
@@ -134,6 +123,16 @@ public class MoveExecutor {
         game.switchTurn();
 
         return GameStatus.ONGOING;
+    }
+
+    private boolean hasAnyLegalMove(Board board, Game game, Piece p, Position from, Color color) {
+        for (Position to : moveGenerator.getPseudoLegalMoves(game, board, from)) {
+            boolean epMove = p.getPieceType() == PieceType.PAWN && to.equals(game.getEnPassantTarget());
+            if (!kingLeftInCheck(board, game, new Move(from, to, null), p, color, epMove)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean[] castlingRights(Game game){
