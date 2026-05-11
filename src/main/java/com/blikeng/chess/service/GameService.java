@@ -125,11 +125,7 @@ public class GameService {
             } else if (gameStatus != null) {
                 game.addMove(moveDTO.move());
 
-                EndedBy endedBy;
-                if (gameStatus == GameStatus.DRAW) endedBy = EndedBy.STALEMATE;
-                else endedBy = EndedBy.CHECKMATE;
-
-                handleGameEnd(game, gameStatus, endedBy);
+                handleGameEnd(game, gameStatus);
             }
         } finally {
             lock.unlock();
@@ -182,7 +178,8 @@ public class GameService {
 
             boolean isWhite = game.getWhiteId().equals(userId);
             GameStatus gameStatus = isWhite ? GameStatus.BLACK_WIN : GameStatus.WHITE_WIN;
-            handleGameEnd(game, gameStatus, EndedBy.RESIGNATION);
+            game.setEndedBy(EndedBy.RESIGNATION);
+            handleGameEnd(game, gameStatus);
         } finally {
             lock.unlock();
         }
@@ -206,7 +203,8 @@ public class GameService {
             else game.setBlackDraw(true);
 
             if (game.isWhiteDraw() && game.isBlackDraw()) {
-                handleGameEnd(game, GameStatus.DRAW, EndedBy.AGREEMENT);
+                game.setEndedBy(EndedBy.AGREEMENT);
+                handleGameEnd(game, GameStatus.DRAW);
             } else {
                 UUID otherUser = isWhite ? game.getBlackId() : game.getWhiteId();
                 notificationService.sendDrawOffer(game.getId(), otherUser);
@@ -216,7 +214,7 @@ public class GameService {
         }
     }
 
-    private void handleGameEnd(Game game, GameStatus gameStatus, EndedBy endedBy) {
+    private void handleGameEnd(Game game, GameStatus gameStatus) {
         String moves = PgnConverter.toPgn(game);
 
         gameRepository.findById(game.getId()).ifPresent(entity -> {
@@ -233,7 +231,7 @@ public class GameService {
 
         int[] newElo = userService.updateUserElo(game.getWhiteId(), game.getBlackId(), gameStatus);
 
-        eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, endedBy, newElo[0], newElo[1]));
+        eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, game.getEndedBy(), newElo[0], newElo[1]));
         games.remove(game.getId());
 
         logger.info("Game ended: {}. Black: {}. White: {}. Result: {}", game.getId(), game.getWhiteUsername(), game.getBlackUsername(), gameStatus.name());

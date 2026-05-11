@@ -38,6 +38,7 @@ public class Game {
         this.whiteDraw = other.whiteDraw;
         this.blackDraw = other.blackDraw;
         this.moves.addAll(other.moves);
+        this.halfMoveClock = other.halfMoveClock;
     }
 
     private final UUID id;
@@ -70,6 +71,12 @@ public class Game {
 
     @Setter
     private GameStatus status = GameStatus.ONGOING;
+
+    @Setter
+    private int halfMoveClock = 0;
+
+    @Setter
+    private EndedBy endedBy = null;
 
     @Setter
     private Position enPassantTarget;

@@ -27,6 +27,13 @@ public class MoveExecutor {
 
         if (kingLeftInCheck(board, game, move, piece, color, isEnPassant)) return null;
 
+        boolean isCapture = board.getPiece(move.to().row(), move.to().col()) != null || isEnPassant;
+        if (piece.getPieceType() == PieceType.PAWN || isCapture){
+            game.setHalfMoveClock(0);
+        } else {
+            game.setHalfMoveClock(game.getHalfMoveClock() + 1);
+        }
+
         piece = checkIfPawnPromotion(piece, move);
 
         if (piece.getPieceType() == PieceType.KING){
@@ -70,6 +77,11 @@ public class MoveExecutor {
     }
 
     private GameStatus isGameOver(Color playerColor, Board board, Game game){
+        if (game.getHalfMoveClock() >= 100) {
+            game.setEndedBy(EndedBy.FIFTY_MOVE_ROLE);
+            return GameStatus.DRAW;
+        }
+
         Color opponentColor = playerColor == Color.WHITE ? Color.BLACK : Color.WHITE;
         boolean hasLegalMove = false;
 
@@ -95,8 +107,10 @@ public class MoveExecutor {
 
         if (!hasLegalMove) {
             if (squareAttacked.isInCheck(game, opponentColor)) {
+                game.setEndedBy(EndedBy.CHECKMATE);
                 return playerColor == Color.WHITE ? GameStatus.WHITE_WIN : GameStatus.BLACK_WIN;
             } else {
+                game.setEndedBy(EndedBy.STALEMATE);
                 return GameStatus.DRAW;
             }
         }
