@@ -1,6 +1,8 @@
 package com.blikeng.chess.exception;
 
 public final class ErrorMessages {
+    private ErrorMessages() {}
+
     public static final String INVALID_CREDENTIALS = "Invalid credentials";
     public static final String INVALID_USERNAME = "Invalid username";
     public static final String INVALID_PASSWORD = "Invalid password";

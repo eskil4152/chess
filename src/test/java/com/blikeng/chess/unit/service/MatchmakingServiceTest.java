@@ -1,8 +1,8 @@
 package com.blikeng.chess.unit.service;
 
 import com.blikeng.chess.entity.UserEntity;
-import com.blikeng.chess.exception.errorTypes.ExistingGameException;
-import com.blikeng.chess.exception.errorTypes.InvalidUserException;
+import com.blikeng.chess.exception.types.ExistingGameException;
+import com.blikeng.chess.exception.types.InvalidUserException;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.UserRole;
 import com.blikeng.chess.service.AuthService;

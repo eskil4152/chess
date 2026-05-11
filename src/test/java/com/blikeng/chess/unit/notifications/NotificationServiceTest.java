@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -42,7 +43,7 @@ class NotificationServiceTest {
         gameId = UUID.randomUUID();
     }
 
-    private WebSocketSession openSession() throws IOException {
+    private WebSocketSession openSession() {
         WebSocketSession s = mock(WebSocketSession.class);
         when(s.isOpen()).thenReturn(true);
         return s;
@@ -109,7 +110,7 @@ class NotificationServiceTest {
         WebSocketSession session = openSession();
         doThrow(new IOException("network error")).when(session).sendMessage(any());
 
-        notificationService.sendToSession(session, "hello");
+        assertThatCode(() -> notificationService.sendToSession(session, "hello")).doesNotThrowAnyException();
     }
 
     @Test

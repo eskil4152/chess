@@ -3,7 +3,7 @@ package com.blikeng.chess.unit.websocket;
 import com.blikeng.chess.dto.websocket.WsDrawDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
 import com.blikeng.chess.dto.websocket.WsResignDTO;
-import com.blikeng.chess.exception.errorTypes.InvalidMoveException;
+import com.blikeng.chess.exception.types.InvalidMoveException;
 import com.blikeng.chess.notifications.NotificationService;
 import com.blikeng.chess.service.GameService;
 import com.blikeng.chess.service.MatchmakingService;

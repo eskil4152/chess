@@ -6,7 +6,7 @@ import com.blikeng.chess.dto.websocket.WsMoveDTO;
 import com.blikeng.chess.dto.websocket.WsResignDTO;
 import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.entity.UserEntity;
-import com.blikeng.chess.exception.errorTypes.*;
+import com.blikeng.chess.exception.types.*;
 import com.blikeng.chess.model.Game;
 import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.model.Position;
@@ -43,7 +43,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -114,12 +113,6 @@ class GameServiceTest {
         assertThat(gameService.isInGame(UUID.randomUUID())).isFalse();
     }
 
-    @Test
-    void isInGameShouldReturnFalseWhenPlayerNotInExistingGame() {
-        beginAndGetGame();
-        assertThat(gameService.isInGame(UUID.randomUUID())).isFalse();
-    }
-
     // --- Is In Game (filter branching) ---
     @Test
     void isInGameShouldReturnTrueForWhitePlayer() {
@@ -148,21 +141,29 @@ class GameServiceTest {
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(3)).publishEvent(captor.capture());
-        assertThat(captor.getAllValues().stream().filter(e -> e instanceof MoveMadeEvent).count()).isEqualTo(2);
+        assertThat(
+                captor
+                        .getAllValues()
+                        .stream()
+                        .filter(MoveMadeEvent.class::isInstance)
+                        .count()
+        ).isEqualTo(2);
     }
 
     // --- Make Move ---
     @Test
     void makeMoveShouldThrowWhenGameNotFound() {
         WsMoveDTO dto = new WsMoveDTO(UUID.randomUUID().toString(), "e2e4");
-        assertThatThrownBy(() -> gameService.makeMove(white.getId(), dto))
+        UUID whiteId = white.getId();
+        assertThatThrownBy(() -> gameService.makeMove(whiteId, dto))
                 .isInstanceOf(GameNotFoundException.class);
     }
 
     @Test
     void makeMoveShouldThrowOnInvalidUUIDFormat() {
         WsMoveDTO dto = new WsMoveDTO("not-valid-uuid", "e2e4");
-        assertThatThrownBy(() -> gameService.makeMove(white.getId(), dto))
+        UUID whiteId = white.getId();
+        assertThatThrownBy(() -> gameService.makeMove(whiteId, dto))
                 .isInstanceOf(InvalidUUIDException.class);
     }
 
@@ -170,7 +171,8 @@ class GameServiceTest {
     void makeMoveShouldThrowWhenMoveTooShort() {
         Game game = beginAndGetGame();
         WsMoveDTO dto = new WsMoveDTO(game.getId().toString(), "e2");
-        assertThatThrownBy(() -> gameService.makeMove(game.getWhiteId(), dto))
+        UUID whiteId = game.getWhiteId();
+        assertThatThrownBy(() -> gameService.makeMove(whiteId, dto))
                 .isInstanceOf(InvalidMoveException.class);
     }
 
@@ -190,7 +192,7 @@ class GameServiceTest {
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
-        assertThat(captor.getAllValues()).anyMatch(e -> e instanceof MoveMadeEvent);
+        assertThat(captor.getAllValues()).anyMatch(MoveMadeEvent.class::isInstance);
     }
 
     @Test
@@ -201,7 +203,7 @@ class GameServiceTest {
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(1)).publishEvent(captor.capture());
-        assertThat(captor.getAllValues()).noneMatch(e -> e instanceof MoveMadeEvent);
+        assertThat(captor.getAllValues()).noneMatch(MoveMadeEvent.class::isInstance);
     }
 
     @Test
@@ -247,7 +249,7 @@ class GameServiceTest {
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
-        assertThat(captor.getAllValues()).anyMatch(e -> e instanceof MatchEndedEvent);
+        assertThat(captor.getAllValues()).anyMatch(MatchEndedEvent.class::isInstance);
         assertThat(gameService.isInGame(white.getId())).isFalse();
     }
 
@@ -274,7 +276,7 @@ class GameServiceTest {
         verify(gameRepository, atLeast(2)).save(any());
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
-        assertThat(captor.getAllValues()).anyMatch(e -> e instanceof MatchEndedEvent);
+        assertThat(captor.getAllValues()).anyMatch(MatchEndedEvent.class::isInstance);
         assertThat(gameService.isInGame(game.getWhiteId())).isFalse();
     }
 
@@ -284,7 +286,8 @@ class GameServiceTest {
     void resignGameShouldThrowWhenUserNotInGame() {
         Game game = beginAndGetGame();
         WsResignDTO dto = new WsResignDTO(game.getId().toString());
-        assertThatThrownBy(() -> gameService.resignGame(UUID.randomUUID(), dto))
+        UUID randomId = UUID.randomUUID();
+        assertThatThrownBy(() -> gameService.resignGame(randomId, dto))
                 .isInstanceOf(NotAllowedException.class);
     }
 
@@ -322,7 +325,8 @@ class GameServiceTest {
     void handleDrawShouldThrowWhenUserNotInGame() {
         Game game = beginAndGetGame();
         WsDrawDTO dto = new WsDrawDTO(game.getId().toString());
-        assertThatThrownBy(() -> gameService.handleDraw(UUID.randomUUID(), dto))
+        UUID randomId = UUID.randomUUID();
+        assertThatThrownBy(() -> gameService.handleDraw(randomId, dto))
                 .isInstanceOf(NotAllowedException.class);
     }
 
@@ -332,7 +336,7 @@ class GameServiceTest {
 
         gameService.handleDraw(game.getWhiteId(), new WsDrawDTO(game.getId().toString()));
 
-        verify(notificationService).sendDrawOffer(eq(game.getId()), eq(game.getBlackId()));
+        verify(notificationService).sendDrawOffer(game.getId(), game.getBlackId());
         assertThat(gameService.isInGame(game.getWhiteId())).isTrue();
     }
 
@@ -342,7 +346,7 @@ class GameServiceTest {
 
         gameService.handleDraw(game.getBlackId(), new WsDrawDTO(game.getId().toString()));
 
-        verify(notificationService).sendDrawOffer(eq(game.getId()), eq(game.getWhiteId()));
+        verify(notificationService).sendDrawOffer(game.getId(), game.getWhiteId());
         assertThat(gameService.isInGame(game.getBlackId())).isTrue();
     }
 

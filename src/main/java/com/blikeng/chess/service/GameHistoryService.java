@@ -2,9 +2,9 @@ package com.blikeng.chess.service;
 
 import com.blikeng.chess.dto.GameDTO;
 import com.blikeng.chess.dto.GamePreviewDTO;
-import com.blikeng.chess.exception.errorTypes.GameNotFoundException;
-import com.blikeng.chess.exception.errorTypes.InvalidUUIDException;
-import com.blikeng.chess.exception.errorTypes.UserNotFoundException;
+import com.blikeng.chess.exception.types.GameNotFoundException;
+import com.blikeng.chess.exception.types.InvalidUUIDException;
+import com.blikeng.chess.exception.types.UserNotFoundException;
 import com.blikeng.chess.repository.GameRepository;
 import org.springframework.stereotype.Service;
 

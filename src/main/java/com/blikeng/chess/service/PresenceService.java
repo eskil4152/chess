@@ -28,7 +28,7 @@ public class PresenceService {
 
     public boolean hasNoSessions(UUID userId) {
         Set<WebSocketSession> sessions = userSessions.get(userId);
-        return sessions == null || sessions.isEmpty();
+        return sessions == null;
     }
 
     public Set<WebSocketSession> getSessions(UUID userId) {

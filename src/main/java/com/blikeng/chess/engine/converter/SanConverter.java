@@ -20,7 +20,7 @@ public class SanConverter {
 
     private static final MoveGenerator moveGenerator = new MoveGenerator();
     private static final MoveExecutor moveExecutor = new MoveExecutor();
-    private final static SquareAttacked squareAttacked = new SquareAttacked(moveGenerator);
+    private static final SquareAttacked squareAttacked = new SquareAttacked(moveGenerator);
 
     public static String toSan(Game game, Move move) {
         StringBuilder sb = new StringBuilder();

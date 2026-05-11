@@ -49,13 +49,10 @@ public class MoveGenerator {
             int newRow = position.row() + offset[0];
             int newCol = position.col() + offset[1];
 
-            if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
-                if (
-                        board.getPiece(newRow, newCol) == null ||
-                        board.getPiece(newRow, newCol).getColor() != board.getPiece(position.row(), position.col()).getColor()
-                ){
-                    moves.add(new Position(newRow, newCol));
-                }
+            if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8 &&
+                    (board.getPiece(newRow, newCol) == null ||
+                    board.getPiece(newRow, newCol).getColor() != board.getPiece(position.row(), position.col()).getColor())) {
+                moves.add(new Position(newRow, newCol));
             }
         }
 
@@ -84,152 +81,87 @@ public class MoveGenerator {
 
     private List<Position> getKingMoves(Board board, Position position) {
         List<Position> moves = new ArrayList<>();
+        addAdjacentKingMoves(board, position, moves);
 
+        Piece king = board.getPiece(position.row(), position.col());
+        if (!king.hasMoved()) {
+            int row = king.getColor() == Color.WHITE ? 0 : 7;
+            addCastlingMoves(board, row, moves);
+        }
+
+        return moves;
+    }
+
+    private void addAdjacentKingMoves(Board board, Position position, List<Position> moves) {
         int[][] directions = {
             {-1, -1}, {-1, 0}, {-1, +1},
             {0, -1}, {0, +1},
             {+1, -1}, {+1, 0}, {+1, +1}
         };
 
+        Piece sourcePiece = board.getPiece(position.row(), position.col());
         for (int[] direction : directions) {
             int row = position.row() + direction[0];
             int col = position.col() + direction[1];
 
-            if ((row >= 0 && row < 8 && col >= 0 && col < 8)) {
-                if (board.getPiece(row, col) == null) {
+            if (row >= 0 && row < 8 && col >= 0 && col < 8) {
+                Piece target = board.getPiece(row, col);
+                if (target == null || target.getColor() != sourcePiece.getColor()) {
                     moves.add(new Position(row, col));
-                } else {
-                    Piece moving = board.getPiece(position.row(), position.col());
-                    Piece target = board.getPiece(row, col);
-                    if (target.getColor() != moving.getColor()) {
-                        moves.add(new Position(row, col));
-                    }
                 }
             }
         }
+    }
 
-        Piece king = board.getPiece(position.row(), position.col());
-        if (king.getColor() == Color.WHITE) {
-            if (!king.hasMoved()) {
-                Piece kingsideRook = board.getPiece(0, 7);
-                if (
-                        kingsideRook != null &&
-                        !kingsideRook.hasMoved() &&
-                        board.getPiece(0, 6) == null &&
-                        board.getPiece(0, 5) == null
-                ) {
-                    moves.add(new Position(0, 6));
-                }
-
-                Piece queensideRook = board.getPiece(0, 0);
-                if (
-                        queensideRook != null &&
-                        !queensideRook.hasMoved() &&
-                        board.getPiece(0, 1) == null &&
-                        board.getPiece(0, 2) == null &&
-                        board.getPiece(0, 3) == null
-                ) {
-                    moves.add(new Position(0, 2));
-                }
-            }
-        } else {
-            if (!king.hasMoved()) {
-                Piece kingsideRook = board.getPiece(7, 7);
-                if (
-                        kingsideRook != null &&
-                        !kingsideRook.hasMoved() &&
-                        board.getPiece(7, 5) == null &&
-                        board.getPiece(7, 6) == null
-                ) {
-                    moves.add(new Position(7, 6));
-                }
-
-                Piece queensideRook = board.getPiece(7, 0);
-                if (
-                        queensideRook != null &&
-                        !queensideRook.hasMoved() &&
-                        board.getPiece(7, 1) == null &&
-                        board.getPiece(7, 2) == null &&
-                        board.getPiece(7, 3) == null
-                ) {
-                    moves.add(new Position(7, 2));
-                }
-            }
+    private void addCastlingMoves(Board board, int row, List<Position> moves) {
+        Piece kingsideRook = board.getPiece(row, 7);
+        if (kingsideRook != null && !kingsideRook.hasMoved() &&
+                board.getPiece(row, 5) == null && board.getPiece(row, 6) == null) {
+            moves.add(new Position(row, 6));
         }
+
+        Piece queensideRook = board.getPiece(row, 0);
+        if (queensideRook != null && !queensideRook.hasMoved() &&
+                board.getPiece(row, 1) == null && board.getPiece(row, 2) == null && board.getPiece(row, 3) == null) {
+            moves.add(new Position(row, 2));
+        }
+    }
+
+    private List<Position> getPawnMoves(Game game, Board board, Position position) {
+        List<Position> moves = new ArrayList<>();
+        Piece pawn = board.getPiece(position.row(), position.col());
+        boolean isWhite = pawn.getColor() == Color.WHITE;
+        int direction = isWhite ? 1 : -1;
+        int row = position.row();
+        int col = position.col();
+        int nextRow = row + direction;
+
+        if (nextRow >= 0 && nextRow < 8) {
+            if (board.getPiece(nextRow, col) == null) {
+                moves.add(new Position(nextRow, col));
+                int doubleRow = nextRow + direction;
+                if (!pawn.hasMoved() && doubleRow >= 0 && doubleRow < 8 && board.getPiece(doubleRow, col) == null)
+                    moves.add(new Position(doubleRow, col));
+            }
+            addPawnCaptures(board, nextRow, col, pawn.getColor(), moves);
+        }
+
+        Position enPassantTarget = game.getEnPassantTarget();
+        if (enPassantTarget != null && enPassantTarget.row() == nextRow && Math.abs(enPassantTarget.col() - col) == 1)
+            moves.add(enPassantTarget);
 
         return moves;
     }
 
-    private List<Position> getPawnMoves(Game game, Board board, Position position){
-        List<Position> moves = new ArrayList<>();
-
-        boolean hasMoved = board.getPiece(position.row(), position.col()).hasMoved();
-        boolean isWhite = board.getPiece(position.row(), position.col()).getColor() == Color.WHITE;
-        Position enPassantTarget = game.getEnPassantTarget();
-
-        if (isWhite) {
-            // Walk ahead
-            if (position.row() + 1 < 8 && board.getPiece(position.row() + 1, position.col()) == null)
-                moves.add(new Position(position.row() + 1, position.col()));
-
-            // Captures
-            if (
-                    position.row() + 1 < 8 && position.col() + 1 < 8 &&
-                    board.getPiece(position.row() + 1, position.col() + 1) != null &&
-                    board.getPiece(position.row() + 1, position.col() + 1).getColor() != Color.WHITE
-            ) moves.add(new Position(position.row() + 1, position.col() + 1));
-
-            if (
-                    position.row() + 1 < 8 && position.col() - 1 >= 0 &&
-                    board.getPiece(position.row() + 1, position.col() - 1) != null &&
-                    board.getPiece(position.row() + 1, position.col() - 1).getColor() != Color.WHITE
-            ) moves.add(new Position(position.row() + 1, position.col() - 1));
-
-            if (
-                    !hasMoved && position.row() + 2 < 8 &&
-                    board.getPiece(position.row() + 2, position.col()) == null &&
-                    board.getPiece(position.row() + 1, position.col()) == null
-            ) moves.add(new Position(position.row() + 2, position.col()));
-
-            // En passant
-            if (enPassantTarget != null && enPassantTarget.row() == position.row() + 1 &&
-                    Math.abs(enPassantTarget.col() - position.col()) == 1) {
-                moves.add(enPassantTarget);
-            }
-
-        } else {
-            // Walk ahead
-            if (position.row() - 1 >= 0 && board.getPiece(position.row() - 1, position.col()) == null)
-                moves.add(new Position(position.row() - 1, position.col()));
-
-            // Captures
-            if (
-                    position.row() - 1 >= 0 && position.col() + 1 < 8 &&
-                    board.getPiece(position.row() - 1, position.col() + 1) != null &&
-                    board.getPiece(position.row() - 1, position.col() + 1).getColor() != Color.BLACK
-            ) moves.add(new Position(position.row() - 1, position.col() + 1));
-
-            if (
-                    position.row() - 1 >= 0 && position.col() - 1 >= 0 &&
-                    board.getPiece(position.row() - 1, position.col() - 1) != null &&
-                    board.getPiece(position.row() - 1, position.col() - 1).getColor() != Color.BLACK
-            ) moves.add(new Position(position.row() - 1, position.col() - 1));
-
-            // First move
-            if (
-                    !hasMoved && position.row() - 2 >= 0 &&
-                    board.getPiece(position.row() - 2, position.col()) == null &&
-                    board.getPiece(position.row() - 1, position.col()) == null
-            ) moves.add(new Position(position.row() - 2, position.col()));
-
-            // En passant
-            if (enPassantTarget != null && enPassantTarget.row() == position.row() - 1 &&
-                    Math.abs(enPassantTarget.col() - position.col()) == 1) {
-                moves.add(enPassantTarget);
+    private void addPawnCaptures(Board board, int nextRow, int col, Color color, List<Position> moves) {
+        for (int colOffset : new int[]{-1, 1}) {
+            int captureCol = col + colOffset;
+            if (captureCol >= 0 && captureCol < 8) {
+                Piece target = board.getPiece(nextRow, captureCol);
+                if (target != null && target.getColor() != color)
+                    moves.add(new Position(nextRow, captureCol));
             }
         }
-
-        return moves;
     }
 
     private List<Position> slideDirection(Board board, Position position, int[][] directions) {
@@ -245,8 +177,8 @@ public class MoveGenerator {
                 if (target == null) {
                     moves.add(new Position(row, col));
                 } else {
-                    Piece moving = board.getPiece(position.row(), position.col());
-                    if (target.getColor() != moving.getColor()) {
+                    Piece sourcePiece = board.getPiece(position.row(), position.col());
+                    if (target.getColor() != sourcePiece.getColor()) {
                         moves.add(new Position(row, col));
                     }
                     break;

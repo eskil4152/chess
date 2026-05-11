@@ -8,7 +8,7 @@ public abstract class Piece {
 
     protected boolean moved = false;
 
-    public Piece(Color color) {
+    protected Piece(Color color) {
         this.color = color;
     }
 

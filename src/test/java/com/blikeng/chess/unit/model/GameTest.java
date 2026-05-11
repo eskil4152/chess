@@ -49,8 +49,9 @@ class GameTest {
     @Test
     void lockGameShouldReturnLock() {
         ReentrantLock lock = game.lockGame();
-        assertThat(lock).isNotNull();
-        assertThat(lock).isSameAs(game.lockGame());
+        assertThat(lock)
+                .isNotNull()
+                .isSameAs(game.lockGame());
     }
 
     @Test

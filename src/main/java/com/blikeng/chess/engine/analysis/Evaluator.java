@@ -21,99 +21,97 @@ public class Evaluator {
     public static int miniMax(Game game, int depth, int alpha, int beta) {
         if (depth == 0) return evaluate(game);
 
-        int best = game.isWhiteTurn() ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        boolean isWhite = game.isWhiteTurn();
+        int[] state = {alpha, beta, isWhite ? Integer.MIN_VALUE : Integer.MAX_VALUE};
+        Color color = isWhite ? Color.WHITE : Color.BLACK;
 
-        outer:
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
+        for (int row = 0; row < 8 && state[1] > state[0]; row++)
+            for (int col = 0; col < 8 && state[1] > state[0]; col++) {
                 Piece piece = game.getBoard().getPiece(row, col);
-                Color color = game.isWhiteTurn() ? Color.WHITE : Color.BLACK;
-
                 if (piece == null || piece.getColor() != color) continue;
+                evalMoves(game, new Position(row, col), piece, depth, isWhite, state);
+            }
 
-                List<Position> legalMoves = moveGenerator.getPseudoLegalMoves(game, game.getBoard(), new Position(row, col));
-                for (Position legalMove : legalMoves) {
-                    Move move = new Move(new Position(row, col), legalMove, null);
-                    boolean isPromotion = piece.getPieceType() == PieceType.PAWN
-                            && (game.isWhiteTurn() ? legalMove.row() == 7 : legalMove.row() == 0);
+        return state[2];
+    }
 
-                    PieceType[] promotions = isPromotion
-                            ? new PieceType[]{PieceType.QUEEN, PieceType.ROOK, PieceType.BISHOP, PieceType.KNIGHT}
-                            : new PieceType[]{null};
-
-                    for (PieceType promo : promotions) {
-                        Game copy = new Game(game);
-                        if (moveExecutor.performMove(copy, new Move(move.from(), move.to(), promo)) == null) continue;
-                        int current = miniMax(copy, depth - 1, alpha, beta);
-
-                        if (game.isWhiteTurn()) {
-                            best = Math.max(best, current);
-                            alpha = Math.max(alpha, current);
-                        } else {
-                            best = Math.min(best, current);
-                            beta = Math.min(beta, current);
-                        }
-
-                        if (beta <= alpha) break outer;
-                    }
-                }
+    private static void evalMoves(Game game, Position from, Piece piece, int depth, boolean isWhite, int[] state) {
+        List<Position> moves = moveGenerator.getPseudoLegalMoves(game, game.getBoard(), from);
+        for (int m = 0; m < moves.size() && state[1] > state[0]; m++) {
+            Position to = moves.get(m);
+            PieceType[] promotions = getPromotions(piece, to, isWhite);
+            for (int p = 0; p < promotions.length && state[1] > state[0]; p++) {
+                Game copy = new Game(game);
+                if (moveExecutor.performMove(copy, new Move(from, to, promotions[p])) != null)
+                    updateState(state, miniMax(copy, depth - 1, state[0], state[1]), isWhite);
             }
         }
+    }
 
-        return best;
+    private static void updateState(int[] state, int score, boolean isWhite) {
+        if (isWhite ? score > state[2] : score < state[2]) state[2] = score;
+        if (isWhite) state[0] = Math.max(state[0], score);
+        else state[1] = Math.min(state[1], score);
+    }
+
+    private static PieceType[] getPromotions(Piece piece, Position to, boolean isWhite) {
+        boolean isPromotion = piece.getPieceType() == PieceType.PAWN
+                && (isWhite ? to.row() == 7 : to.row() == 0);
+        return isPromotion
+                ? new PieceType[]{PieceType.QUEEN, PieceType.ROOK, PieceType.BISHOP, PieceType.KNIGHT}
+                : new PieceType[]{null};
     }
 
     public static MoveEval getBestMove(Game game, int depth) {
-        Move bestMove = null;
-        PieceType bestPromo = null;
-
         boolean isWhite = game.isWhiteTurn();
-        int best = game.isWhiteTurn() ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        Color color = isWhite ? Color.WHITE : Color.BLACK;
+        BestMoveState state = new BestMoveState(isWhite);
 
-        int alpha = Integer.MIN_VALUE;
-        int beta = Integer.MAX_VALUE;
-
-        outer:
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
+        for (int row = 0; row < 8 && state.beta > state.alpha; row++)
+            for (int col = 0; col < 8 && state.beta > state.alpha; col++) {
                 Piece piece = game.getBoard().getPiece(row, col);
-                Color color = game.isWhiteTurn() ? Color.WHITE : Color.BLACK;
                 if (piece == null || piece.getColor() != color) continue;
+                evalBestMovesForPiece(game, new Position(row, col), piece, depth, isWhite, state);
+            }
 
-                List<Position> legalMoves = moveGenerator.getPseudoLegalMoves(game, game.getBoard(), new Position(row, col));
-                for (Position legalMove : legalMoves) {
-                    Move move = new Move(new Position(row, col), legalMove, null);
-                    boolean isPromotion = piece.getPieceType() == PieceType.PAWN
-                            && (isWhite ? legalMove.row() == 7 : legalMove.row() == 0);
+        return new MoveEval(state.bestMove, state.best, state.bestPromo);
+    }
 
-                    PieceType[] promotions = isPromotion
-                            ? new PieceType[]{PieceType.QUEEN, PieceType.ROOK, PieceType.BISHOP, PieceType.KNIGHT}
-                            : new PieceType[]{null};
-
-                    for (PieceType promo : promotions) {
-                        Game copy = new Game(game);
-                        if (moveExecutor.performMove(copy, new Move(move.from(), move.to(), promo)) == null) continue;
-                        int score = miniMax(copy, depth - 1, alpha, beta);
-
-                        if (isWhite ? score > best : score < best) {
-                            best = score;
-                            bestMove = move;
-                            bestPromo = promo;
-                        }
-
-                        if (isWhite) {
-                            alpha = Math.max(alpha, score);
-                        } else {
-                            beta = Math.min(beta, score);
-                        }
-
-                        if (beta <= alpha) break outer;
-                    }
+    private static void evalBestMovesForPiece(Game game, Position from, Piece piece, int depth, boolean isWhite, BestMoveState state) {
+        List<Position> moves = moveGenerator.getPseudoLegalMoves(game, game.getBoard(), from);
+        for (int m = 0; m < moves.size() && state.beta > state.alpha; m++) {
+            Position to = moves.get(m);
+            PieceType[] promotions = getPromotions(piece, to, isWhite);
+            for (int p = 0; p < promotions.length && state.beta > state.alpha; p++) {
+                Game copy = new Game(game);
+                if (moveExecutor.performMove(copy, new Move(from, to, promotions[p])) != null) {
+                    int score = miniMax(copy, depth - 1, state.alpha, state.beta);
+                    updateBestMoveState(state, score, new Move(from, to, null), promotions[p], isWhite);
                 }
             }
         }
+    }
 
-        return new MoveEval(bestMove, best, bestPromo);
+    private static void updateBestMoveState(BestMoveState state, int score, Move move, PieceType promotion, boolean isWhite) {
+        if (isWhite ? score > state.best : score < state.best) {
+            state.best = score;
+            state.bestMove = move;
+            state.bestPromo = promotion;
+        }
+        if (isWhite) state.alpha = Math.max(state.alpha, score);
+        else state.beta = Math.min(state.beta, score);
+    }
+
+    static final class BestMoveState {
+        int alpha = Integer.MIN_VALUE;
+        int beta = Integer.MAX_VALUE;
+        int best;
+        Move bestMove = null;
+        PieceType bestPromo = null;
+
+        BestMoveState(boolean isWhite) {
+            best = isWhite ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        }
     }
 
     public static int evaluate(Game game) {
@@ -129,98 +127,75 @@ public class Evaluator {
     }
 
     private static int evaluateMaterial(Board board) {
-        int difference = 0;
+        return scoreSide(board, Color.WHITE) - scoreSide(board, Color.BLACK);
+    }
 
-        boolean whiteBishop = false;
-        boolean blackBishop = false;
-
+    private static int scoreSide(Board board, Color color) {
+        int score = 0;
+        boolean hasBishop = false;
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 Piece piece = board.getPiece(row, col);
-                if (piece == null) continue;
-
-                if (piece.getColor() == Color.WHITE) {
-                    difference += piece.getPieceType().getPieceValue();
-
-                    if (piece.getPieceType() == PieceType.BISHOP) {
-                        if (whiteBishop) difference += 50;
-                        else whiteBishop = true;
-                    }
-                } else {
-                    difference -= piece.getPieceType().getPieceValue();
-
-                    if (piece.getPieceType() == PieceType.BISHOP) {
-                        if (blackBishop) difference -= 50;
-                        else blackBishop = true;
-                    }
+                if (piece == null || piece.getColor() != color) continue;
+                score += piece.getPieceType().getPieceValue();
+                if (piece.getPieceType() == PieceType.BISHOP) {
+                    if (hasBishop) score += 50;
+                    else hasBishop = true;
                 }
             }
         }
-
-        return difference;
+        return score;
     }
 
     private static int evaluatePawnStructure(Board board) {
-        int difference = 0;
+        int[] whiteCols = countPawnsPerColumn(board, Color.WHITE);
+        int[] blackCols = countPawnsPerColumn(board, Color.BLACK);
+        int blocked = countBlocked(board, Color.WHITE) - countBlocked(board, Color.BLACK);
+        int doubled = countDoubled(whiteCols) - countDoubled(blackCols);
+        int isolated = countIsolated(whiteCols) - countIsolated(blackCols);
+        return blocked + doubled + isolated;
+    }
 
-        int whiteBlockedPawns = 0;
-        int blackBlockedPawns = 0;
-
-        int whiteIsolatedPawns = 0;
-        int blackIsolatedPawns = 0;
-
-        int whiteDoubledPawns = 0;
-        int blackDoubledPawns = 0;
-
-        int[] whitePawnsColumn = new int[8];
-        int[] blackPawnsColumn = new int[8];
-
-        for (int row = 0; row < 8; row++) {
+    private static int[] countPawnsPerColumn(Board board, Color color) {
+        int[] cols = new int[8];
+        for (int row = 0; row < 8; row++)
             for (int col = 0; col < 8; col++) {
                 Piece piece = board.getPiece(row, col);
-                if (piece == null || piece.getPieceType() != PieceType.PAWN) continue;
-
-                if (piece.getColor() == Color.WHITE) {
-                    whitePawnsColumn[col]++;
-
-                    if (row == 7) continue;
-                    if (board.getPiece(row + 1, col) != null) whiteBlockedPawns++;
-                } else {
-                    blackPawnsColumn[col]++;
-
-                    if (row == 0) continue;
-                    if (board.getPiece(row - 1, col) != null) blackBlockedPawns++;
-                }
+                if (piece != null && piece.getColor() == color && piece.getPieceType() == PieceType.PAWN)
+                    cols[col]++;
             }
-        }
+        return cols;
+    }
 
+    private static int countDoubled(int[] pawnsPerCol) {
+        int count = 0;
+        for (int n : pawnsPerCol)
+            if (n > 1) count += n - 1;
+        return count;
+    }
+
+    private static int countIsolated(int[] pawnsPerCol) {
+        int count = 0;
         for (int i = 0; i < 8; i++) {
-            if (whitePawnsColumn[i] > 1) whiteDoubledPawns += whitePawnsColumn[i] - 1;
-            if (whitePawnsColumn[i] > 0){
-                boolean hasLeftColumn = i > 0;
-                boolean hasRightColumn = i < 7;
-
-                boolean leftEmpty = !hasLeftColumn || whitePawnsColumn[i - 1] == 0;
-                boolean rightEmpty = !hasRightColumn || whitePawnsColumn[i + 1] == 0;
-                if (leftEmpty && rightEmpty) whiteIsolatedPawns++;
-            }
-
-            if (blackPawnsColumn[i] > 1) blackDoubledPawns += blackPawnsColumn[i] - 1;
-            if (blackPawnsColumn[i] > 0){
-                boolean hasLeftColumn = i > 0;
-                boolean hasRightColumn = i < 7;
-
-                boolean leftEmpty = !hasLeftColumn || blackPawnsColumn[i - 1] == 0;
-                boolean rightEmpty = !hasRightColumn || blackPawnsColumn[i + 1] == 0;
-                if (leftEmpty && rightEmpty) blackIsolatedPawns++;
-            }
+            if (pawnsPerCol[i] == 0) continue;
+            boolean leftEmpty = i == 0 || pawnsPerCol[i - 1] == 0;
+            boolean rightEmpty = i == 7 || pawnsPerCol[i + 1] == 0;
+            if (leftEmpty && rightEmpty) count++;
         }
+        return count;
+    }
 
-        difference += whiteBlockedPawns - blackBlockedPawns;
-        difference += whiteDoubledPawns - blackDoubledPawns;
-        difference += whiteIsolatedPawns - blackIsolatedPawns;
-
-        return difference;
+    private static int countBlocked(Board board, Color color) {
+        int count = 0;
+        int direction = color == Color.WHITE ? 1 : -1;
+        for (int row = 0; row < 8; row++)
+            for (int col = 0; col < 8; col++) {
+                Piece piece = board.getPiece(row, col);
+                if (piece == null || piece.getColor() != color || piece.getPieceType() != PieceType.PAWN) continue;
+                int nextRow = row + direction;
+                if (nextRow >= 0 && nextRow < 8 && board.getPiece(nextRow, col) != null) count++;
+            }
+        return count;
     }
 
     private static int evaluateMobility(Game game) {
@@ -233,12 +208,12 @@ public class Evaluator {
                 Piece piece = board.getPiece(row, col);
                 if (piece == null) continue;
 
-                int legalMoves = moveGenerator.getPseudoLegalMoves(game, board, new Position(row, col)).size();
+                int moveCount = moveGenerator.getPseudoLegalMoves(game, board, new Position(row, col)).size();
 
                 if (piece.getColor() == Color.WHITE) {
-                    difference += legalMoves;
+                    difference += moveCount;
                 } else {
-                    difference -= legalMoves;
+                    difference -= moveCount;
                 }
             }
         }

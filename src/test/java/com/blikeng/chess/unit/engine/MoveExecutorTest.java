@@ -1,7 +1,7 @@
 package com.blikeng.chess.unit.engine;
 
 import com.blikeng.chess.engine.MoveExecutor;
-import com.blikeng.chess.exception.errorTypes.InvalidPromotionException;
+import com.blikeng.chess.exception.types.InvalidPromotionException;
 import com.blikeng.chess.model.*;
 import com.blikeng.chess.model.piece.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -198,9 +198,9 @@ class MoveExecutorTest {
     @Test
     void whitePawnPromotionWithoutPieceShouldThrow() {
         board.setPiece(6, 2, movedWhitePawn());
-        assertThatThrownBy(() ->
-                executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2), null))
-        ).isInstanceOf(InvalidPromotionException.class);
+        Move move = new Move(new Position(6, 2), new Position(7, 2), null);
+        assertThatThrownBy(() -> executor.performMove(game, move))
+                .isInstanceOf(InvalidPromotionException.class);
     }
 
     @Test
@@ -255,17 +255,17 @@ class MoveExecutorTest {
         board.setPiece(0, 6, new King(Color.WHITE));
         game.setWhiteKingPosition(new Position(0, 6));
         board.setPiece(1, 2, movedBlackPawn());
-        assertThatThrownBy(() ->
-                executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2), null))
-        ).isInstanceOf(InvalidPromotionException.class);
+        Move move = new Move(new Position(1, 2), new Position(0, 2), null);
+        assertThatThrownBy(() -> executor.performMove(game, move))
+                .isInstanceOf(InvalidPromotionException.class);
     }
 
     @Test
     void promotionToKingShouldThrow() {
         board.setPiece(6, 2, movedWhitePawn());
-        assertThatThrownBy(() ->
-                executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2), PieceType.KING))
-        ).isInstanceOf(InvalidPromotionException.class);
+        Move move = new Move(new Position(6, 2), new Position(7, 2), PieceType.KING);
+        assertThatThrownBy(() -> executor.performMove(game, move))
+                .isInstanceOf(InvalidPromotionException.class);
     }
 
     // --- Castling ---
@@ -503,7 +503,7 @@ class MoveExecutorTest {
         game.setHalfMoveClock(50);
 
         executor.performMove(game, new Move(new Position(1, 3), new Position(2, 3), null));
-        assertThat(game.getHalfMoveClock()).isEqualTo(0);
+        assertThat(game.getHalfMoveClock()).isZero();
     }
 
     @Test
@@ -519,7 +519,7 @@ class MoveExecutorTest {
         game.setHalfMoveClock(50);
 
         executor.performMove(game, new Move(new Position(3, 3), new Position(5, 4), null));
-        assertThat(game.getHalfMoveClock()).isEqualTo(0);
+        assertThat(game.getHalfMoveClock()).isZero();
     }
 
     @Test
@@ -535,7 +535,7 @@ class MoveExecutorTest {
 
         GameStatus result = executor.performMove(game, new Move(new Position(1, 3), new Position(2, 3), null));
         assertThat(result).isEqualTo(GameStatus.ONGOING);
-        assertThat(game.getHalfMoveClock()).isEqualTo(0);
+        assertThat(game.getHalfMoveClock()).isZero();
     }
 
     // --- Threefold repetition ---

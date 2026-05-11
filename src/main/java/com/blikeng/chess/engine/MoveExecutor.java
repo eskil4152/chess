@@ -1,6 +1,6 @@
 package com.blikeng.chess.engine;
 
-import com.blikeng.chess.exception.errorTypes.InvalidPromotionException;
+import com.blikeng.chess.exception.types.InvalidPromotionException;
 import com.blikeng.chess.model.*;
 import com.blikeng.chess.model.piece.*;
 
@@ -87,53 +87,53 @@ public class MoveExecutor {
         Color opponentColor = playerColor == Color.WHITE ? Color.BLACK : Color.WHITE;
         boolean hasLegalMove = false;
 
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                Piece p = board.getPiece(row, col);
-                if (p == null || p.getColor() != opponentColor) continue;
-
-                Position from = new Position(row, col);
-                List<Position> pseudoMoves = moveGenerator.getPseudoLegalMoves(game, board, from);
-
-                for (Position to : pseudoMoves) {
-                    boolean epMove = p.getPieceType() == PieceType.PAWN && to.equals(game.getEnPassantTarget());
-                    if (!kingLeftInCheck(board, game, new Move(from, to, null), p, opponentColor, epMove)) {
-                        hasLegalMove = true;
-                        break;
-                    }
-                }
-
-                if (hasLegalMove) break;
+        for (int row = 0; row < 8 && !hasLegalMove; row++)
+            for (int col = 0; col < 8 && !hasLegalMove; col++) {
+                Piece piece = board.getPiece(row, col);
+                if (piece != null && piece.getColor() == opponentColor)
+                    hasLegalMove = hasAnyLegalMove(board, game, piece, new Position(row, col), opponentColor);
             }
-        }
 
-        if (!hasLegalMove) {
-            if (squareAttacked.isInCheck(game, opponentColor)) {
-                game.setEndedBy(EndedBy.CHECKMATE);
-                return playerColor == Color.WHITE ? GameStatus.WHITE_WIN : GameStatus.BLACK_WIN;
-            } else {
-                game.setEndedBy(EndedBy.STALEMATE);
-                return GameStatus.DRAW;
-            }
-        }
+        if (!hasLegalMove) return noLegalMoveStatus(game, playerColor, opponentColor);
 
         if (isInsufficientMaterial(board)) {
             game.setEndedBy(EndedBy.INSUFFICIENT_MATERIAL);
             return GameStatus.DRAW;
         }
 
-        String key = board.toString() + game.isWhiteTurn() + game.getEnPassantTarget() + Arrays.toString(castlingRights(game));
-        HashMap<String, Integer> positionHistory = game.getPositionHistory();
-        positionHistory.put(key, positionHistory.getOrDefault(key, 0) + 1);
-
-        if (positionHistory.get(key) >= 3) {
+        if (isThreefoldRepetition(game, board)) {
             game.setEndedBy(EndedBy.REPETITION);
             return GameStatus.DRAW;
         }
 
         game.switchTurn();
-
         return GameStatus.ONGOING;
+    }
+
+    private GameStatus noLegalMoveStatus(Game game, Color playerColor, Color opponentColor) {
+        if (squareAttacked.isInCheck(game, opponentColor)) {
+            game.setEndedBy(EndedBy.CHECKMATE);
+            return playerColor == Color.WHITE ? GameStatus.WHITE_WIN : GameStatus.BLACK_WIN;
+        }
+        game.setEndedBy(EndedBy.STALEMATE);
+        return GameStatus.DRAW;
+    }
+
+    private boolean isThreefoldRepetition(Game game, Board board) {
+        String key = board.toString() + game.isWhiteTurn() + game.getEnPassantTarget() + Arrays.toString(castlingRights(game));
+        HashMap<String, Integer> history = game.getPositionHistory();
+        history.put(key, history.getOrDefault(key, 0) + 1);
+        return history.get(key) >= 3;
+    }
+
+    private boolean hasAnyLegalMove(Board board, Game game, Piece piece, Position from, Color color) {
+        for (Position to : moveGenerator.getPseudoLegalMoves(game, board, from)) {
+            boolean isEnPassantMove = piece.getPieceType() == PieceType.PAWN && to.equals(game.getEnPassantTarget());
+            if (!kingLeftInCheck(board, game, new Move(from, to, null), piece, color, isEnPassantMove)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean[] castlingRights(Game game){
@@ -236,8 +236,8 @@ public class MoveExecutor {
 
     private void updateEnPassantTarget(Game game, Piece piece, Move move) {
         if (piece.getPieceType() == PieceType.PAWN && Math.abs(move.to().row() - move.from().row()) == 2) {
-            int epRow = (move.from().row() + move.to().row()) / 2;
-            game.setEnPassantTarget(new Position(epRow, move.from().col()));
+            int enPassantRow = (move.from().row() + move.to().row()) / 2;
+            game.setEnPassantTarget(new Position(enPassantRow, move.from().col()));
         } else {
             game.setEnPassantTarget(null);
         }
@@ -270,49 +270,34 @@ public class MoveExecutor {
         };
     }
 
-    private boolean isInsufficientMaterial(Board board) {
-        int whitePieces = 0;
-        int blackPieces = 0;
-
-        int whiteBishopSquareColor = -1;
-        int blackBishopSquareColor = -1;
-
-        boolean whiteHasBishop = false;
-        boolean whiteHasKnight = false;
-
-        boolean blackHasBishop = false;
-        boolean blackHasKnight = false;
-
-        for (int row = 0; row < 8; row++) {
+    private MaterialInfo scanMaterial(Board board, Color color) {
+        int pieces = 0;
+        boolean hasBishop = false;
+        boolean hasKnight = false;
+        int bishopSquareColor = -1;
+        for (int row = 0; row < 8; row++)
             for (int col = 0; col < 8; col++) {
                 Piece piece = board.getPiece(row, col);
-                if (piece == null || piece.getPieceType() == PieceType.KING) continue;
-
-                if (piece.getColor() == Color.WHITE) {
-                    whitePieces++;
-                    if (piece.getPieceType() == PieceType.BISHOP) {
-                        whiteHasBishop = true;
-                        whiteBishopSquareColor = (row + col) % 2;
-                    } else if (piece.getPieceType() == PieceType.KNIGHT) {
-                        whiteHasKnight = true;
-                    }
-                } else {
-                    blackPieces++;
-                    if (piece.getPieceType() == PieceType.BISHOP) {
-                        blackHasBishop = true;
-                        blackBishopSquareColor = (row + col) % 2;
-                    } else if (piece.getPieceType() == PieceType.KNIGHT) {
-                        blackHasKnight = true;
-                    }
-                }
+                if (piece == null || piece.getPieceType() == PieceType.KING || piece.getColor() != color) continue;
+                pieces++;
+                if (piece.getPieceType() == PieceType.BISHOP) { hasBishop = true; bishopSquareColor = (row + col) % 2; }
+                else if (piece.getPieceType() == PieceType.KNIGHT) hasKnight = true;
             }
-        }
-
-        if (whitePieces == 0 && blackPieces == 0) return true;
-        if (whitePieces == 1 && blackPieces == 0 && (whiteHasBishop || whiteHasKnight)) return true;
-        if (blackPieces == 1 && whitePieces == 0 && (blackHasBishop || blackHasKnight)) return true;
-
-        return whitePieces == 1 && blackPieces == 1 && whiteHasBishop && blackHasBishop
-                && whiteBishopSquareColor == blackBishopSquareColor;
+        return new MaterialInfo(pieces, hasBishop, hasKnight, bishopSquareColor);
     }
+
+    private boolean isInsufficientMaterial(Board board) {
+        MaterialInfo white = scanMaterial(board, Color.WHITE);
+        MaterialInfo black = scanMaterial(board, Color.BLACK);
+
+        if (white.pieceCount() == 0 && black.pieceCount() == 0) return true;
+        if (white.pieceCount() == 1 && black.pieceCount() == 0 && (white.hasBishop() || white.hasKnight())) return true;
+        if (black.pieceCount() == 1 && white.pieceCount() == 0 && (black.hasBishop() || black.hasKnight())) return true;
+
+        return white.pieceCount() == 1 && black.pieceCount() == 1
+                && white.hasBishop() && black.hasBishop()
+                && white.bishopSquareColor() == black.bishopSquareColor();
+    }
+
+    private record MaterialInfo(int pieceCount, boolean hasBishop, boolean hasKnight, int bishopSquareColor) {}
 }
