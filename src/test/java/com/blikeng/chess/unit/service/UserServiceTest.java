@@ -2,7 +2,7 @@ package com.blikeng.chess.unit.service;
 
 import com.blikeng.chess.dto.ProfileDTO;
 import com.blikeng.chess.entity.UserEntity;
-import com.blikeng.chess.exception.errorTypes.UserNotFoundException;
+import com.blikeng.chess.exception.types.UserNotFoundException;
 import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.repository.UserRepository;
 import com.blikeng.chess.service.UserService;

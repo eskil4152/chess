@@ -3,7 +3,7 @@ package com.blikeng.chess.unit.controller;
 import com.blikeng.chess.config.SecurityConfig;
 import com.blikeng.chess.controller.UserController;
 import com.blikeng.chess.dto.ProfileDTO;
-import com.blikeng.chess.exception.errorTypes.UserNotFoundException;
+import com.blikeng.chess.exception.types.UserNotFoundException;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.service.UserService;
 import org.junit.jupiter.api.Test;

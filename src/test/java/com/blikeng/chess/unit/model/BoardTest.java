@@ -40,8 +40,7 @@ class BoardTest {
     void shouldConvertSquaresToLetters() {
         Board b = new Board();
         String s = b.toString();
-        assertThat(s).contains(".");
-        assertThat(s).contains("N");
-        assertThat(s).contains("R").contains("B").contains("Q").contains("K").contains("P");
+        assertThat(s)
+                .contains(".", "N", "B", "R", "Q", "K", "B", "N");
     }
 }

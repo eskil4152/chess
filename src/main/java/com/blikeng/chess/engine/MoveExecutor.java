@@ -1,6 +1,6 @@
 package com.blikeng.chess.engine;
 
-import com.blikeng.chess.exception.errorTypes.InvalidPromotionException;
+import com.blikeng.chess.exception.types.InvalidPromotionException;
 import com.blikeng.chess.model.*;
 import com.blikeng.chess.model.piece.*;
 

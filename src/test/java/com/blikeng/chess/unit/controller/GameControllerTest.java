@@ -5,7 +5,7 @@ import com.blikeng.chess.controller.GameController;
 import com.blikeng.chess.dto.GameDTO;
 import com.blikeng.chess.dto.GamePreviewDTO;
 import com.blikeng.chess.dto.GameStateDTO;
-import com.blikeng.chess.exception.errorTypes.GameNotFoundException;
+import com.blikeng.chess.exception.types.GameNotFoundException;
 import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.service.GameHistoryService;

@@ -24,13 +24,13 @@ public class AuthController {
         this.environment = environment;
     }
 
-    private static final Long maxAge = (long) 24 * 60 * 60;
+    private static final Long MAX_AGE = (long) 24 * 60 * 60;
 
     @PostMapping("/login")
     public ResponseEntity<AuthDTO> login(@RequestBody LoginDTO loginDTO) {
         AuthResult authResult = authService.login(loginDTO);
 
-        ResponseCookie cookie = makeCookie(authResult.token(), maxAge);
+        ResponseCookie cookie = makeCookie(authResult.token(), MAX_AGE);
 
         return ResponseEntity
                 .ok()
@@ -42,7 +42,7 @@ public class AuthController {
     public ResponseEntity<AuthDTO> register(@RequestBody LoginDTO loginDTO) {
         AuthResult authResult = authService.register(loginDTO);
 
-        ResponseCookie cookie = makeCookie(authResult.token(), maxAge);
+        ResponseCookie cookie = makeCookie(authResult.token(), MAX_AGE);
 
         return ResponseEntity
                 .status(201)

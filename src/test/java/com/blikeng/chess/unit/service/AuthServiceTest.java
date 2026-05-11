@@ -4,7 +4,7 @@ import com.blikeng.chess.dto.AuthDTO;
 import com.blikeng.chess.dto.AuthResult;
 import com.blikeng.chess.dto.LoginDTO;
 import com.blikeng.chess.entity.UserEntity;
-import com.blikeng.chess.exception.errorTypes.*;
+import com.blikeng.chess.exception.types.*;
 import com.blikeng.chess.repository.AuthRepository;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;

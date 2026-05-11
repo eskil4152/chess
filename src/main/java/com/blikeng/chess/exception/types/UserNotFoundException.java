@@ -1,4 +1,4 @@
-package com.blikeng.chess.exception.errorTypes;
+package com.blikeng.chess.exception.types;
 
 import com.blikeng.chess.exception.ApiException;
 import com.blikeng.chess.exception.ErrorMessages;

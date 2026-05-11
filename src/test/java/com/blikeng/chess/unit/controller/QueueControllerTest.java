@@ -2,7 +2,7 @@ package com.blikeng.chess.unit.controller;
 
 import com.blikeng.chess.config.SecurityConfig;
 import com.blikeng.chess.controller.QueueController;
-import com.blikeng.chess.exception.errorTypes.ExistingGameException;
+import com.blikeng.chess.exception.types.ExistingGameException;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.service.MatchmakingService;
 import org.junit.jupiter.api.Test;

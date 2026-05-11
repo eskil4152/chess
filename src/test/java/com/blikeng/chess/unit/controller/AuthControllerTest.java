@@ -5,7 +5,7 @@ import com.blikeng.chess.controller.AuthController;
 import com.blikeng.chess.dto.AuthDTO;
 import com.blikeng.chess.dto.AuthResult;
 import com.blikeng.chess.dto.LoginDTO;
-import com.blikeng.chess.exception.errorTypes.InvalidCredentialsException;
+import com.blikeng.chess.exception.types.InvalidCredentialsException;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.UserRole;
 import com.blikeng.chess.service.AuthService;

@@ -42,7 +42,7 @@ class NotificationServiceTest {
         gameId = UUID.randomUUID();
     }
 
-    private WebSocketSession openSession() throws IOException {
+    private WebSocketSession openSession() {
         WebSocketSession s = mock(WebSocketSession.class);
         when(s.isOpen()).thenReturn(true);
         return s;

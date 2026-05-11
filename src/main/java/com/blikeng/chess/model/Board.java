@@ -3,6 +3,8 @@ package com.blikeng.chess.model;
 import com.blikeng.chess.model.piece.Knight;
 import com.blikeng.chess.model.piece.Piece;
 
+import java.util.Arrays;
+
 import static com.blikeng.chess.engine.SetupBoard.setupBoard;
 
 public class Board {
@@ -10,9 +12,7 @@ public class Board {
 
     public Board(Board board) {
         for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                this.squares[row][col] = board.squares[row][col];
-            }
+            this.squares[row] = Arrays.copyOf(board.squares[row], board.squares[row].length);
         }
     }
 

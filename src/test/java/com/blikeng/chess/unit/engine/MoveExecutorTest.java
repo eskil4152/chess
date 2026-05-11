@@ -1,7 +1,7 @@
 package com.blikeng.chess.unit.engine;
 
 import com.blikeng.chess.engine.MoveExecutor;
-import com.blikeng.chess.exception.errorTypes.InvalidPromotionException;
+import com.blikeng.chess.exception.types.InvalidPromotionException;
 import com.blikeng.chess.model.*;
 import com.blikeng.chess.model.piece.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -503,7 +503,7 @@ class MoveExecutorTest {
         game.setHalfMoveClock(50);
 
         executor.performMove(game, new Move(new Position(1, 3), new Position(2, 3), null));
-        assertThat(game.getHalfMoveClock()).isEqualTo(0);
+        assertThat(game.getHalfMoveClock()).isZero();
     }
 
     @Test
@@ -519,7 +519,7 @@ class MoveExecutorTest {
         game.setHalfMoveClock(50);
 
         executor.performMove(game, new Move(new Position(3, 3), new Position(5, 4), null));
-        assertThat(game.getHalfMoveClock()).isEqualTo(0);
+        assertThat(game.getHalfMoveClock()).isZero();
     }
 
     @Test
@@ -535,7 +535,7 @@ class MoveExecutorTest {
 
         GameStatus result = executor.performMove(game, new Move(new Position(1, 3), new Position(2, 3), null));
         assertThat(result).isEqualTo(GameStatus.ONGOING);
-        assertThat(game.getHalfMoveClock()).isEqualTo(0);
+        assertThat(game.getHalfMoveClock()).isZero();
     }
 
     // --- Threefold repetition ---

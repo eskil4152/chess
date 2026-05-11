@@ -11,8 +11,8 @@ class PositionMapperTest {
     @Test
     void a1ShouldMapToRow0Col0() {
         Position p = PositionMapper.fromString("a1");
-        assertThat(p.row()).isEqualTo(0);
-        assertThat(p.col()).isEqualTo(0);
+        assertThat(p.row()).isZero();
+        assertThat(p.col()).isZero();
     }
 
     @Test
@@ -43,13 +43,13 @@ class PositionMapperTest {
     void a8ShouldMapToRow7Col0() {
         Position p = PositionMapper.fromString("a8");
         assertThat(p.row()).isEqualTo(7);
-        assertThat(p.col()).isEqualTo(0);
+        assertThat(p.col()).isZero();
     }
 
     @Test
     void h1ShouldMapToRow0Col7() {
         Position p = PositionMapper.fromString("h1");
-        assertThat(p.row()).isEqualTo(0);
+        assertThat(p.row()).isZero();
         assertThat(p.col()).isEqualTo(7);
     }
 

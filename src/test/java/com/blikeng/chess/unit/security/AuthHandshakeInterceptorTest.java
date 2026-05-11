@@ -81,8 +81,8 @@ class AuthHandshakeInterceptorTest {
         boolean result = interceptor.beforeHandshake(new ServletServerHttpRequest(request), response(), handler(), attributes);
 
         assertThat(result).isTrue();
-        assertThat(attributes.get("username")).isEqualTo("user");
-        assertThat(attributes.get("userId")).isEqualTo(userId);
+        assertThat(attributes).containsEntry("username", "user");
+        assertThat(attributes).containsEntry("userId", userId);
     }
 
     // --- afterHandshake ---

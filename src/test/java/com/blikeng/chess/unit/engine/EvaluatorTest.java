@@ -38,7 +38,7 @@ class EvaluatorTest {
     // --- evaluate ---
     @Test
     void evaluateShouldReturnZeroForSymmetricPosition() {
-        assertThat(Evaluator.evaluate(game)).isEqualTo(0);
+        assertThat(Evaluator.evaluate(game)).isZero();
     }
 
     @Test

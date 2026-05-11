@@ -2,7 +2,7 @@ package com.blikeng.chess.unit.exception;
 
 import com.blikeng.chess.exception.ErrorMessages;
 import com.blikeng.chess.exception.GlobalExceptionHandler;
-import com.blikeng.chess.exception.errorTypes.GameNotFoundException;
+import com.blikeng.chess.exception.types.GameNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
