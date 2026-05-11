@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
@@ -39,6 +40,8 @@ public class Game {
         this.blackDraw = other.blackDraw;
         this.moves.addAll(other.moves);
         this.halfMoveClock = other.halfMoveClock;
+        this.endedBy = other.endedBy;
+        this.positionHistory = new HashMap<>(other.positionHistory);
     }
 
     private final UUID id;
@@ -77,6 +80,9 @@ public class Game {
 
     @Setter
     private EndedBy endedBy = null;
+
+    @Setter
+    private HashMap<String, Integer> positionHistory = new HashMap<>();
 
     @Setter
     private Position enPassantTarget;

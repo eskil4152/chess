@@ -4,6 +4,8 @@ import com.blikeng.chess.exception.errorTypes.InvalidPromotionException;
 import com.blikeng.chess.model.*;
 import com.blikeng.chess.model.piece.*;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 public class MoveExecutor {
@@ -78,7 +80,7 @@ public class MoveExecutor {
 
     private GameStatus isGameOver(Color playerColor, Board board, Game game){
         if (game.getHalfMoveClock() >= 100) {
-            game.setEndedBy(EndedBy.FIFTY_MOVE_ROLE);
+            game.setEndedBy(EndedBy.FIFTY_MOVE_RULE);
             return GameStatus.DRAW;
         }
 
@@ -116,7 +118,74 @@ public class MoveExecutor {
         }
 
         game.switchTurn();
+
+        String key = board.toString() + game.isWhiteTurn() + game.getEnPassantTarget() + Arrays.toString(castlingRights(game));
+        HashMap<String, Integer> positionHistory = game.getPositionHistory();
+        positionHistory.put(key, positionHistory.getOrDefault(key, 0) + 1);
+
+        if (positionHistory.get(key) >= 3) {
+            game.setEndedBy(EndedBy.REPETITION);
+            return GameStatus.DRAW;
+        }
+
         return GameStatus.ONGOING;
+    }
+
+    private boolean[] castlingRights(Game game){
+        boolean whiteCanCastleKingSide = false;
+        boolean whiteCanCastleQueenSide = false;
+        boolean blackCanCastleKingSide = false;
+        boolean blackCanCastleQueenSide = false;
+
+        Board board = game.getBoard();
+
+        if (!board.getPiece(game.getWhiteKingPosition().row(), game.getWhiteKingPosition().col()).hasMoved()) {
+            Piece kingSideRook = board.getPiece(game.getWhiteKingPosition().row(), 7);
+            Piece queenSideRook = board.getPiece(game.getWhiteKingPosition().row(), 0);
+
+            if (
+                    queenSideRook != null &&
+                    queenSideRook.getPieceType() == PieceType.ROOK &&
+                    queenSideRook.getColor() == Color.WHITE &&
+                    !queenSideRook.hasMoved()
+            ) {
+                whiteCanCastleQueenSide = true;
+            }
+
+            if (
+                    kingSideRook != null &&
+                    kingSideRook.getPieceType() == PieceType.ROOK &&
+                    kingSideRook.getColor() == Color.WHITE &&
+                    !kingSideRook.hasMoved()
+            ){
+                whiteCanCastleKingSide = true;
+            }
+        }
+
+        if (!board.getPiece(game.getBlackKingPosition().row(), game.getBlackKingPosition().col()).hasMoved()) {
+            Piece kingSideRook = board.getPiece(game.getBlackKingPosition().row(), 7);
+            Piece queenSideRook = board.getPiece(game.getBlackKingPosition().row(), 0);
+
+            if (
+                    queenSideRook != null &&
+                    queenSideRook.getPieceType() == PieceType.ROOK &&
+                    queenSideRook.getColor() == Color.BLACK &&
+                    !queenSideRook.hasMoved()
+            ) {
+                blackCanCastleQueenSide = true;
+            }
+
+            if (
+                    kingSideRook != null &&
+                    kingSideRook.getPieceType() == PieceType.ROOK &&
+                    kingSideRook.getColor() == Color.BLACK &&
+                    !kingSideRook.hasMoved()
+            ) {
+                blackCanCastleKingSide = true;
+            }
+        }
+
+        return new boolean[]{whiteCanCastleKingSide, whiteCanCastleQueenSide, blackCanCastleKingSide, blackCanCastleQueenSide};
     }
 
     private void handleCastling(Board board, Game game, Move move, Piece piece) {
