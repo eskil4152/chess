@@ -50,7 +50,7 @@ class GameControllerTest {
     void shouldGetGame() throws Exception {
         UUID id = UUID.randomUUID();
         when(gameHistoryService.getGame(id.toString()))
-                .thenReturn(new GameDTO(id, "black", "white", GameStatus.DRAW, List.of()));
+                .thenReturn(new GameDTO(id, "black", "white", GameStatus.DRAW, ""));
 
         mockMvc.perform(get("/api/games/{id}", id))
                 .andExpect(status().isOk())

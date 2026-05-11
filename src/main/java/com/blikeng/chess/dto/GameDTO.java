@@ -10,6 +10,6 @@ public record GameDTO(
         String blackUsername,
         String whiteUsername,
         GameStatus status,
-        List<String> moves
+        String moves
 ) {
 }

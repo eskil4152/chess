@@ -443,4 +443,374 @@ class MoveExecutorTest {
         GameStatus result = executor.performMove(game, new Move(new Position(3, 1), new Position(5, 1), null));
         assertThat(result).isEqualTo(GameStatus.DRAW);
     }
+
+    // --- 50-move rule ---
+
+    @Test
+    void fiftyMoveRuleShouldTriggerDrawAt100HalfMoves() {
+        board.setPiece(0, 4, null);
+        board.setPiece(7, 4, null);
+        board.setPiece(0, 0, new King(Color.WHITE));
+        board.setPiece(7, 0, new King(Color.BLACK));
+        game.setWhiteKingPosition(new Position(0, 0));
+        game.setBlackKingPosition(new Position(7, 0));
+        board.setPiece(3, 3, new Knight(Color.WHITE));
+        game.setHalfMoveClock(99);
+
+        GameStatus result = executor.performMove(game, new Move(new Position(3, 3), new Position(5, 4), null));
+        assertThat(result).isEqualTo(GameStatus.DRAW);
+        assertThat(game.getEndedBy()).isEqualTo(EndedBy.FIFTY_MOVE_RULE);
+    }
+
+    @Test
+    void fiftyMoveRuleShouldNotTriggerAt99HalfMoves() {
+        board.setPiece(0, 4, null);
+        board.setPiece(7, 4, null);
+        board.setPiece(0, 0, new King(Color.WHITE));
+        board.setPiece(7, 0, new King(Color.BLACK));
+        game.setWhiteKingPosition(new Position(0, 0));
+        game.setBlackKingPosition(new Position(7, 0));
+        board.setPiece(3, 3, new Rook(Color.WHITE));
+        game.setHalfMoveClock(98);
+
+        GameStatus result = executor.performMove(game, new Move(new Position(3, 3), new Position(3, 5), null));
+        assertThat(result).isEqualTo(GameStatus.ONGOING);
+    }
+
+    @Test
+    void halfMoveClockShouldIncrementOnKnightMove() {
+        board.setPiece(0, 4, null);
+        board.setPiece(7, 4, null);
+        board.setPiece(0, 0, new King(Color.WHITE));
+        board.setPiece(7, 0, new King(Color.BLACK));
+        game.setWhiteKingPosition(new Position(0, 0));
+        game.setBlackKingPosition(new Position(7, 0));
+        board.setPiece(3, 3, new Knight(Color.WHITE));
+
+        executor.performMove(game, new Move(new Position(3, 3), new Position(5, 4), null));
+        assertThat(game.getHalfMoveClock()).isEqualTo(1);
+    }
+
+    @Test
+    void halfMoveClockShouldResetOnPawnMove() {
+        board.setPiece(0, 4, null);
+        board.setPiece(7, 4, null);
+        board.setPiece(0, 0, new King(Color.WHITE));
+        board.setPiece(7, 0, new King(Color.BLACK));
+        game.setWhiteKingPosition(new Position(0, 0));
+        game.setBlackKingPosition(new Position(7, 0));
+        board.setPiece(1, 3, new Pawn(Color.WHITE));
+        game.setHalfMoveClock(50);
+
+        executor.performMove(game, new Move(new Position(1, 3), new Position(2, 3), null));
+        assertThat(game.getHalfMoveClock()).isEqualTo(0);
+    }
+
+    @Test
+    void halfMoveClockShouldResetOnCapture() {
+        board.setPiece(0, 4, null);
+        board.setPiece(7, 4, null);
+        board.setPiece(0, 0, new King(Color.WHITE));
+        board.setPiece(7, 0, new King(Color.BLACK));
+        game.setWhiteKingPosition(new Position(0, 0));
+        game.setBlackKingPosition(new Position(7, 0));
+        board.setPiece(3, 3, new Knight(Color.WHITE));
+        board.setPiece(5, 4, new Knight(Color.BLACK));
+        game.setHalfMoveClock(50);
+
+        executor.performMove(game, new Move(new Position(3, 3), new Position(5, 4), null));
+        assertThat(game.getHalfMoveClock()).isEqualTo(0);
+    }
+
+    @Test
+    void pawnMoveAtClock99ShouldNotTriggerFiftyMoveRule() {
+        board.setPiece(0, 4, null);
+        board.setPiece(7, 4, null);
+        board.setPiece(0, 0, new King(Color.WHITE));
+        board.setPiece(7, 0, new King(Color.BLACK));
+        game.setWhiteKingPosition(new Position(0, 0));
+        game.setBlackKingPosition(new Position(7, 0));
+        board.setPiece(1, 3, new Pawn(Color.WHITE));
+        game.setHalfMoveClock(99);
+
+        GameStatus result = executor.performMove(game, new Move(new Position(1, 3), new Position(2, 3), null));
+        assertThat(result).isEqualTo(GameStatus.ONGOING);
+        assertThat(game.getHalfMoveClock()).isEqualTo(0);
+    }
+
+    // --- Threefold repetition ---
+    // Kings in corners, rooks bounce back and forth → K+R vs K+R is never insufficient material.
+    // White rook bounces (2,0)↔(2,1), black rook bounces (5,7)↔(5,6).
+    // The position after white's rook move first recurs on move 5 and triggers on move 9.
+
+    private void setupRepetitionBoard() {
+        board.setPiece(0, 4, null);
+        board.setPiece(7, 4, null);
+        board.setPiece(0, 0, new King(Color.WHITE));
+        board.setPiece(7, 7, new King(Color.BLACK));
+        game.setWhiteKingPosition(new Position(0, 0));
+        game.setBlackKingPosition(new Position(7, 7));
+        board.setPiece(2, 0, new Rook(Color.WHITE));
+        board.setPiece(5, 7, new Rook(Color.BLACK));
+    }
+
+    @Test
+    void positionRepeatedThreeTimesShouldReturnDraw() {
+        setupRepetitionBoard();
+        for (int i = 0; i < 2; i++) {
+            executor.performMove(game, new Move(new Position(2, 0), new Position(2, 1), null));
+            executor.performMove(game, new Move(new Position(5, 7), new Position(5, 6), null));
+            executor.performMove(game, new Move(new Position(2, 1), new Position(2, 0), null));
+            executor.performMove(game, new Move(new Position(5, 6), new Position(5, 7), null));
+        }
+        GameStatus result = executor.performMove(game, new Move(new Position(2, 0), new Position(2, 1), null));
+        assertThat(result).isEqualTo(GameStatus.DRAW);
+        assertThat(game.getEndedBy()).isEqualTo(EndedBy.REPETITION);
+    }
+
+    @Test
+    void positionRepeatedTwiceShouldNotReturnDraw() {
+        setupRepetitionBoard();
+        executor.performMove(game, new Move(new Position(2, 0), new Position(2, 1), null));
+        executor.performMove(game, new Move(new Position(5, 7), new Position(5, 6), null));
+        executor.performMove(game, new Move(new Position(2, 1), new Position(2, 0), null));
+        executor.performMove(game, new Move(new Position(5, 6), new Position(5, 7), null));
+        GameStatus result = executor.performMove(game, new Move(new Position(2, 0), new Position(2, 1), null));
+        assertThat(result).isEqualTo(GameStatus.ONGOING);
+    }
+
+    // --- Insufficient material ---
+    // Each test sets up the exact material and makes any valid move.
+    // Kings in corners far apart; no rooks at castling squares, so castling rights are always false.
+
+    @Test
+    void kingsAloneShouldReturnDraw() {
+        board.setPiece(0, 4, null);
+        board.setPiece(7, 4, null);
+        board.setPiece(0, 0, new King(Color.WHITE));
+        board.setPiece(7, 7, new King(Color.BLACK));
+        game.setWhiteKingPosition(new Position(0, 0));
+        game.setBlackKingPosition(new Position(7, 7));
+
+        GameStatus result = executor.performMove(game, new Move(new Position(0, 0), new Position(1, 0), null));
+        assertThat(result).isEqualTo(GameStatus.DRAW);
+        assertThat(game.getEndedBy()).isEqualTo(EndedBy.INSUFFICIENT_MATERIAL);
+    }
+
+    @Test
+    void kingAndBishopVsKingShouldReturnDraw() {
+        board.setPiece(0, 4, null);
+        board.setPiece(7, 4, null);
+        board.setPiece(0, 0, new King(Color.WHITE));
+        board.setPiece(7, 7, new King(Color.BLACK));
+        board.setPiece(4, 4, new Bishop(Color.WHITE));
+        game.setWhiteKingPosition(new Position(0, 0));
+        game.setBlackKingPosition(new Position(7, 7));
+
+        GameStatus result = executor.performMove(game, new Move(new Position(4, 4), new Position(5, 3), null));
+        assertThat(result).isEqualTo(GameStatus.DRAW);
+        assertThat(game.getEndedBy()).isEqualTo(EndedBy.INSUFFICIENT_MATERIAL);
+    }
+
+    @Test
+    void kingAndKnightVsKingShouldReturnDraw() {
+        board.setPiece(0, 4, null);
+        board.setPiece(7, 4, null);
+        board.setPiece(0, 0, new King(Color.WHITE));
+        board.setPiece(7, 7, new King(Color.BLACK));
+        board.setPiece(3, 3, new Knight(Color.WHITE));
+        game.setWhiteKingPosition(new Position(0, 0));
+        game.setBlackKingPosition(new Position(7, 7));
+
+        GameStatus result = executor.performMove(game, new Move(new Position(3, 3), new Position(5, 2), null));
+        assertThat(result).isEqualTo(GameStatus.DRAW);
+        assertThat(game.getEndedBy()).isEqualTo(EndedBy.INSUFFICIENT_MATERIAL);
+    }
+
+    @Test
+    void kingAndBishopVsKingAndBishopSameSquareColorShouldReturnDraw() {
+        board.setPiece(0, 4, null);
+        board.setPiece(7, 4, null);
+        board.setPiece(0, 0, new King(Color.WHITE));
+        board.setPiece(7, 7, new King(Color.BLACK));
+        board.setPiece(2, 2, new Bishop(Color.WHITE)); // (2+2)%2 = 0 → light square
+        board.setPiece(5, 5, new Bishop(Color.BLACK)); // (5+5)%2 = 0 → light square
+        game.setWhiteKingPosition(new Position(0, 0));
+        game.setBlackKingPosition(new Position(7, 7));
+
+        GameStatus result = executor.performMove(game, new Move(new Position(0, 0), new Position(1, 0), null));
+        assertThat(result).isEqualTo(GameStatus.DRAW);
+        assertThat(game.getEndedBy()).isEqualTo(EndedBy.INSUFFICIENT_MATERIAL);
+    }
+
+    @Test
+    void kingAndBishopVsKingAndBishopDifferentSquareColorShouldNotReturnDraw() {
+        board.setPiece(0, 4, null);
+        board.setPiece(7, 4, null);
+        board.setPiece(0, 0, new King(Color.WHITE));
+        board.setPiece(7, 7, new King(Color.BLACK));
+        board.setPiece(2, 2, new Bishop(Color.WHITE)); // (2+2)%2 = 0 → light square
+        board.setPiece(5, 4, new Bishop(Color.BLACK)); // (5+4)%2 = 1 → dark square
+        game.setWhiteKingPosition(new Position(0, 0));
+        game.setBlackKingPosition(new Position(7, 7));
+
+        // (1,0) is on B(5,4)'s diagonal so use (0,1) instead
+        GameStatus result = executor.performMove(game, new Move(new Position(0, 0), new Position(0, 1), null));
+        assertThat(result).isEqualTo(GameStatus.ONGOING);
+    }
+
+    @Test
+    void kingAndRookVsKingShouldNotReturnDraw() {
+        board.setPiece(0, 4, null);
+        board.setPiece(7, 4, null);
+        board.setPiece(0, 0, new King(Color.WHITE));
+        board.setPiece(7, 7, new King(Color.BLACK));
+        board.setPiece(3, 3, new Rook(Color.WHITE));
+        game.setWhiteKingPosition(new Position(0, 0));
+        game.setBlackKingPosition(new Position(7, 7));
+
+        GameStatus result = executor.performMove(game, new Move(new Position(3, 3), new Position(3, 5), null));
+        assertThat(result).isEqualTo(GameStatus.ONGOING);
+    }
+
+    @Test
+    void kingAndKnightVsKingAndKnightShouldNotReturnDraw() {
+        // K+N vs K+N: whitePieces=1, blackPieces=1, whiteHasBishop=false
+        // → last return short-circuits at whiteHasBishop (line 315 false branch).
+        board.setPiece(0, 4, null);
+        board.setPiece(7, 4, null);
+        board.setPiece(0, 0, new King(Color.WHITE));
+        board.setPiece(7, 7, new King(Color.BLACK));
+        board.setPiece(3, 3, new Knight(Color.WHITE));
+        board.setPiece(5, 5, new Knight(Color.BLACK));
+        game.setWhiteKingPosition(new Position(0, 0));
+        game.setBlackKingPosition(new Position(7, 7));
+
+        GameStatus result = executor.performMove(game, new Move(new Position(3, 3), new Position(5, 4), null));
+        assertThat(result).isEqualTo(GameStatus.ONGOING);
+    }
+
+    @Test
+    void kingAndBishopVsKingAndKnightShouldNotReturnDraw() {
+        // K+B vs K+N: whitePieces=1, blackPieces=1, whiteHasBishop=true, blackHasBishop=false
+        // → last return short-circuits at blackHasBishop (line 315 false branch).
+        board.setPiece(0, 4, null);
+        board.setPiece(7, 4, null);
+        board.setPiece(0, 0, new King(Color.WHITE));
+        board.setPiece(7, 7, new King(Color.BLACK));
+        board.setPiece(4, 4, new Bishop(Color.WHITE));
+        board.setPiece(5, 5, new Knight(Color.BLACK));
+        game.setWhiteKingPosition(new Position(0, 0));
+        game.setBlackKingPosition(new Position(7, 7));
+
+        GameStatus result = executor.performMove(game, new Move(new Position(4, 4), new Position(5, 3), null));
+        assertThat(result).isEqualTo(GameStatus.ONGOING);
+    }
+
+    // --- castlingRights branches ---
+    // Each test places a specific piece at a rook corner to exercise a false branch in castlingRights.
+    // A mobile white rook at (4,4) makes the actual move so isGameOver reaches the position-history
+    // code path that calls castlingRights. White king stays at (0,4), black king stays at (7,4).
+
+    @Test
+    void castlingRightsWhiteQueenSideWrongColorShouldBeIgnored() {
+        // Black rook at (0,0): not null, is ROOK, but color != WHITE → line 154 false branch.
+        // White blocker at (0,2) prevents the black rook from attacking the white king at (0,4).
+        board.setPiece(0, 0, new Rook(Color.BLACK));
+        board.setPiece(0, 2, new Rook(Color.WHITE));
+        board.setPiece(4, 4, new Rook(Color.WHITE));
+        board.setPiece(6, 4, new Pawn(Color.BLACK));
+
+        GameStatus result = executor.performMove(game, new Move(new Position(4, 4), new Position(4, 5), null));
+        assertThat(result).isEqualTo(GameStatus.ONGOING);
+    }
+
+    @Test
+    void castlingRightsWhiteQueenSideMovedRookShouldBeIgnored() {
+        // White rook at (0,0) that has already moved: not null, is ROOK, correct color, but hasMoved → line 155 false branch.
+        Rook movedRook = new Rook(Color.WHITE);
+        movedRook.setMoved();
+        board.setPiece(0, 0, movedRook);
+        board.setPiece(4, 4, new Rook(Color.WHITE));
+        board.setPiece(6, 4, new Pawn(Color.BLACK));
+
+        GameStatus result = executor.performMove(game, new Move(new Position(4, 4), new Position(4, 5), null));
+        assertThat(result).isEqualTo(GameStatus.ONGOING);
+    }
+
+    @Test
+    void castlingRightsWhiteKingSideNonRookShouldBeIgnored() {
+        // White queen at (0,7): not null, but pieceType != ROOK → line 162 false branch.
+        board.setPiece(0, 7, new Queen(Color.WHITE));
+        board.setPiece(4, 4, new Rook(Color.WHITE));
+        board.setPiece(6, 4, new Pawn(Color.BLACK));
+
+        GameStatus result = executor.performMove(game, new Move(new Position(4, 4), new Position(4, 5), null));
+        assertThat(result).isEqualTo(GameStatus.ONGOING);
+    }
+
+    @Test
+    void castlingRightsWhiteKingSideWrongColorShouldBeIgnored() {
+        // Black rook at (0,7): not null, is ROOK, but color != WHITE → line 163 false branch.
+        // White blocker at (0,6) prevents the black rook from attacking the white king at (0,4).
+        board.setPiece(0, 7, new Rook(Color.BLACK));
+        board.setPiece(0, 6, new Rook(Color.WHITE));
+        board.setPiece(4, 4, new Rook(Color.WHITE));
+        board.setPiece(6, 4, new Pawn(Color.BLACK));
+
+        GameStatus result = executor.performMove(game, new Move(new Position(4, 4), new Position(4, 5), null));
+        assertThat(result).isEqualTo(GameStatus.ONGOING);
+    }
+
+    @Test
+    void castlingRightsWhiteKingSideMovedRookShouldBeIgnored() {
+        // White rook at (0,7) that has already moved → line 164 false branch.
+        Rook movedRook = new Rook(Color.WHITE);
+        movedRook.setMoved();
+        board.setPiece(0, 7, movedRook);
+        board.setPiece(4, 4, new Rook(Color.WHITE));
+        board.setPiece(6, 4, new Pawn(Color.BLACK));
+
+        GameStatus result = executor.performMove(game, new Move(new Position(4, 4), new Position(4, 5), null));
+        assertThat(result).isEqualTo(GameStatus.ONGOING);
+    }
+
+    @Test
+    void castlingRightsBlackQueenSideWrongColorShouldBeIgnored() {
+        // White rook at (7,0): not null, is ROOK, but color != BLACK → line 177 false branch.
+        // Black blocker at (7,2) prevents the white rook from attacking the black king at (7,4).
+        board.setPiece(7, 0, new Rook(Color.WHITE));
+        board.setPiece(7, 2, new Rook(Color.BLACK));
+        board.setPiece(4, 4, new Rook(Color.WHITE));
+        board.setPiece(1, 4, new Pawn(Color.WHITE));
+
+        GameStatus result = executor.performMove(game, new Move(new Position(4, 4), new Position(4, 5), null));
+        assertThat(result).isEqualTo(GameStatus.ONGOING);
+    }
+
+    @Test
+    void castlingRightsBlackQueenSideMovedRookShouldBeIgnored() {
+        // Black rook at (7,0) that has already moved → line 178 false branch.
+        Rook movedRook = new Rook(Color.BLACK);
+        movedRook.setMoved();
+        board.setPiece(7, 0, movedRook);
+        board.setPiece(4, 4, new Rook(Color.WHITE));
+        board.setPiece(6, 4, new Pawn(Color.BLACK));
+
+        GameStatus result = executor.performMove(game, new Move(new Position(4, 4), new Position(4, 5), null));
+        assertThat(result).isEqualTo(GameStatus.ONGOING);
+    }
+
+    @Test
+    void castlingRightsBlackKingSideWrongColorShouldBeIgnored() {
+        // White rook at (7,7): not null, is ROOK, but color != BLACK → line 186 false branch.
+        // Black blocker at (7,6) prevents the white rook from attacking the black king at (7,4).
+        board.setPiece(7, 7, new Rook(Color.WHITE));
+        board.setPiece(7, 6, new Rook(Color.BLACK));
+        board.setPiece(4, 4, new Rook(Color.WHITE));
+        board.setPiece(1, 4, new Pawn(Color.WHITE));
+
+        GameStatus result = executor.performMove(game, new Move(new Position(4, 4), new Position(4, 5), null));
+        assertThat(result).isEqualTo(GameStatus.ONGOING);
+    }
 }

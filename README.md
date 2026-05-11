@@ -3,7 +3,9 @@
 A real-time multiplayer chess server built with Spring Boot and Java.
 Full-rule chess gameplay over WebSockets, auto-matchmaking by Elo rating, resign and draw-by-agreement,
 PGN export, persistent game history, and JWT-based authentication —
-with a chess engine, move validator, and minimax evaluator all written from scratch, no external chess libraries.
+with a complete chess engine written from scratch: move generation, legal move validation, all draw conditions
+(50-move rule, threefold repetition, insufficient material, stalemate), SAN/PGN conversion, and a minimax evaluator.
+No external chess libraries.
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=eskil4152_chess&metric=alert_status&token=469754be27b6275c7320c03b903fba6df45ee983)](https://sonarcloud.io/summary/new_code?id=eskil4152_chess)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=eskil4152_chess&metric=reliability_rating&token=469754be27b6275c7320c03b903fba6df45ee983)](https://sonarcloud.io/summary/new_code?id=eskil4152_chess)
@@ -109,9 +111,15 @@ The chess engine is written entirely from scratch with no external chess librari
 - **Castling**: transit squares are checked for attack in addition to the king's source square. The rook is relocated only if `canCastle` passes.
 - **Pawn promotion**: promotion piece must be supplied for any pawn reaching the back rank. Supported: queen, rook, bishop, knight.
 
+**Draw Detection**
+- **50-move rule**: the half-move clock increments on every non-pawn, non-capture move and resets on any pawn move or capture. At 100 half-moves the game ends in a draw.
+- **Threefold repetition**: every position is hashed as board state + side to move + en passant target + castling rights (derived from king/rook `hasMoved` flags). When the same hash appears three times the game ends in a draw.
+- **Insufficient material**: draw is declared immediately when neither side can force checkmate — K vs K, K+B vs K, K+N vs K, and K+B vs K+B with bishops on the same square color.
+- **Stalemate**: detected as part of the legal-move scan; the side to move has no legal moves and is not in check.
+
 **Game State**
-- Each active game holds its board, king positions, en passant target, turn, and move history.
-- Game-over detection runs after every move: if the opponent has no legal moves, the result is checkmate or stalemate depending on whether their king is in check.
+- Each active game holds its board, king positions, en passant target, half-move clock, position history, turn, and full move list.
+- All game-over detection runs after every move before the turn switches, so draws are awarded immediately on the move that causes them.
 - Per-game `ReentrantLock` prevents concurrent move submissions from corrupting state.
 
 ---
@@ -130,7 +138,7 @@ Moves are submitted in **UCI notation** — a 4-character string for normal move
 | Server → Client | `GAME_STARTED` | Match found — includes game ID, player IDs, usernames, and Elo ratings              |
 | Server → Client | `MOVE`         | Move broadcast to both players after a valid move                                    |
 | Server → Client | `DRAW_OFFER`   | Forwarded to the opponent when one player offers a draw                              |
-| Server → Client | `GAME_ENDED`   | Game over — includes result, how it ended (`CHECKMATE`, `STALEMATE`, `RESIGNATION`, `AGREEMENT`), and updated Elo ratings |
+| Server → Client | `GAME_ENDED`   | Game over — includes result, how it ended (`CHECKMATE`, `STALEMATE`, `RESIGNATION`, `AGREEMENT`, `FIFTY_MOVE_RULE`, `REPETITION`, `INSUFFICIENT_MATERIAL`), and updated Elo ratings |
 | Server → Client | `GAME_STATE`   | Full game state sent to a player who reconnects mid-game                             |
 | Server → Client | `ERROR`        | Structured error with HTTP status code and message                                   |
 
@@ -178,7 +186,7 @@ Completed games are stored with their move list converted to **PGN** format usin
 
 ### Elo Rating
 
-- Elo is updated at the end of every game, regardless of how it ends (checkmate, stalemate, resignation, or draw by agreement).
+- Elo is updated at the end of every game, regardless of how it ends (checkmate, stalemate, resignation, draw by agreement, 50-move rule, threefold repetition, or insufficient material).
 - Win: +1, Draw: +0, Loss: −1.
 - Both players' updated ratings are included in the `GAME_ENDED` WebSocket event.
 
@@ -239,6 +247,6 @@ Update SonarCloud Analysis
 
 ## Testing
 
-The project has comprehensive unit test coverage across all layers — engine, service, security, and controllers.
+The project has near-complete unit test coverage (>99%) across all layers — engine, service, security, and controllers.
 
 Tests use an in-memory H2 database so no external dependencies are required to run the suite.
