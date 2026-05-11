@@ -131,7 +131,7 @@ class SanConverterTest {
         place(game, new King(Color.BLACK), 0, 0);
         game.setWhiteKingPosition(new Position(5, 4));
         game.setBlackKingPosition(new Position(0, 0));
-        assertThat(SanConverter.toSan(game, new Move(new Position(5, 4), new Position(4, 4), null))).isEqualTo("e5");
+        assertThat(SanConverter.toSan(game, new Move(new Position(5, 4), new Position(4, 4), null))).isEqualTo("Ke5");
     }
 
     @Test
