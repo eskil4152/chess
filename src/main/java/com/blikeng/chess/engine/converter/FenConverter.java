@@ -9,11 +9,6 @@ import com.blikeng.chess.model.piece.Piece;
 import com.blikeng.chess.model.piece.PieceType;
 
 public class FenConverter {
-
-    // En passant target square. - if no en passant
-    // Half move clock. 0 - first move, 1 - second move, ...
-    // Full move number. 1 - first move, 2 - second move, ...
-
     public static String toFen(Game game) {
         StringBuilder fen = new StringBuilder();
 
@@ -25,13 +20,15 @@ public class FenConverter {
         if (enPassantTarget == null){
             fen.append('-');
         } else {
-            fen.append((char) ('a' + enPassantTarget.row()));
-            fen.append(enPassantTarget.col() + 1);
+            fen.append((char) ('a' + enPassantTarget.col()));
+            fen.append(enPassantTarget.row() + 1);
         }
 
         fen.append(' ');
 
+        fen.append(game.getHalfMoveClock()).append(' ');
 
+        fen.append((game.getMoves().size() / 2) + 1);
 
         return fen.toString().trim();
     }
