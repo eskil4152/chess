@@ -28,6 +28,8 @@ public class SanConverter {
 
         Piece piece = board.getPiece(move.from().row(), move.from().col());
 
+        if (piece == null) return "?";
+
         boolean isCastle = piece.getPieceType() == PieceType.KING && (move.to().col() - move.from().col() == 2 || move.to().col() - move.from().col() == -2);
 
         boolean isWhiteMove = board.getPiece(move.from().row(), move.from().col()).getColor() == Color.WHITE;

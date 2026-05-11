@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
@@ -38,6 +39,9 @@ public class Game {
         this.whiteDraw = other.whiteDraw;
         this.blackDraw = other.blackDraw;
         this.moves.addAll(other.moves);
+        this.halfMoveClock = other.halfMoveClock;
+        this.endedBy = other.endedBy;
+        this.positionHistory = new HashMap<>(other.positionHistory);
     }
 
     private final UUID id;
@@ -59,10 +63,10 @@ public class Game {
     private final int blackElo;
 
     @Setter
-    private Position whiteKingPosition;
+    private Position whiteKingPosition = new Position(0, 4);
 
     @Setter
-    private Position blackKingPosition;
+    private Position blackKingPosition = new Position(7, 4);
 
     private final Board board;
     private boolean isWhiteTurn = true;
@@ -70,6 +74,15 @@ public class Game {
 
     @Setter
     private GameStatus status = GameStatus.ONGOING;
+
+    @Setter
+    private int halfMoveClock = 0;
+
+    @Setter
+    private EndedBy endedBy = null;
+
+    @Setter
+    private HashMap<String, Integer> positionHistory = new HashMap<>();
 
     @Setter
     private Position enPassantTarget;

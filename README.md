@@ -1,9 +1,11 @@
-# Chess — with Evaluator
+# Chess
 
 A real-time multiplayer chess server built with Spring Boot and Java.
-It supports auto-matchmaking by Elo rating, full-rule chess gameplay over WebSockets,
-persistent game history, and JWT-based authentication — with a chess engine and minimax evaluator
-written from scratch, no external chess libraries.
+Full-rule chess gameplay over WebSockets, auto-matchmaking by Elo rating, resign and draw-by-agreement,
+PGN export, persistent game history, and JWT-based authentication —
+with a complete chess engine written from scratch: move generation, legal move validation, all draw conditions
+(50-move rule, threefold repetition, insufficient material, stalemate), SAN/PGN conversion, and a minimax evaluator.
+No external chess libraries.
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=eskil4152_chess&metric=alert_status&token=469754be27b6275c7320c03b903fba6df45ee983)](https://sonarcloud.io/summary/new_code?id=eskil4152_chess)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=eskil4152_chess&metric=reliability_rating&token=469754be27b6275c7320c03b903fba6df45ee983)](https://sonarcloud.io/summary/new_code?id=eskil4152_chess)
@@ -23,6 +25,7 @@ written from scratch, no external chess libraries.
   - [Chess Engine](#chess-engine)
   - [WebSocket & Real-Time Gameplay](#websocket--real-time-gameplay)
   - [Evaluator](#evaluator)
+  - [PGN Export](#pgn-export)
   - [Elo Rating](#elo-rating)
   - [Database & Persistence](#database--persistence)
 - [API Overview](#api-overview)
@@ -52,11 +55,11 @@ written from scratch, no external chess libraries.
 
 The server is structured around three main concerns:
 
-- **HTTP layer** — REST endpoints for authentication, user profiles, and game history.
-- **WebSocket layer** — a single `/ws` endpoint handles all real-time gameplay. On connect, players are automatically queued for matchmaking. Moves are sent and broadcast over the same connection.
-- **Engine layer** — a self-contained chess engine with no external dependencies, responsible for move generation, legal move validation, game-state tracking, and position evaluation.
+- **HTTP layer** — REST endpoints for authentication, user profiles, queue management, and game history.
+- **WebSocket layer** — a single `/ws` endpoint handles all real-time gameplay. Moves, resignations, and draw offers are sent and broadcast over the same connection.
+- **Engine layer** — a self-contained chess engine with no external dependencies, responsible for move generation, legal move validation, game-state tracking, position evaluation, and PGN/SAN conversion.
 
-Game state is kept in memory during a match (one `Game` object per active game, protected by a `ReentrantLock`). Completed games are persisted to PostgreSQL with their full move list and result.
+Game state is kept in memory during a match (one `Game` object per active game, protected by a `ReentrantLock`). Completed games are persisted to PostgreSQL with their full move list in PGN format.
 
 ---
 
@@ -81,11 +84,11 @@ Game state is kept in memory during a match (one `Game` object per active game, 
 
 ### Matchmaking
 
-- On WebSocket connect, a player is automatically queued if they are not already in an active game.
+- Players join the queue via `POST /api/queue` or automatically on WebSocket connect if not already in an active game.
 - The queue finds the closest Elo match within a **200-point window**.
-- If no suitable opponent is found, the player waits in the queue until one connects.
+- If no suitable opponent is found, the player waits until one connects.
 - The queue is backed by a `ConcurrentHashMap` and all match decisions are made inside a `synchronized` block to prevent race conditions.
-- On disconnect, the player is removed from the queue if not yet matched.
+- Players can leave the queue via `DELETE /api/queue` or on disconnect if not yet matched.
 
 ---
 
@@ -108,9 +111,15 @@ The chess engine is written entirely from scratch with no external chess librari
 - **Castling**: transit squares are checked for attack in addition to the king's source square. The rook is relocated only if `canCastle` passes.
 - **Pawn promotion**: promotion piece must be supplied for any pawn reaching the back rank. Supported: queen, rook, bishop, knight.
 
+**Draw Detection**
+- **50-move rule**: the half-move clock increments on every non-pawn, non-capture move and resets on any pawn move or capture. At 100 half-moves the game ends in a draw.
+- **Threefold repetition**: every position is hashed as board state + side to move + en passant target + castling rights (derived from king/rook `hasMoved` flags). When the same hash appears three times the game ends in a draw.
+- **Insufficient material**: draw is declared immediately when neither side can force checkmate — K vs K, K+B vs K, K+N vs K, and K+B vs K+B with bishops on the same square color.
+- **Stalemate**: detected as part of the legal-move scan; the side to move has no legal moves and is not in check.
+
 **Game State**
-- Each active game holds its board, king positions, en passant target, turn, and move history.
-- Game-over detection runs after every move: if the opponent has no legal moves, the result is checkmate or stalemate depending on whether their king is in check.
+- Each active game holds its board, king positions, en passant target, half-move clock, position history, turn, and full move list.
+- All game-over detection runs after every move before the turn switches, so draws are awarded immediately on the move that causes them.
 - Per-game `ReentrantLock` prevents concurrent move submissions from corrupting state.
 
 ---
@@ -121,17 +130,21 @@ Moves are submitted in **UCI notation** — a 4-character string for normal move
 
 **WebSocket Events**
 
-| Direction       | Type           | Description                                                             |
-|-----------------|----------------|-------------------------------------------------------------------------|
-| Client → Server | `MOVE`         | Submit a move in UCI notation (e.g. `e2e4`, `e7e8q`)                    |
-| Server → Client | `GAME_STARTED` | Match found — includes game ID, white/black player IDs and usernames    |
-| Server → Client | `MOVE`         | Move broadcast to both players after a valid move                       |
-| Server → Client | `GAME_ENDED`   | Game over — includes result (`WHITE_WIN`, `BLACK_WIN`, `DRAW`)          |
-| Server → Client | `GAME_STATE`   | Full game state (move history) sent to a player who reconnects mid-game |
-| Server → Client | `ERROR`        | Structured error with HTTP status code and message                      |
+| Direction       | Type           | Description                                                                          |
+|-----------------|----------------|--------------------------------------------------------------------------------------|
+| Client → Server | `MOVE`         | Submit a move in UCI notation (e.g. `e2e4`, `e7e8q`)                                |
+| Client → Server | `RESIGN`       | Forfeit the game; the opponent is awarded the win                                    |
+| Client → Server | `OFFER_DRAW`   | Propose a draw; the game ends when both players have sent this                       |
+| Server → Client | `GAME_STARTED` | Match found — includes game ID, player IDs, usernames, and Elo ratings              |
+| Server → Client | `MOVE`         | Move broadcast to both players after a valid move                                    |
+| Server → Client | `DRAW_OFFER`   | Forwarded to the opponent when one player offers a draw                              |
+| Server → Client | `GAME_ENDED`   | Game over — includes result, how it ended (`CHECKMATE`, `STALEMATE`, `RESIGNATION`, `AGREEMENT`, `FIFTY_MOVE_RULE`, `REPETITION`, `INSUFFICIENT_MATERIAL`), and updated Elo ratings |
+| Server → Client | `GAME_STATE`   | Full game state sent to a player who reconnects mid-game                             |
+| Server → Client | `ERROR`        | Structured error with HTTP status code and message                                   |
 
 **Reconnection**
 - On connect, if the user already has an active game, the full move history is sent as a `GAME_STATE` event so the client can reconstruct the board without server-side board serialization.
+- Active game state is also available via `GET /api/games/active`.
 
 **Presence**
 - Sessions are tracked per user in a `ConcurrentHashMap`. A player is considered connected as long as at least one session is open.
@@ -161,11 +174,21 @@ Three components contribute to the score:
 
 ---
 
+### PGN Export
+
+Completed games are stored with their move list converted to **PGN** format using a built-in SAN converter.
+
+- `SanConverter` translates UCI moves into Standard Algebraic Notation, including disambiguation for ambiguous pieces, check (`+`) and checkmate (`#`) markers, and promotion notation.
+- `PgnConverter` wraps the SAN move list into a numbered PGN string (e.g. `1. e4 e5 2. Nf3 ...`).
+- The full PGN is returned when fetching a completed game via `GET /api/games/{id}`.
+
+---
+
 ### Elo Rating
 
-- Elo is updated at the end of every game.
+- Elo is updated at the end of every game, regardless of how it ends (checkmate, stalemate, resignation, draw by agreement, 50-move rule, threefold repetition, or insufficient material).
 - Win: +1, Draw: +0, Loss: −1.
-- Both players' ratings are updated atomically after the game result is confirmed.
+- Both players' updated ratings are included in the `GAME_ENDED` WebSocket event.
 
 ---
 
@@ -176,7 +199,7 @@ Three components contribute to the score:
 
 **Relational Modeling**
 - `users` stores credentials, Elo, bio, and avatar URL.
-- `games` stores the result, start time, white/black player references, and the full move list as a serialized string.
+- `games` stores the result, how the game ended, start time, white/black player references, and the full move list in PGN format.
 
 **DTOs**
 - All API responses use Data Transfer Objects to decouple the API surface from the internal entity structure.
@@ -185,16 +208,19 @@ Three components contribute to the score:
 
 ## API Overview
 
-| Method | Endpoint                   | Description                           |
-|--------|----------------------------|---------------------------------------|
-| POST   | /api/auth/register         | Register                              |
-| POST   | /api/auth/login            | Login                                 |
-| POST   | /api/auth/logout           | Logout                                |
-| GET    | /api/auth                  | Check auth status                     |
-| GET    | /api/user/{username}       | Get user profile (username, Elo, bio) |
-| GET    | /api/games/user/{username} | Get game history for a user           |
-| GET    | /api/games/{id}            | Get a specific game by ID             |
-| WS     | /ws                        | WebSocket endpoint                    |
+| Method | Endpoint                   | Description                                    |
+|--------|----------------------------|------------------------------------------------|
+| POST   | /api/auth/register         | Register                                       |
+| POST   | /api/auth/login            | Login                                          |
+| POST   | /api/auth/logout           | Logout                                         |
+| GET    | /api/auth                  | Check auth status                              |
+| GET    | /api/user/{username}       | Get user profile (username, Elo, bio)          |
+| POST   | /api/queue                 | Join the matchmaking queue                     |
+| DELETE | /api/queue                 | Leave the matchmaking queue                    |
+| GET    | /api/games/active          | Get the current user's active game state       |
+| GET    | /api/games/user/{username} | Get game history for a user                    |
+| GET    | /api/games/{id}            | Get a specific game by ID (includes PGN)       |
+| WS     | /ws                        | WebSocket endpoint                             |
 
 ---
 
@@ -221,6 +247,6 @@ Update SonarCloud Analysis
 
 ## Testing
 
-The project has comprehensive unit test coverage across all layers — engine, service, security, and controllers.
+The project has near-complete unit test coverage (>99%) across all layers — engine, service, security, and controllers.
 
 Tests use an in-memory H2 database so no external dependencies are required to run the suite.

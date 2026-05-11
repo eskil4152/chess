@@ -11,14 +11,19 @@ public class PgnConverter {
     private static final MoveExecutor moveExecutor = new MoveExecutor();
 
     public static String toPgn(Game original){
-        Game game = new Game(original);
+        Game game = new Game(
+                original.getId(),
+                original.getWhiteId(), original.getWhiteUsername(),
+                original.getBlackId(), original.getBlackUsername(),
+                original.getWhiteElo(), original.getBlackElo()
+        );
 
         StringBuilder pgn = new StringBuilder();
 
         boolean isWhiteTurn = true;
         int moveNumber = 1;
 
-        for (String move : game.getMoves()) {
+        for (String move : original.getMoves()) {
             Move mappedMove = PositionMapper.fromUci(move);
 
             String moveSan = SanConverter.toSan(game, mappedMove);

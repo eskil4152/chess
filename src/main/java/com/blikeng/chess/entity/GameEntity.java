@@ -44,7 +44,5 @@ public class GameEntity {
     private Instant createdAt;
 
     @Setter
-    @ElementCollection
-    @CollectionTable(name = "game_moves", joinColumns = @JoinColumn(name = "game_id"))
-    private List<String> moves;
+    private String moves;
 }
