@@ -25,13 +25,12 @@ No external chess libraries.
   - [Chess Engine](#chess-engine)
   - [WebSocket & Real-Time Gameplay](#websocket--real-time-gameplay)
   - [Evaluator](#evaluator)
-  - [PGN Export](#pgn-export)
+  - [PGN & FEN Export](#pgn--fen-export)
   - [Elo Rating](#elo-rating)
   - [Database & Persistence](#database--persistence)
 - [API Overview](#api-overview)
 - [CI/CD Pipeline](#cicd-pipeline)
 - [Testing](#testing)
-- [License](#license)
 
 ---
 
@@ -47,6 +46,7 @@ No external chess libraries.
 | Database         | PostgreSQL (schema managed via Flyway)    |
 | CI/CD            | GitHub Actions (self-hosted runner)       |
 | Code Quality     | SonarCloud                                |
+| Rate Limiting    | Caffeine, Bucket4j                        |
 | Testing          | JUnit 5, Mockito, AssertJ                 |
 
 ---
@@ -75,6 +75,11 @@ Game state is kept in memory during a match (one `Game` object per active game, 
 **Password Handling**
 - Passwords are hashed with **BCrypt**; plaintext is never persisted.
 - Minimum length is enforced for both usernames and passwords at registration.
+
+**Rate Limiting**
+- All API endpoints are protected by a token bucket rate limiter backed by **Caffeine** and **Bucket4j**.
+- Login and register endpoints have tighter per-IP limits than general endpoints.
+- Requests that exceed the limit receive a `429 Too Many Requests` response.
 
 **WebSocket Handshake Authentication**
 - An `AuthHandshakeInterceptor` validates the JWT cookie before any WebSocket connection is established.
@@ -130,17 +135,17 @@ Moves are submitted in **UCI notation** — a 4-character string for normal move
 
 **WebSocket Events**
 
-| Direction       | Type           | Description                                                                          |
-|-----------------|----------------|--------------------------------------------------------------------------------------|
-| Client → Server | `MOVE`         | Submit a move in UCI notation (e.g. `e2e4`, `e7e8q`)                                |
-| Client → Server | `RESIGN`       | Forfeit the game; the opponent is awarded the win                                    |
-| Client → Server | `OFFER_DRAW`   | Propose a draw; the game ends when both players have sent this                       |
-| Server → Client | `GAME_STARTED` | Match found — includes game ID, player IDs, usernames, and Elo ratings              |
-| Server → Client | `MOVE`         | Move broadcast to both players after a valid move                                    |
-| Server → Client | `DRAW_OFFER`   | Forwarded to the opponent when one player offers a draw                              |
+| Direction       | Type           | Description                                                                                                                                                                         |
+|-----------------|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Client → Server | `MOVE`         | Submit a move in UCI notation (e.g. `e2e4`, `e7e8q`)                                                                                                                                |
+| Client → Server | `RESIGN`       | Forfeit the game; the opponent is awarded the win                                                                                                                                   |
+| Client → Server | `OFFER_DRAW`   | Propose a draw; the game ends when both players have sent this                                                                                                                      |
+| Server → Client | `GAME_STARTED` | Match found — includes game ID, player IDs, usernames, and Elo ratings                                                                                                              |
+| Server → Client | `MOVE`         | Move broadcast to both players after a valid move                                                                                                                                   |
+| Server → Client | `DRAW_OFFER`   | Forwarded to the opponent when one player offers a draw                                                                                                                             |
 | Server → Client | `GAME_ENDED`   | Game over — includes result, how it ended (`CHECKMATE`, `STALEMATE`, `RESIGNATION`, `AGREEMENT`, `FIFTY_MOVE_RULE`, `REPETITION`, `INSUFFICIENT_MATERIAL`), and updated Elo ratings |
-| Server → Client | `GAME_STATE`   | Full game state sent to a player who reconnects mid-game                             |
-| Server → Client | `ERROR`        | Structured error with HTTP status code and message                                   |
+| Server → Client | `GAME_STATE`   | Full game state sent to a player who reconnects mid-game                                                                                                                            |
+| Server → Client | `ERROR`        | Structured error with HTTP status code and message                                                                                                                                  |
 
 **Reconnection**
 - On connect, if the user already has an active game, the full move history is sent as a `GAME_STATE` event so the client can reconstruct the board without server-side board serialization.
@@ -174,13 +179,14 @@ Three components contribute to the score:
 
 ---
 
-### PGN Export
+### PGN & FEN Export
 
 Completed games are stored with their move list converted to **PGN** format using a built-in SAN converter.
 
 - `SanConverter` translates UCI moves into Standard Algebraic Notation, including disambiguation for ambiguous pieces, check (`+`) and checkmate (`#`) markers, and promotion notation.
 - `PgnConverter` wraps the SAN move list into a numbered PGN string (e.g. `1. e4 e5 2. Nf3 ...`).
 - The full PGN is returned when fetching a completed game via `GET /api/games/{id}`.
+- `FenConverter` serializes any game state to a standard **FEN** string, encoding the board, active color, castling rights, en passant target, half-move clock, and full move number.
 
 ---
 
@@ -249,4 +255,4 @@ Update SonarCloud Analysis
 
 The project has near-complete unit test coverage (>99%) across all layers — engine, service, security, and controllers.
 
-Tests use an in-memory H2 database so no external dependencies are required to run the suite.
+Tests use an in-memory H2 database, so no external dependencies are required to run the suite.
