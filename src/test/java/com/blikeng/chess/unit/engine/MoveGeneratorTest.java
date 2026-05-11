@@ -189,6 +189,7 @@ class MoveGeneratorTest {
         board.setPiece(0, 4, king);
         List<Position> moves = gen.getPseudoLegalMoves(game, board, new Position(0, 4));
         assertThat(moves)
+                .isNotEmpty()
                 .doesNotContain(new Position(0, 6))
                 .doesNotContain(new Position(0, 2));
     }
@@ -232,6 +233,7 @@ class MoveGeneratorTest {
         List<Position> moves = gen.getPseudoLegalMoves(game, board, new Position(0, 4));
 
         assertThat(moves)
+                .isNotEmpty()
                 .doesNotContain(new Position(0, 6), new Position(0, 2));
     }
 
@@ -288,7 +290,9 @@ class MoveGeneratorTest {
         board.setPiece(7, 7, kingsideRook);
         board.setPiece(7, 0, queensideRook);
         List<Position> moves = gen.getPseudoLegalMoves(game, board, new Position(7, 4));
-        assertThat(moves).doesNotContain(new Position(7, 6), new Position(7, 2));
+        assertThat(moves)
+                .isNotEmpty()
+                .doesNotContain(new Position(7, 6), new Position(7, 2));
     }
 
     @Test
@@ -300,7 +304,9 @@ class MoveGeneratorTest {
         board.setPiece(7, 0, new Rook(Color.BLACK));
         board.setPiece(7, 3, new Queen(Color.BLACK));
         List<Position> moves = gen.getPseudoLegalMoves(game, board, new Position(7, 4));
-        assertThat(moves).doesNotContain(new Position(7, 6), new Position(7, 2));
+        assertThat(moves)
+                .isNotEmpty()
+                .doesNotContain(new Position(7, 6), new Position(7, 2));
     }
 
     @Test
@@ -492,7 +498,10 @@ class MoveGeneratorTest {
         board.setPiece(5, 4, new Pawn(Color.BLACK));
         board.setPiece(4, 4, new Pawn(Color.WHITE));
         List<Position> moves = gen.getPseudoLegalMoves(game, board, new Position(5, 4));
-        assertThat(moves).doesNotContain(new Position(4, 4), new Position(3, 4));
+
+        assertThat(moves)
+                .isNotEmpty()
+                .doesNotContain(new Position(4, 4), new Position(3, 4));
     }
 
     @Test

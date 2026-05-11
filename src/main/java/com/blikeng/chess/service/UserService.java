@@ -41,8 +41,9 @@ public class UserService {
         UserEntity white = userRepository.findById(whiteId).orElseThrow();
         UserEntity black = userRepository.findById(blackId).orElseThrow();
 
-        double whiteScore = whiteWin ? 1.0 : draw ? 0.5 : 0.0;
-        double blackScore = whiteWin ? 0.0 : draw ? 0.5 : 1.0;
+        double drawScore = draw ? 0.5 : 0.0;
+        double whiteScore = whiteWin ? 1.0 : drawScore;
+        double blackScore = 1.0 - whiteScore;
 
         int whiteElo = calculateNewElo(white.getElo(), black.getElo(), whiteScore, getKFactor(white.getGames(), white.isBeen2400()));
         int blackElo = calculateNewElo(black.getElo(), white.getElo(), blackScore, getKFactor(black.getGames(), black.isBeen2400()));
