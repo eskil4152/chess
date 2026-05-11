@@ -9,3 +9,11 @@ spring:
 app:
   jwt:
     secret: ${JWT_SECRET:superSecretKeyForTheDevelopmentWhichIsAbsolutelySecureEnoughAndFarEnoughBitsToBeAbleToBeMadeIntoASecureEnoughKey}
+
+rate-limit:
+  login:
+    max-tokens: 5
+  register:
+    max-tokens: 10
+  other:
+    max-tokens: 60

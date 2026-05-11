@@ -4,7 +4,9 @@ import com.blikeng.chess.config.SecurityConfig;
 import com.blikeng.chess.controller.QueueController;
 import com.blikeng.chess.exception.types.ExistingGameException;
 import com.blikeng.chess.security.JwtService;
+import com.blikeng.chess.security.ratelimit.RateLimitingService;
 import com.blikeng.chess.service.MatchmakingService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -14,8 +16,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -29,6 +31,12 @@ class QueueControllerTest {
     @Autowired MockMvc mockMvc;
     @MockitoBean MatchmakingService matchmakingService;
     @MockitoBean JwtService jwtService;
+    @MockitoBean RateLimitingService rateLimitingService;
+
+    @BeforeEach
+    void setup() {
+        when(rateLimitingService.tryConsume(any(), any(), any())).thenReturn(true);
+    }
 
     @Test
     void shouldJoinQueue() throws Exception {
