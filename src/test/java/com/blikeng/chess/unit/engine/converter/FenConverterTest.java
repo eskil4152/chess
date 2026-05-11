@@ -7,10 +7,15 @@ import com.blikeng.chess.model.piece.Bishop;
 import com.blikeng.chess.model.piece.Color;
 import com.blikeng.chess.model.piece.Rook;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 class FenConverterTest {
 
@@ -51,49 +56,24 @@ class FenConverterTest {
         assertThat(FenConverter.toFen(newGame())).contains(" KQkq ");
     }
 
-    @Test
-    void noCastlingRightsWhenKingMoved() {
+    @ParameterizedTest
+    @MethodSource("castlingRightsProvider")
+    void castlingRightsReflectMovedPieces(int[] movedPieces, String expectedCastling) {
         Game game = newGame();
-        game.getBoard().getPiece(0, 4).setMoved();
-        game.getBoard().getPiece(7, 4).setMoved();
-
-        assertThat(FenConverter.toFen(game)).contains(" - ");
+        for (int i = 0; i < movedPieces.length; i += 2) {
+            game.getBoard().getPiece(movedPieces[i], movedPieces[i + 1]).setMoved();
+        }
+        assertThat(FenConverter.toFen(game)).contains(expectedCastling);
     }
 
-    @Test
-    void onlyWhiteKingsideCastlingWhenQueensideRookMoved() {
-        Game game = newGame();
-        game.getBoard().getPiece(0, 0).setMoved();
-        game.getBoard().getPiece(7, 4).setMoved();
-
-        assertThat(FenConverter.toFen(game)).contains(" K ");
-    }
-
-    @Test
-    void onlyWhiteQueensideCastlingWhenKingsideRookMoved() {
-        Game game = newGame();
-        game.getBoard().getPiece(0, 7).setMoved();
-        game.getBoard().getPiece(7, 4).setMoved();
-
-        assertThat(FenConverter.toFen(game)).contains(" Q ");
-    }
-
-    @Test
-    void onlyBlackKingsideCastlingWhenQueensideRookMoved() {
-        Game game = newGame();
-        game.getBoard().getPiece(0, 4).setMoved();
-        game.getBoard().getPiece(7, 0).setMoved();
-
-        assertThat(FenConverter.toFen(game)).contains(" k ");
-    }
-
-    @Test
-    void onlyBlackQueensideCastlingWhenKingsideRookMoved() {
-        Game game = newGame();
-        game.getBoard().getPiece(0, 4).setMoved();
-        game.getBoard().getPiece(7, 7).setMoved();
-
-        assertThat(FenConverter.toFen(game)).contains(" q ");
+    static Stream<Arguments> castlingRightsProvider() {
+        return Stream.of(
+            arguments(new int[]{0, 4, 7, 4}, " - "),
+            arguments(new int[]{0, 0, 7, 4}, " K "),
+            arguments(new int[]{0, 7, 7, 4}, " Q "),
+            arguments(new int[]{0, 4, 7, 0}, " k "),
+            arguments(new int[]{0, 4, 7, 7}, " q ")
+        );
     }
 
     @Test

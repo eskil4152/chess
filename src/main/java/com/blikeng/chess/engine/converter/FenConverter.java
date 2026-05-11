@@ -36,40 +36,31 @@ public class FenConverter {
 
     private static void appendBoard(StringBuilder fen, Game game) {
         for (int row = 7; row >= 0; row--) {
-            int empty = 0;
+            int empty = appendRow(fen, game.getBoard(), row);
+            if (empty > 0) fen.append(empty);
+            fen.append(row != 0 ? '/' : ' ');
+        }
+    }
 
-            for (int col = 0; col < 8; col++) {
-                Piece piece = game.getBoard().getPiece(row, col);
-                if (piece == null){
-                    empty++;
-                } else {
-                    if (empty > 0){
-                        fen.append(empty);
-                        empty = 0;
-                    }
-
-                    Color color = piece.getColor();
-                    char pieceSymbol = PieceType.toChar(piece.getPieceType());
-                    String pieceString = String.valueOf(pieceSymbol);
-
-                    if (color == Color.WHITE){
-                        fen.append(pieceString.toUpperCase());
-                    } else {
-                        fen.append(pieceString.toLowerCase());
-                    }
-                }
-            }
-
-            if (empty > 0){
-                fen.append(empty);
-            }
-
-            if (row != 0){
-                fen.append('/');
+    private static int appendRow(StringBuilder fen, Board board, int row) {
+        int empty = 0;
+        for (int col = 0; col < 8; col++) {
+            Piece piece = board.getPiece(row, col);
+            if (piece == null) {
+                empty++;
             } else {
-                fen.append(' ');
+                if (empty > 0) { fen.append(empty); empty = 0; }
+                fen.append(pieceToChar(piece));
             }
         }
+        return empty;
+    }
+
+    private static char pieceToChar(Piece piece) {
+        char symbol = PieceType.toChar(piece.getPieceType());
+        return piece.getColor() == Color.WHITE
+                ? Character.toUpperCase(symbol)
+                : Character.toLowerCase(symbol);
     }
 
     private static void appendCastlingRights(StringBuilder fen, Game game) {
