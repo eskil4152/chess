@@ -76,7 +76,7 @@ public class NotificationService {
         try {
             return objectMapper.writeValueAsString(obj);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException("Failed to serialize object", e);
         }
     }
 }

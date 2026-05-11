@@ -49,13 +49,10 @@ public class MoveGenerator {
             int newRow = position.row() + offset[0];
             int newCol = position.col() + offset[1];
 
-            if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
-                if (
-                        board.getPiece(newRow, newCol) == null ||
-                        board.getPiece(newRow, newCol).getColor() != board.getPiece(position.row(), position.col()).getColor()
-                ){
-                    moves.add(new Position(newRow, newCol));
-                }
+            if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8 &&
+                    (board.getPiece(newRow, newCol) == null ||
+                    board.getPiece(newRow, newCol).getColor() != board.getPiece(position.row(), position.col()).getColor())) {
+                moves.add(new Position(newRow, newCol));
             }
         }
 

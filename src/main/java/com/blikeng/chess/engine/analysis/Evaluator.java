@@ -22,17 +22,16 @@ public class Evaluator {
         if (depth == 0) return evaluate(game);
 
         int best = game.isWhiteTurn() ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        Color color = game.isWhiteTurn() ? Color.WHITE : Color.BLACK;
 
-        outer:
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
+        for (int row = 0; row < 8 && beta > alpha; row++) {
+            for (int col = 0; col < 8 && beta > alpha; col++) {
                 Piece piece = game.getBoard().getPiece(row, col);
-                Color color = game.isWhiteTurn() ? Color.WHITE : Color.BLACK;
-
                 if (piece == null || piece.getColor() != color) continue;
 
                 List<Position> legalMoves = moveGenerator.getPseudoLegalMoves(game, game.getBoard(), new Position(row, col));
-                for (Position legalMove : legalMoves) {
+                for (int m = 0; m < legalMoves.size() && beta > alpha; m++) {
+                    Position legalMove = legalMoves.get(m);
                     Move move = new Move(new Position(row, col), legalMove, null);
                     boolean isPromotion = piece.getPieceType() == PieceType.PAWN
                             && (game.isWhiteTurn() ? legalMove.row() == 7 : legalMove.row() == 0);
@@ -41,9 +40,9 @@ public class Evaluator {
                             ? new PieceType[]{PieceType.QUEEN, PieceType.ROOK, PieceType.BISHOP, PieceType.KNIGHT}
                             : new PieceType[]{null};
 
-                    for (PieceType promo : promotions) {
+                    for (int p = 0; p < promotions.length && beta > alpha; p++) {
                         Game copy = new Game(game);
-                        if (moveExecutor.performMove(copy, new Move(move.from(), move.to(), promo)) != null) {
+                        if (moveExecutor.performMove(copy, new Move(move.from(), move.to(), promotions[p])) != null) {
                             int current = miniMax(copy, depth - 1, alpha, beta);
 
                             if (game.isWhiteTurn()) {
@@ -53,8 +52,6 @@ public class Evaluator {
                                 best = Math.min(best, current);
                                 beta = Math.min(beta, current);
                             }
-
-                            if (beta <= alpha) break outer;
                         }
                     }
                 }
@@ -74,15 +71,16 @@ public class Evaluator {
         int alpha = Integer.MIN_VALUE;
         int beta = Integer.MAX_VALUE;
 
-        outer:
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
+        Color color = isWhite ? Color.WHITE : Color.BLACK;
+
+        for (int row = 0; row < 8 && beta > alpha; row++) {
+            for (int col = 0; col < 8 && beta > alpha; col++) {
                 Piece piece = game.getBoard().getPiece(row, col);
-                Color color = game.isWhiteTurn() ? Color.WHITE : Color.BLACK;
                 if (piece == null || piece.getColor() != color) continue;
 
                 List<Position> legalMoves = moveGenerator.getPseudoLegalMoves(game, game.getBoard(), new Position(row, col));
-                for (Position legalMove : legalMoves) {
+                for (int m = 0; m < legalMoves.size() && beta > alpha; m++) {
+                    Position legalMove = legalMoves.get(m);
                     Move move = new Move(new Position(row, col), legalMove, null);
                     boolean isPromotion = piece.getPieceType() == PieceType.PAWN
                             && (isWhite ? legalMove.row() == 7 : legalMove.row() == 0);
@@ -91,15 +89,15 @@ public class Evaluator {
                             ? new PieceType[]{PieceType.QUEEN, PieceType.ROOK, PieceType.BISHOP, PieceType.KNIGHT}
                             : new PieceType[]{null};
 
-                    for (PieceType promo : promotions) {
+                    for (int p = 0; p < promotions.length && beta > alpha; p++) {
                         Game copy = new Game(game);
-                        if (moveExecutor.performMove(copy, new Move(move.from(), move.to(), promo)) != null) {
+                        if (moveExecutor.performMove(copy, new Move(move.from(), move.to(), promotions[p])) != null) {
                             int score = miniMax(copy, depth - 1, alpha, beta);
 
                             if (isWhite ? score > best : score < best) {
                                 best = score;
                                 bestMove = move;
-                                bestPromo = promo;
+                                bestPromo = promotions[p];
                             }
 
                             if (isWhite) {
@@ -107,8 +105,6 @@ public class Evaluator {
                             } else {
                                 beta = Math.min(beta, score);
                             }
-
-                            if (beta <= alpha) break outer;
                         }
                     }
                 }
