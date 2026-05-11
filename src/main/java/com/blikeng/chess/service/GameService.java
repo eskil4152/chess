@@ -6,6 +6,7 @@ import com.blikeng.chess.dto.websocket.WsMoveDTO;
 import com.blikeng.chess.dto.websocket.WsResignDTO;
 import com.blikeng.chess.engine.MoveExecutor;
 import com.blikeng.chess.engine.PositionMapper;
+import com.blikeng.chess.engine.converter.PgnConverter;
 import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.errorTypes.*;
@@ -216,8 +217,10 @@ public class GameService {
     }
 
     private void handleGameEnd(Game game, GameStatus gameStatus, EndedBy endedBy) {
+        String moves = PgnConverter.toPgn(game);
+
         gameRepository.findById(game.getId()).ifPresent(entity -> {
-            entity.setMoves(game.getMoves());
+            entity.setMoves(moves);
             entity.setStatus(gameStatus);
             gameRepository.save(entity);
         });
