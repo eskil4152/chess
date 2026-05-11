@@ -89,9 +89,9 @@ public class MoveExecutor {
 
         for (int row = 0; row < 8 && !hasLegalMove; row++)
             for (int col = 0; col < 8 && !hasLegalMove; col++) {
-                Piece p = board.getPiece(row, col);
-                if (p != null && p.getColor() == opponentColor)
-                    hasLegalMove = hasAnyLegalMove(board, game, p, new Position(row, col), opponentColor);
+                Piece piece = board.getPiece(row, col);
+                if (piece != null && piece.getColor() == opponentColor)
+                    hasLegalMove = hasAnyLegalMove(board, game, piece, new Position(row, col), opponentColor);
             }
 
         if (!hasLegalMove) return noLegalMoveStatus(game, playerColor, opponentColor);
@@ -126,10 +126,10 @@ public class MoveExecutor {
         return history.get(key) >= 3;
     }
 
-    private boolean hasAnyLegalMove(Board board, Game game, Piece p, Position from, Color color) {
+    private boolean hasAnyLegalMove(Board board, Game game, Piece piece, Position from, Color color) {
         for (Position to : moveGenerator.getPseudoLegalMoves(game, board, from)) {
-            boolean epMove = p.getPieceType() == PieceType.PAWN && to.equals(game.getEnPassantTarget());
-            if (!kingLeftInCheck(board, game, new Move(from, to, null), p, color, epMove)) {
+            boolean isEnPassantMove = piece.getPieceType() == PieceType.PAWN && to.equals(game.getEnPassantTarget());
+            if (!kingLeftInCheck(board, game, new Move(from, to, null), piece, color, isEnPassantMove)) {
                 return true;
             }
         }
@@ -236,8 +236,8 @@ public class MoveExecutor {
 
     private void updateEnPassantTarget(Game game, Piece piece, Move move) {
         if (piece.getPieceType() == PieceType.PAWN && Math.abs(move.to().row() - move.from().row()) == 2) {
-            int epRow = (move.from().row() + move.to().row()) / 2;
-            game.setEnPassantTarget(new Position(epRow, move.from().col()));
+            int enPassantRow = (move.from().row() + move.to().row()) / 2;
+            game.setEnPassantTarget(new Position(enPassantRow, move.from().col()));
         } else {
             game.setEnPassantTarget(null);
         }

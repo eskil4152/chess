@@ -92,11 +92,11 @@ public class Evaluator {
         }
     }
 
-    private static void updateBestMoveState(BestMoveState state, int score, Move move, PieceType promo, boolean isWhite) {
+    private static void updateBestMoveState(BestMoveState state, int score, Move move, PieceType promotion, boolean isWhite) {
         if (isWhite ? score > state.best : score < state.best) {
             state.best = score;
             state.bestMove = move;
-            state.bestPromo = promo;
+            state.bestPromo = promotion;
         }
         if (isWhite) state.alpha = Math.max(state.alpha, score);
         else state.beta = Math.min(state.beta, score);
@@ -160,8 +160,8 @@ public class Evaluator {
         int[] cols = new int[8];
         for (int row = 0; row < 8; row++)
             for (int col = 0; col < 8; col++) {
-                Piece p = board.getPiece(row, col);
-                if (p != null && p.getColor() == color && p.getPieceType() == PieceType.PAWN)
+                Piece piece = board.getPiece(row, col);
+                if (piece != null && piece.getColor() == color && piece.getPieceType() == PieceType.PAWN)
                     cols[col]++;
             }
         return cols;
@@ -187,13 +187,13 @@ public class Evaluator {
 
     private static int countBlocked(Board board, Color color) {
         int count = 0;
-        int dir = color == Color.WHITE ? 1 : -1;
+        int direction = color == Color.WHITE ? 1 : -1;
         for (int row = 0; row < 8; row++)
             for (int col = 0; col < 8; col++) {
-                Piece p = board.getPiece(row, col);
-                if (p == null || p.getColor() != color || p.getPieceType() != PieceType.PAWN) continue;
-                int fwd = row + dir;
-                if (fwd >= 0 && fwd < 8 && board.getPiece(fwd, col) != null) count++;
+                Piece piece = board.getPiece(row, col);
+                if (piece == null || piece.getColor() != color || piece.getPieceType() != PieceType.PAWN) continue;
+                int nextRow = row + direction;
+                if (nextRow >= 0 && nextRow < 8 && board.getPiece(nextRow, col) != null) count++;
             }
         return count;
     }
@@ -208,12 +208,12 @@ public class Evaluator {
                 Piece piece = board.getPiece(row, col);
                 if (piece == null) continue;
 
-                int legalMoves = moveGenerator.getPseudoLegalMoves(game, board, new Position(row, col)).size();
+                int moveCount = moveGenerator.getPseudoLegalMoves(game, board, new Position(row, col)).size();
 
                 if (piece.getColor() == Color.WHITE) {
-                    difference += legalMoves;
+                    difference += moveCount;
                 } else {
-                    difference -= legalMoves;
+                    difference -= moveCount;
                 }
             }
         }

@@ -99,14 +99,14 @@ public class MoveGenerator {
             {+1, -1}, {+1, 0}, {+1, +1}
         };
 
-        Piece moving = board.getPiece(position.row(), position.col());
+        Piece sourcePiece = board.getPiece(position.row(), position.col());
         for (int[] direction : directions) {
             int row = position.row() + direction[0];
             int col = position.col() + direction[1];
 
             if (row >= 0 && row < 8 && col >= 0 && col < 8) {
                 Piece target = board.getPiece(row, col);
-                if (target == null || target.getColor() != moving.getColor()) {
+                if (target == null || target.getColor() != sourcePiece.getColor()) {
                     moves.add(new Position(row, col));
                 }
             }
@@ -131,35 +131,35 @@ public class MoveGenerator {
         List<Position> moves = new ArrayList<>();
         Piece pawn = board.getPiece(position.row(), position.col());
         boolean isWhite = pawn.getColor() == Color.WHITE;
-        int dir = isWhite ? 1 : -1;
+        int direction = isWhite ? 1 : -1;
         int row = position.row();
         int col = position.col();
-        int fwd = row + dir;
+        int nextRow = row + direction;
 
-        if (fwd >= 0 && fwd < 8) {
-            if (board.getPiece(fwd, col) == null) {
-                moves.add(new Position(fwd, col));
-                int dbl = fwd + dir;
-                if (!pawn.hasMoved() && dbl >= 0 && dbl < 8 && board.getPiece(dbl, col) == null)
-                    moves.add(new Position(dbl, col));
+        if (nextRow >= 0 && nextRow < 8) {
+            if (board.getPiece(nextRow, col) == null) {
+                moves.add(new Position(nextRow, col));
+                int doubleRow = nextRow + direction;
+                if (!pawn.hasMoved() && doubleRow >= 0 && doubleRow < 8 && board.getPiece(doubleRow, col) == null)
+                    moves.add(new Position(doubleRow, col));
             }
-            addPawnCaptures(board, fwd, col, pawn.getColor(), moves);
+            addPawnCaptures(board, nextRow, col, pawn.getColor(), moves);
         }
 
-        Position ep = game.getEnPassantTarget();
-        if (ep != null && ep.row() == fwd && Math.abs(ep.col() - col) == 1)
-            moves.add(ep);
+        Position enPassantTarget = game.getEnPassantTarget();
+        if (enPassantTarget != null && enPassantTarget.row() == nextRow && Math.abs(enPassantTarget.col() - col) == 1)
+            moves.add(enPassantTarget);
 
         return moves;
     }
 
-    private void addPawnCaptures(Board board, int fwd, int col, Color color, List<Position> moves) {
-        for (int dc : new int[]{-1, 1}) {
-            int captureCol = col + dc;
+    private void addPawnCaptures(Board board, int nextRow, int col, Color color, List<Position> moves) {
+        for (int colOffset : new int[]{-1, 1}) {
+            int captureCol = col + colOffset;
             if (captureCol >= 0 && captureCol < 8) {
-                Piece target = board.getPiece(fwd, captureCol);
+                Piece target = board.getPiece(nextRow, captureCol);
                 if (target != null && target.getColor() != color)
-                    moves.add(new Position(fwd, captureCol));
+                    moves.add(new Position(nextRow, captureCol));
             }
         }
     }
@@ -177,8 +177,8 @@ public class MoveGenerator {
                 if (target == null) {
                     moves.add(new Position(row, col));
                 } else {
-                    Piece moving = board.getPiece(position.row(), position.col());
-                    if (target.getColor() != moving.getColor()) {
+                    Piece sourcePiece = board.getPiece(position.row(), position.col());
+                    if (target.getColor() != sourcePiece.getColor()) {
                         moves.add(new Position(row, col));
                     }
                     break;
