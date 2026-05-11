@@ -5,5 +5,9 @@ CREATE table users (
     bio TEXT,
     email VARCHAR(255),
     avatarUrl VARCHAR(255),
-    elo INT NOT NULL DEFAULT 800
+    elo INT NOT NULL DEFAULT 800,
+    role VARCHAR(255) NOT NULL DEFAULT 'USER'
+        CONSTRAINT role_check CHECK (role IN ('SUPERUSER', 'ADMIN', 'MODERATOR', 'TRUSTED', 'USER')),
+    games INT NOT NULL DEFAULT 0,
+    been2400 BOOLEAN NOT NULL DEFAULT FALSE
 );
