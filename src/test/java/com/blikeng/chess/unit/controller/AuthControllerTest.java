@@ -8,8 +8,10 @@ import com.blikeng.chess.dto.LoginDTO;
 import com.blikeng.chess.exception.types.InvalidCredentialsException;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.UserRole;
+import com.blikeng.chess.security.ratelimit.RateLimitingService;
 import com.blikeng.chess.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -37,6 +39,12 @@ class AuthControllerTest {
     @MockitoBean AuthService authService;
     @MockitoBean JwtService jwtService;
     @MockitoBean Environment environment;
+    @MockitoBean RateLimitingService rateLimitingService;
+
+    @BeforeEach
+    void setup() {
+        when(rateLimitingService.tryConsume(any(), any(), any())).thenReturn(true);
+    }
 
     ObjectMapper objectMapper = new ObjectMapper();
 
