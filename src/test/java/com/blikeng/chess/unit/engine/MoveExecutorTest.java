@@ -198,9 +198,9 @@ class MoveExecutorTest {
     @Test
     void whitePawnPromotionWithoutPieceShouldThrow() {
         board.setPiece(6, 2, movedWhitePawn());
-        assertThatThrownBy(() ->
-                executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2), null))
-        ).isInstanceOf(InvalidPromotionException.class);
+        Move move = new Move(new Position(6, 2), new Position(7, 2), null);
+        assertThatThrownBy(() -> executor.performMove(game, move))
+                .isInstanceOf(InvalidPromotionException.class);
     }
 
     @Test
@@ -255,17 +255,17 @@ class MoveExecutorTest {
         board.setPiece(0, 6, new King(Color.WHITE));
         game.setWhiteKingPosition(new Position(0, 6));
         board.setPiece(1, 2, movedBlackPawn());
-        assertThatThrownBy(() ->
-                executor.performMove(game, new Move(new Position(1, 2), new Position(0, 2), null))
-        ).isInstanceOf(InvalidPromotionException.class);
+        Move move = new Move(new Position(1, 2), new Position(0, 2), null);
+        assertThatThrownBy(() -> executor.performMove(game, move))
+                .isInstanceOf(InvalidPromotionException.class);
     }
 
     @Test
     void promotionToKingShouldThrow() {
         board.setPiece(6, 2, movedWhitePawn());
-        assertThatThrownBy(() ->
-                executor.performMove(game, new Move(new Position(6, 2), new Position(7, 2), PieceType.KING))
-        ).isInstanceOf(InvalidPromotionException.class);
+        Move move = new Move(new Position(6, 2), new Position(7, 2), PieceType.KING);
+        assertThatThrownBy(() -> executor.performMove(game, move))
+                .isInstanceOf(InvalidPromotionException.class);
     }
 
     // --- Castling ---

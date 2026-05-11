@@ -67,7 +67,8 @@ class GameHistoryServiceTest {
     void getGameShouldThrowWhenNotFound() {
         UUID id = UUID.randomUUID();
         when(gameRepository.findById(id)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> gameHistoryService.getGame(id.toString()))
+        String idStr = id.toString();
+        assertThatThrownBy(() -> gameHistoryService.getGame(idStr))
                 .isInstanceOf(GameNotFoundException.class);
     }
 

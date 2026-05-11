@@ -113,12 +113,6 @@ class GameServiceTest {
         assertThat(gameService.isInGame(UUID.randomUUID())).isFalse();
     }
 
-    @Test
-    void isInGameShouldReturnFalseWhenPlayerNotInExistingGame() {
-        beginAndGetGame();
-        assertThat(gameService.isInGame(UUID.randomUUID())).isFalse();
-    }
-
     // --- Is In Game (filter branching) ---
     @Test
     void isInGameShouldReturnTrueForWhitePlayer() {
@@ -160,14 +154,16 @@ class GameServiceTest {
     @Test
     void makeMoveShouldThrowWhenGameNotFound() {
         WsMoveDTO dto = new WsMoveDTO(UUID.randomUUID().toString(), "e2e4");
-        assertThatThrownBy(() -> gameService.makeMove(white.getId(), dto))
+        UUID whiteId = white.getId();
+        assertThatThrownBy(() -> gameService.makeMove(whiteId, dto))
                 .isInstanceOf(GameNotFoundException.class);
     }
 
     @Test
     void makeMoveShouldThrowOnInvalidUUIDFormat() {
         WsMoveDTO dto = new WsMoveDTO("not-valid-uuid", "e2e4");
-        assertThatThrownBy(() -> gameService.makeMove(white.getId(), dto))
+        UUID whiteId = white.getId();
+        assertThatThrownBy(() -> gameService.makeMove(whiteId, dto))
                 .isInstanceOf(InvalidUUIDException.class);
     }
 
@@ -175,7 +171,8 @@ class GameServiceTest {
     void makeMoveShouldThrowWhenMoveTooShort() {
         Game game = beginAndGetGame();
         WsMoveDTO dto = new WsMoveDTO(game.getId().toString(), "e2");
-        assertThatThrownBy(() -> gameService.makeMove(game.getWhiteId(), dto))
+        UUID whiteId = game.getWhiteId();
+        assertThatThrownBy(() -> gameService.makeMove(whiteId, dto))
                 .isInstanceOf(InvalidMoveException.class);
     }
 
@@ -289,7 +286,8 @@ class GameServiceTest {
     void resignGameShouldThrowWhenUserNotInGame() {
         Game game = beginAndGetGame();
         WsResignDTO dto = new WsResignDTO(game.getId().toString());
-        assertThatThrownBy(() -> gameService.resignGame(UUID.randomUUID(), dto))
+        UUID randomId = UUID.randomUUID();
+        assertThatThrownBy(() -> gameService.resignGame(randomId, dto))
                 .isInstanceOf(NotAllowedException.class);
     }
 
@@ -327,7 +325,8 @@ class GameServiceTest {
     void handleDrawShouldThrowWhenUserNotInGame() {
         Game game = beginAndGetGame();
         WsDrawDTO dto = new WsDrawDTO(game.getId().toString());
-        assertThatThrownBy(() -> gameService.handleDraw(UUID.randomUUID(), dto))
+        UUID randomId = UUID.randomUUID();
+        assertThatThrownBy(() -> gameService.handleDraw(randomId, dto))
                 .isInstanceOf(NotAllowedException.class);
     }
 

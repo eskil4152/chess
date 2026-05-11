@@ -67,7 +67,8 @@ class AuthServiceTest {
     @Test
     void loginShouldThrowWhenUserNotFound() {
         when(authRepository.findByUsernameIgnoreCase("unknown")).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> authService.login(new LoginDTO("unknown", "pass")))
+        LoginDTO dto = new LoginDTO("unknown", "pass");
+        assertThatThrownBy(() -> authService.login(dto))
                 .isInstanceOf(InvalidCredentialsException.class);
     }
 
@@ -75,7 +76,8 @@ class AuthServiceTest {
     void loginShouldThrowOnWrongPassword() {
         when(authRepository.findByUsernameIgnoreCase("testuser")).thenReturn(Optional.of(user));
         when(passwordService.checkPassword("wrong", "hashed")).thenReturn(false);
-        assertThatThrownBy(() -> authService.login(new LoginDTO("testuser", "wrong")))
+        LoginDTO dto = new LoginDTO("testuser", "wrong");
+        assertThatThrownBy(() -> authService.login(dto))
                 .isInstanceOf(InvalidCredentialsException.class);
     }
 
@@ -95,27 +97,31 @@ class AuthServiceTest {
 
     @Test
     void registerShouldThrowWhenUsernameTooShort() {
-        assertThatThrownBy(() -> authService.register(new LoginDTO("ab", "password1")))
+        LoginDTO dto = new LoginDTO("ab", "password1");
+        assertThatThrownBy(() -> authService.register(dto))
                 .isInstanceOf(InvalidUsernameException.class);
     }
 
     @Test
     void registerShouldThrowWhenUsernameTooLong() {
         String longName = "a".repeat(33);
-        assertThatThrownBy(() -> authService.register(new LoginDTO(longName, "password1")))
+        LoginDTO dto = new LoginDTO(longName, "password1");
+        assertThatThrownBy(() -> authService.register(dto))
                 .isInstanceOf(InvalidUsernameException.class);
     }
 
     @Test
     void registerShouldThrowWhenPasswordTooShort() {
-        assertThatThrownBy(() -> authService.register(new LoginDTO("validname", "short")))
+        LoginDTO dto = new LoginDTO("validname", "short");
+        assertThatThrownBy(() -> authService.register(dto))
                 .isInstanceOf(InvalidPasswordException.class);
     }
 
     @Test
     void registerShouldThrowWhenPasswordTooLong() {
         String longPass = "a".repeat(129);
-        assertThatThrownBy(() -> authService.register(new LoginDTO("validname", longPass)))
+        LoginDTO dto = new LoginDTO("validname", longPass);
+        assertThatThrownBy(() -> authService.register(dto))
                 .isInstanceOf(InvalidPasswordException.class);
     }
 
@@ -160,7 +166,8 @@ class AuthServiceTest {
     @Test
     void registerShouldThrowWhenUsernameTaken() {
         when(authRepository.existsByUsernameIgnoreCase("taken")).thenReturn(true);
-        assertThatThrownBy(() -> authService.register(new LoginDTO("taken", "password1")))
+        LoginDTO dto = new LoginDTO("taken", "password1");
+        assertThatThrownBy(() -> authService.register(dto))
                 .isInstanceOf(UsernameTakenException.class);
     }
 
