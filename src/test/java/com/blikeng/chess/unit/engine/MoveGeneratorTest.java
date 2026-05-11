@@ -499,9 +499,7 @@ class MoveGeneratorTest {
         board.setPiece(4, 4, new Pawn(Color.WHITE));
         List<Position> moves = gen.getPseudoLegalMoves(game, board, new Position(5, 4));
 
-        assertThat(moves)
-                .isNotEmpty()
-                .doesNotContain(new Position(4, 4), new Position(3, 4));
+        assertThat(moves).isEmpty();
     }
 
     @Test
