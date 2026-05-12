@@ -264,6 +264,73 @@ class EvaluatorTest {
     }
 
 
+    // --- miniMax alpha/beta cutoff in promotion loop (line 44) ---
+
+    @Test
+    void miniMaxShouldCutOffPromotionLoopWhenAlphaExceedsBeta() {
+        // Black pawn about to promote. alpha=-800 means after QUEEN promo (≈-900),
+        // beta becomes -900 which is ≤ alpha=-800 → remaining promos (ROOK etc.) pruned.
+        game.switchTurn();
+        Pawn p = new Pawn(Color.BLACK); p.setMoved();
+        board.setPiece(1, 3, p);
+        int result = Evaluator.miniMax(game, 1, -800, Integer.MAX_VALUE);
+        assertThat(result).isLessThan(-800);
+    }
+
+    // --- performMove returning null (line 92 false branch) ---
+
+    @Test
+    void getBestMoveShouldSkipIllegalPseudoLegalMoves() {
+        // White rook pinned on the a-file: pseudo-legal horizontal moves leave king in check → performMove returns null
+        King king = new King(Color.WHITE); king.setMoved();
+        board.setPiece(0, 0, king);
+        board.setPiece(3, 0, new Rook(Color.WHITE));
+        board.setPiece(7, 0, new Rook(Color.BLACK));
+        game.setWhiteKingPosition(new Position(0, 0));
+        Evaluator.MoveEval result = Evaluator.getBestMove(game, 1);
+        assertThat(result.move()).isNotNull();
+    }
+
+    // --- getBestMove with noise ---
+
+    @Test
+    void getBestMoveNoiseOverloadWithZeroNoiseShouldReturnSameResultAsSingleArgVersion() {
+        board.setPiece(4, 4, new Queen(Color.WHITE));
+        board.setPiece(4, 7, new Rook(Color.BLACK));
+        Evaluator.MoveEval withoutNoise = Evaluator.getBestMove(game, 1);
+        Evaluator.MoveEval withZeroNoise = Evaluator.getBestMove(game, 1, 0);
+        assertThat(withZeroNoise.move()).isEqualTo(withoutNoise.move());
+        assertThat(withZeroNoise.eval()).isEqualTo(withoutNoise.eval());
+    }
+
+    @Test
+    void getBestMoveWithNoiseShouldReturnLegalMove() {
+        board.setPiece(1, 0, new Pawn(Color.WHITE));
+        board.setPiece(6, 0, new Pawn(Color.BLACK));
+        Evaluator.MoveEval result = Evaluator.getBestMove(game, 1, 500);
+        assertThat(result.move()).isNotNull();
+    }
+
+    @Test
+    void getBestMoveAlphaBetaUsesActualScoreNotNoisyScore() {
+        board.setPiece(4, 0, new Queen(Color.WHITE));
+        board.setPiece(4, 7, new Rook(Color.BLACK));
+        Evaluator.MoveEval result = Evaluator.getBestMove(game, 1, 1000);
+
+        assertThat(result.move()).isNotNull();
+        assertThat(result.eval()).isNotEqualTo(Integer.MIN_VALUE);
+    }
+
+    @Test
+    void getBestMoveAlphaBetaCutoffInOuterLoopShouldStillFindBestMove() {
+        board.setPiece(4, 0, new Queen(Color.WHITE));
+        board.setPiece(3, 1, new Rook(Color.WHITE));
+        board.setPiece(4, 7, new Rook(Color.BLACK));
+        Evaluator.MoveEval result = Evaluator.getBestMove(game, 1);
+        assertThat(result.move()).isNotNull();
+        assertThat(result.eval()).isGreaterThan(0);
+    }
+
     // --- getBestMove (black's turn) ---
     @Test
     void getBestMoveShouldReturnMoveForBlack() {

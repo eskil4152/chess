@@ -11,6 +11,7 @@ import com.blikeng.chess.model.piece.Piece;
 import com.blikeng.chess.model.piece.PieceType;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Evaluator {
     private Evaluator() {}
@@ -63,9 +64,13 @@ public class Evaluator {
     }
 
     public static MoveEval getBestMove(Game game, int depth) {
+        return getBestMove(game, depth, 0);
+    }
+
+    public static MoveEval getBestMove(Game game, int depth, int noise) {
         boolean isWhite = game.isWhiteTurn();
         Color color = isWhite ? Color.WHITE : Color.BLACK;
-        BestMoveState state = new BestMoveState(isWhite);
+        BestMoveState state = new BestMoveState(isWhite, noise);
 
         for (int row = 0; row < 8 && state.beta > state.alpha; row++)
             for (int col = 0; col < 8 && state.beta > state.alpha; col++) {
@@ -93,8 +98,11 @@ public class Evaluator {
     }
 
     private static void updateBestMoveState(BestMoveState state, int score, Move move, PieceType promotion, boolean isWhite) {
-        if (isWhite ? score > state.best : score < state.best) {
-            state.best = score;
+        int noisyScore = state.noise > 0
+                ? score + ThreadLocalRandom.current().nextInt(-state.noise, state.noise + 1)
+                : score;
+        if (isWhite ? noisyScore > state.best : noisyScore < state.best) {
+            state.best = noisyScore;
             state.bestMove = move;
             state.bestPromo = promotion;
         }
@@ -108,9 +116,11 @@ public class Evaluator {
         int best;
         Move bestMove = null;
         PieceType bestPromo = null;
+        final int noise;
 
-        BestMoveState(boolean isWhite) {
+        BestMoveState(boolean isWhite, int noise) {
             best = isWhite ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+            this.noise = noise;
         }
     }
 

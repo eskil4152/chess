@@ -5,6 +5,7 @@ import com.blikeng.chess.controller.FriendController;
 import com.blikeng.chess.dto.FriendDTO;
 import com.blikeng.chess.dto.UsernameDTO;
 import com.blikeng.chess.exception.types.AlreadyFriendsException;
+import com.blikeng.chess.exception.types.NotAllowedException;
 import com.blikeng.chess.exception.types.NotFoundException;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.ratelimit.RateLimitingService;
@@ -88,6 +89,17 @@ class FriendControllerTest {
                         .content(objectMapper.writeValueAsString(new UsernameDTO("alice")))
                         .with(csrf()))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void shouldReturn403WhenAddingYourself() throws Exception {
+        doThrow(new NotAllowedException()).when(friendService).addFriend(any());
+
+        mockMvc.perform(post("/api/friends/add")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new UsernameDTO("me")))
+                        .with(csrf()))
+                .andExpect(status().isForbidden());
     }
 
     @Test

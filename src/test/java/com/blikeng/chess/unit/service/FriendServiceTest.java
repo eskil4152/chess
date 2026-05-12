@@ -5,9 +5,7 @@ import com.blikeng.chess.dto.UsernameDTO;
 import com.blikeng.chess.entity.FriendEntity;
 import com.blikeng.chess.entity.FriendId;
 import com.blikeng.chess.entity.UserEntity;
-import com.blikeng.chess.exception.types.AlreadyFriendsException;
-import com.blikeng.chess.exception.types.InvalidUserException;
-import com.blikeng.chess.exception.types.NotFoundException;
+import com.blikeng.chess.exception.types.*;
 import com.blikeng.chess.repository.FriendRepository;
 import com.blikeng.chess.repository.UserRepository;
 import com.blikeng.chess.security.JwtPrincipal;
@@ -25,7 +23,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -90,7 +87,7 @@ class FriendServiceTest {
         List<FriendDTO> result = friendService.getFriends();
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).username()).isEqualTo("alice");
+        assertThat(result.getFirst().username()).isEqualTo("alice");
     }
 
     @Test
@@ -103,7 +100,7 @@ class FriendServiceTest {
         List<FriendDTO> result = friendService.getFriends();
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).username()).isEqualTo("alice");
+        assertThat(result.getFirst().username()).isEqualTo("alice");
     }
 
     @Test
@@ -148,6 +145,16 @@ class FriendServiceTest {
 
         assertThatThrownBy(() -> friendService.addFriend(new UsernameDTO("alice")))
                 .isInstanceOf(AlreadyFriendsException.class);
+    }
+
+    @Test
+    void addFriendShouldThrowWhenAddingSelf() {
+        setupSecurityContext();
+
+        assertThatThrownBy(() -> friendService.addFriend(new UsernameDTO("me")))
+                .isInstanceOf(FriendYourselfException.class);
+
+        verify(friendRepository, never()).save(any());
     }
 
     @Test

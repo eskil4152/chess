@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.types.AlreadyFriendsException;
+import com.blikeng.chess.exception.types.FriendYourselfException;
 import com.blikeng.chess.exception.types.NotFoundException;
 import com.blikeng.chess.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,8 @@ public class FriendService {
     public void addFriend(UsernameDTO usernameDTO){
         JwtPrincipal principal = JwtService.getCurrentUser();
         if (principal == null || principal.userId() == null) throw new InvalidUserException();
+
+        if (principal.username().equals(usernameDTO.username())) throw new FriendYourselfException();
 
         UserEntity user = userRepository.findByUsernameIgnoreCase(principal.username()).orElseThrow(InvalidUserException::new);
         UserEntity friend = userRepository.findByUsernameIgnoreCase(usernameDTO.username()).orElseThrow(NotFoundException::new);

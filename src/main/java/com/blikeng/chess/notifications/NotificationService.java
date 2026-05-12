@@ -20,6 +20,8 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class NotificationService {
@@ -27,6 +29,7 @@ public class NotificationService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final Logger logger = LoggerFactory.getLogger(NotificationService.class);
+    private final ConcurrentHashMap<String, ReentrantLock> sessionLocks = new ConcurrentHashMap<>();
 
     public NotificationService(PresenceService presenceService) {
         this.presenceService = presenceService;
@@ -61,11 +64,19 @@ public class NotificationService {
     }
 
     public void sendToSession(WebSocketSession session, String payload) {
+        ReentrantLock lock = sessionLocks.computeIfAbsent(session.getId(), _ -> new ReentrantLock());
+        lock.lock();
         try {
             if (session.isOpen()) session.sendMessage(new TextMessage(payload));
         } catch (IOException e) {
             logger.warn("Error sending message to session: ", e);
+        } finally {
+            lock.unlock();
         }
+    }
+
+    public void removeSession(String sessionId) {
+        sessionLocks.remove(sessionId);
     }
 
     private void sendToUser(UUID userId, String payload) {
