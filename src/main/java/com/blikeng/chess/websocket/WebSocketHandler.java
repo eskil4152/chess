@@ -64,6 +64,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
                 case "OFFER_DRAW" -> gameService.handleDraw(userId, objectMapper.treeToValue(json, WsDrawDTO.class));
 
+                case "PING" -> notificationService.sendToSession(session, "PONG");
+
                 default -> { /* ignore */ }
             }
         } catch (ApiException e) {
@@ -75,6 +77,12 @@ public class WebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
+    public void handleTransportError(WebSocketSession session, Throwable exception) {
+        UUID userId = getUserId(session);
+        logger.warn("Transport error for user {}: {}", userId, exception.getMessage(), exception);
+    }
+
+    @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         UUID userId = getUserId(session);
         presenceService.removeSession(userId, session);
@@ -83,7 +91,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
             matchmakingService.dequeuePlayer(userId);
         }
 
-        logger.debug("Connection closed for user: {}", userId);
+        logger.info("Connection closed for user: {} — code={} reason={}", userId, status.getCode(), status.getReason());
     }
 
     private UUID getUserId(WebSocketSession session) {
