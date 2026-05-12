@@ -1,5 +1,7 @@
 package com.blikeng.chess.unit.service;
 
+import com.blikeng.chess.bot.BotDefinition;
+import com.blikeng.chess.bot.BotDifficulty;
 import com.blikeng.chess.dto.GameStateDTO;
 import com.blikeng.chess.dto.websocket.WsDrawDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
@@ -80,6 +82,19 @@ class GameServiceTest {
         gameService.beginGame(white, black);
         ConcurrentHashMap<UUID, Game> gamesMap = (ConcurrentHashMap<UUID, Game>)
                 ReflectionTestUtils.getField(gameService, "games");
+        assert gamesMap != null;
+        return gamesMap.values().iterator().next();
+    }
+
+    private static final BotDefinition BOT = new BotDefinition(
+            java.util.UUID.fromString("00000000-0000-0000-0000-000000000001"), "Bot-Easy", BotDifficulty.EASY);
+
+    @SuppressWarnings("unchecked")
+    private Game beginBotGameAndGet() {
+        gameService.beginBotGame(white, BOT);
+        ConcurrentHashMap<UUID, Game> gamesMap = (ConcurrentHashMap<UUID, Game>)
+                ReflectionTestUtils.getField(gameService, "games");
+        assert gamesMap != null;
         return gamesMap.values().iterator().next();
     }
 
@@ -106,6 +121,55 @@ class GameServiceTest {
         assertThat(gameService.isInGame(black.getId())).isTrue();
     }
 
+
+    // --- Begin Bot Game ---
+
+    @Test
+    void beginBotGameShouldNotPersistToDatabase() {
+        gameService.beginBotGame(white, BOT);
+        verify(gameRepository, never()).save(any());
+    }
+
+    @Test
+    void beginBotGameShouldPublishMatchStartedEvent() {
+        gameService.beginBotGame(white, BOT);
+        ArgumentCaptor<MatchStartedEvent> captor = ArgumentCaptor.forClass(MatchStartedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        assertThat(captor.getValue().whiteUsername()).isIn("white", "Bot-Easy");
+        assertThat(captor.getValue().blackUsername()).isIn("white", "Bot-Easy");
+    }
+
+    @Test
+    void beginBotGameShouldAddBothPlayersToActiveGames() {
+        gameService.beginBotGame(white, BOT);
+        assertThat(gameService.isInGame(white.getId())).isTrue();
+        assertThat(gameService.isInGame(BOT.id())).isTrue();
+    }
+
+    // --- Get Active Game ---
+
+    @Test
+    void getActiveGameShouldReturnGameForWhitePlayer() {
+        Game game = beginAndGetGame();
+        assertThat(gameService.getActiveGame(game.getWhiteId())).contains(game);
+    }
+
+    @Test
+    void getActiveGameShouldReturnGameForBlackPlayer() {
+        Game game = beginAndGetGame();
+        assertThat(gameService.getActiveGame(game.getBlackId())).contains(game);
+    }
+
+    @Test
+    void getActiveGameShouldReturnEmptyWhenPlayerNotInGame() {
+        assertThat(gameService.getActiveGame(UUID.randomUUID())).isEmpty();
+    }
+
+    @Test
+    void getActiveGameShouldReturnEmptyWhenGameExistsButUserIsNotInIt() {
+        beginAndGetGame();
+        assertThat(gameService.getActiveGame(UUID.randomUUID())).isEmpty();
+    }
 
     // --- Is In Game ---
     @Test
@@ -280,6 +344,57 @@ class GameServiceTest {
         assertThat(gameService.isInGame(game.getWhiteId())).isFalse();
     }
 
+
+    // --- Bot Game End (isBotGame checks) ---
+
+    @Test
+    void makeMoveShouldNotPersistOrUpdateEloWhenBotGameEnds() {
+        Game game = beginBotGameAndGet();
+
+        for (int r = 0; r < 8; r++)
+            for (int c = 0; c < 8; c++)
+                game.getBoard().setPiece(r, c, null);
+
+        game.getBoard().setPiece(4, 6, new Queen(Color.WHITE));
+        game.getBoard().setPiece(5, 5, new King(Color.WHITE));
+        game.getBoard().setPiece(7, 7, new King(Color.BLACK));
+        game.setWhiteKingPosition(new Position(5, 5));
+        game.setBlackKingPosition(new Position(7, 7));
+
+        UUID moverId = game.getWhiteId();
+        gameService.makeMove(moverId, new WsMoveDTO(game.getId().toString(), "g5g7"));
+
+        verify(gameRepository, never()).findById(any());
+        verify(userService, never()).updateUserElo(any(), any(), any());
+        ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher, atLeast(1)).publishEvent(captor.capture());
+        assertThat(captor.getAllValues()).anyMatch(MatchEndedEvent.class::isInstance);
+    }
+
+    @Test
+    void resignGameShouldNotPersistOrUpdateEloWhenBotGame() {
+        Game game = beginBotGameAndGet();
+
+        gameService.resignGame(game.getWhiteId(), new WsResignDTO(game.getId().toString()));
+
+        verify(gameRepository, never()).findById(any());
+        verify(userService, never()).updateUserElo(any(), any(), any());
+        assertThat(gameService.isInGame(game.getWhiteId())).isFalse();
+    }
+
+    @Test
+    void handleDrawShouldNotPersistOrUpdateEloWhenBotGameEndsInAgreement() {
+        Game game = beginBotGameAndGet();
+        UUID humanId = game.getWhiteId().equals(white.getId()) ? game.getWhiteId() : game.getBlackId();
+        UUID botId = game.getWhiteId().equals(white.getId()) ? game.getBlackId() : game.getWhiteId();
+
+        gameService.handleDraw(humanId, new WsDrawDTO(game.getId().toString()));
+        gameService.handleDraw(botId, new WsDrawDTO(game.getId().toString()));
+
+        verify(gameRepository, never()).findById(any());
+        verify(userService, never()).updateUserElo(any(), any(), any());
+        assertThat(gameService.isInGame(humanId)).isFalse();
+    }
 
     // --- Resign ---
     @Test

@@ -17,7 +17,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import org.springframework.test.util.ReflectionTestUtils;
+
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -45,7 +48,15 @@ class NotificationServiceTest {
 
     private WebSocketSession openSession() {
         WebSocketSession s = mock(WebSocketSession.class);
+        when(s.getId()).thenReturn(UUID.randomUUID().toString());
         when(s.isOpen()).thenReturn(true);
+        return s;
+    }
+
+    private WebSocketSession closedSession() {
+        WebSocketSession s = mock(WebSocketSession.class);
+        when(s.getId()).thenReturn(UUID.randomUUID().toString());
+        when(s.isOpen()).thenReturn(false);
         return s;
     }
 
@@ -69,7 +80,7 @@ class NotificationServiceTest {
         when(presenceService.getSessions(whiteId)).thenReturn(Set.of(ws));
         when(presenceService.getSessions(blackId)).thenReturn(Set.of(bs));
 
-        notificationService.onMoveMade(new MoveMadeEvent(gameId, whiteId, blackId, "e2e4"));
+        notificationService.onMoveMade(new MoveMadeEvent(gameId, whiteId, blackId, "e2e4", true));
 
         verify(ws).sendMessage(any(TextMessage.class));
         verify(bs).sendMessage(any(TextMessage.class));
@@ -99,8 +110,7 @@ class NotificationServiceTest {
 
     @Test
     void closedSessionShouldNotReceiveMessage() throws IOException {
-        WebSocketSession closed = mock(WebSocketSession.class);
-        when(closed.isOpen()).thenReturn(false);
+        WebSocketSession closed = closedSession();
         notificationService.sendToSession(closed, "hello");
         verify(closed, never()).sendMessage(any());
     }
@@ -124,6 +134,19 @@ class NotificationServiceTest {
         ArgumentCaptor<TextMessage> captor = ArgumentCaptor.forClass(TextMessage.class);
         verify(session).sendMessage(captor.capture());
         assertThat(captor.getValue().getPayload()).contains(gameId.toString());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void removeSessionShouldCleanUpSessionLock() {
+        WebSocketSession session = openSession();
+        notificationService.sendToSession(session, "hello");
+
+        Map<String, ?> locks = (Map<String, ?>) ReflectionTestUtils.getField(notificationService, "sessionLocks");
+        assertThat(locks).containsKey(session.getId());
+
+        notificationService.removeSession(session.getId());
+        assertThat(locks).doesNotContainKey(session.getId());
     }
 
     @Test
