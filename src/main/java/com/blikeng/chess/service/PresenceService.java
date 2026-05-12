@@ -3,6 +3,7 @@ package com.blikeng.chess.service;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.Collection;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,5 +34,11 @@ public class PresenceService {
 
     public Set<WebSocketSession> getSessions(UUID userId) {
         return userSessions.getOrDefault(userId, Set.of());
+    }
+
+    public Collection<WebSocketSession> getAllSessions() {
+        return userSessions.values().stream()
+                .flatMap(Collection::stream)
+                .toList();
     }
 }

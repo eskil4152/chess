@@ -12,9 +12,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.web.socket.PingMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -73,6 +75,28 @@ public class NotificationService {
         } finally {
             lock.unlock();
         }
+    }
+
+    @Scheduled(fixedRate = 20000)
+    public void pingAllSessions() {
+        PingMessage ping = new PingMessage();
+        presenceService.getAllSessions().forEach(session -> {
+            ReentrantLock lock = sessionLocks.computeIfAbsent(session.getId(), _ -> new ReentrantLock());
+            lock.lock();
+            try {
+                if (session.isOpen()) {
+                    session.sendMessage(ping);
+                } else {
+                    UUID userId = (UUID) session.getAttributes().get("userId");
+                    presenceService.removeSession(userId, session);
+                    sessionLocks.remove(session.getId());
+                }
+            } catch (IOException e) {
+                logger.warn("Ping failed for session {}: {}", session.getId(), e.getMessage());
+            } finally {
+                lock.unlock();
+            }
+        });
     }
 
     public void removeSession(String sessionId) {
