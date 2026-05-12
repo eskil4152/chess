@@ -3,6 +3,6 @@ CREATE TABLE games (
     white UUID NOT NULL REFERENCES users(id),
     black UUID NOT NULL REFERENCES users(id),
     status VARCHAR(255) NOT NULL,
-    moves TEXT NOT NULL,
+    moves TEXT NOT NULL DEFAULT '',
     created_at TIMESTAMPTZ NOT NULL
 );
