@@ -29,7 +29,7 @@ public class MatchmakingService {
 
         UUID userId = jwtPrincipal.userId();
 
-        UserEntity user = authService.findUserById(userId).orElseThrow();
+        UserEntity user = authService.findUserById(userId).orElseThrow(InvalidUserException::new);
 
         UserEntity matched;
 

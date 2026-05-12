@@ -38,8 +38,8 @@ public class UserService {
     }
 
     private int[] updateElo(UUID whiteId, UUID blackId, boolean whiteWin, boolean draw){
-        UserEntity white = userRepository.findById(whiteId).orElseThrow();
-        UserEntity black = userRepository.findById(blackId).orElseThrow();
+        UserEntity white = userRepository.findById(whiteId).orElseThrow(UserNotFoundException::new);
+        UserEntity black = userRepository.findById(blackId).orElseThrow(UserNotFoundException::new);
 
         double drawScore = draw ? 0.5 : 0.0;
         double whiteScore = whiteWin ? 1.0 : drawScore;

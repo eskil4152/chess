@@ -43,5 +43,5 @@ public class GameEntity {
     private Instant createdAt;
 
     @Setter
-    private String moves;
+    private String moves = "";
 }
