@@ -7,6 +7,7 @@ import com.blikeng.chess.dto.websocket.WsResignDTO;
 import com.blikeng.chess.engine.MoveExecutor;
 import com.blikeng.chess.engine.PositionMapper;
 import com.blikeng.chess.engine.converter.PgnConverter;
+import com.blikeng.chess.bot.BotDefinition;
 import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.types.*;
@@ -92,6 +93,26 @@ public class GameService {
     }
 
     @Transactional
+    public void beginBotGame(UserEntity player, BotDefinition bot) {
+        boolean playerIsWhite = ThreadLocalRandom.current().nextBoolean();
+
+        UUID whiteId = playerIsWhite ? player.getId() : bot.id();
+        String whiteUsername = playerIsWhite ? player.getUsername() : bot.username();
+        UUID blackId = playerIsWhite ? bot.id() : player.getId();
+        String blackUsername = playerIsWhite ? bot.username() : player.getUsername();
+
+        Game game = new Game(UUID.randomUUID(), whiteId, whiteUsername, blackId, blackUsername, player.getElo(), player.getElo(), true);
+
+        games.put(game.getId(), game);
+
+        eventPublisher.publishEvent(new MatchStartedEvent(
+                game.getId(), whiteId, whiteUsername, blackId, blackUsername, player.getElo(), player.getElo()
+        ));
+
+        logger.info("Bot game started: {}. White: {}. Black: {}", game.getId(), whiteUsername, blackUsername);
+    }
+
+    @Transactional
     public void makeMove(UUID userId, WsMoveDTO moveDTO) {
         Game game = getGame(moveDTO.gameId()).orElseThrow(GameNotFoundException::new);
 
@@ -117,12 +138,13 @@ public class GameService {
                 game.setBlackDraw(false);
 
                 eventPublisher.publishEvent(new MoveMadeEvent(
-                        game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move()
+                        game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move(), game.isWhiteTurn()
                 ));
             } else if (gameStatus != null) {
                 game.addMove(moveDTO.move());
 
-                handleGameEnd(game, gameStatus);
+                if (game.isBotGame()) handleBotGameEnd(game, gameStatus);
+                else handleGameEnd(game, gameStatus);
             }
         } finally {
             lock.unlock();
@@ -132,6 +154,12 @@ public class GameService {
     public boolean isInGame(UUID userId) {
         return games.values().stream()
                 .anyMatch(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId));
+    }
+
+    public Optional<Game> getActiveGame(UUID userId) {
+        return games.values().stream()
+                .filter(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId))
+                .findFirst();
     }
 
     public GameStateDTO restoreGameState() {
@@ -176,7 +204,8 @@ public class GameService {
             boolean isWhite = game.getWhiteId().equals(userId);
             GameStatus gameStatus = isWhite ? GameStatus.BLACK_WIN : GameStatus.WHITE_WIN;
             game.setEndedBy(EndedBy.RESIGNATION);
-            handleGameEnd(game, gameStatus);
+            if (game.isBotGame()) handleBotGameEnd(game, gameStatus);
+            else handleGameEnd(game, gameStatus);
         } finally {
             lock.unlock();
         }
@@ -201,7 +230,8 @@ public class GameService {
 
             if (game.isWhiteDraw() && game.isBlackDraw()) {
                 game.setEndedBy(EndedBy.AGREEMENT);
-                handleGameEnd(game, GameStatus.DRAW);
+                if (game.isBotGame()) handleBotGameEnd(game, GameStatus.DRAW);
+                else handleGameEnd(game, GameStatus.DRAW);
             } else {
                 UUID otherUser = isWhite ? game.getBlackId() : game.getWhiteId();
                 notificationService.sendDrawOffer(game.getId(), otherUser);
@@ -209,6 +239,22 @@ public class GameService {
         } finally {
             lock.unlock();
         }
+    }
+
+    private void handleBotGameEnd(Game game, GameStatus gameStatus) {
+        if (!game.getMoves().isEmpty()) {
+            eventPublisher.publishEvent(new MoveMadeEvent(
+                    game.getId(), game.getWhiteId(), game.getBlackId(), game.getMoves().getLast(), game.isWhiteTurn()
+            ));
+        }
+
+        eventPublisher.publishEvent(new MatchEndedEvent(
+                game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, game.getEndedBy(),
+                game.getWhiteElo(), game.getBlackElo()
+        ));
+        games.remove(game.getId());
+
+        logger.info("Bot game ended: {}. White: {}. Black: {}. Result: {}", game.getId(), game.getWhiteUsername(), game.getBlackUsername(), gameStatus.name());
     }
 
     private void handleGameEnd(Game game, GameStatus gameStatus) {
@@ -222,7 +268,7 @@ public class GameService {
 
         if (!game.getMoves().isEmpty()) {
             eventPublisher.publishEvent(new MoveMadeEvent(
-                    game.getId(), game.getWhiteId(), game.getBlackId(), game.getMoves().getLast()
+                    game.getId(), game.getWhiteId(), game.getBlackId(), game.getMoves().getLast(), game.isWhiteTurn()
             ));
         }
 

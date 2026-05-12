@@ -78,6 +78,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         UUID userId = getUserId(session);
         presenceService.removeSession(userId, session);
+        notificationService.removeSession(session.getId());
         if (presenceService.hasNoSessions(userId)) {
             matchmakingService.dequeuePlayer(userId);
         }

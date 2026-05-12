@@ -6,6 +6,7 @@ public record MoveMadeEvent(
         UUID gameId,
         UUID whiteId,
         UUID blackId,
-        String move
+        String move,
+        boolean whiteTurn
 ) {
 }
