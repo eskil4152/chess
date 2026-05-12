@@ -15,4 +15,8 @@ public final class ErrorMessages {
     public static final String INVALID_MOVE = "Invalid move";
     public static final String NOT_ALLOWED = "You are not allowed to perform this action";
     public static final String ALREADY_QUEUED = "You are already queued";
+
+    public static final String NOT_FOUND = "Requested entity could not be found";
+    public static final String ALREADY_FRIENDS = "You are already friends";
+    public static final String FRIEND_YOURSELF = "You can't befriend yourself";
 }
