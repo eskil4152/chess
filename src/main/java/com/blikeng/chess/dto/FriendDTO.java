@@ -1,8 +1,5 @@
 package com.blikeng.chess.dto;
 
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 public record FriendDTO(

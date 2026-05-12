@@ -16,10 +16,10 @@ import java.time.Instant;
 public class FriendEntity {
     protected FriendEntity() {}
 
-    public FriendEntity(UserEntity userA, UserEntity userB) {
+    public FriendEntity(FriendId id, UserEntity userA, UserEntity userB) {
+        this.id = id;
         this.userA = userA;
         this.userB = userB;
-        this.id = new FriendId(userA.getId(), userB.getId());
     }
 
     @EmbeddedId
