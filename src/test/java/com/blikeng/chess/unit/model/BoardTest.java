@@ -10,15 +10,33 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BoardTest {
 
     @Test
-    void copyConstructorShouldCopyAllSquares() {
+    void copyConstructorShouldDeepCopyAllSquares() {
         Board original = new Board();
         Board copy = new Board(original);
+
         for (int r = 0; r < 8; r++)
-            for (int c = 0; c < 8; c++)
-                assertThat(copy.getPiece(r, c)).isSameAs(original.getPiece(r, c));
+            for (int c = 0; c < 8; c++) {
+                if (original.getPiece(r, c) == null) {
+                    assertThat(copy.getPiece(r, c)).isNull();
+                } else {
+                    assertThat(copy.getPiece(r, c)).isNotSameAs(original.getPiece(r, c));
+                    assertThat(copy.getPiece(r, c).getPieceType()).isEqualTo(original.getPiece(r, c).getPieceType());
+                    assertThat(copy.getPiece(r, c).getColor()).isEqualTo(original.getPiece(r, c).getColor());
+                }
+            }
 
         copy.setPiece(0, 0, null);
         assertThat(original.getPiece(0, 0)).isNotNull();
+    }
+
+    @Test
+    void copyConstructorShouldNotShareMovedState() {
+        Board original = new Board();
+        original.getPiece(1, 0).setMoved();
+        Board copy = new Board(original);
+
+        copy.getPiece(6, 0).setMoved();
+        assertThat(original.getPiece(6, 0).hasMoved()).isFalse();
     }
 
     @Test

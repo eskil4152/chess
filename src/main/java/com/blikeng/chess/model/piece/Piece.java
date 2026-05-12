@@ -21,4 +21,18 @@ public abstract class Piece {
     public void setMoved() {
         this.moved = true;
     }
+
+    public Piece copy() {
+        Piece copy = switch (getPieceType()) {
+            case PAWN -> new Pawn(color);
+            case KNIGHT -> new Knight(color);
+            case BISHOP -> new Bishop(color);
+            case ROOK -> new Rook(color);
+            case QUEEN -> new Queen(color);
+            case KING -> new King(color);
+        };
+
+        if (moved) copy.setMoved();
+        return copy;
+    }
 }

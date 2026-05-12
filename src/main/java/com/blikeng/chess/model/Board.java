@@ -12,7 +12,10 @@ public class Board {
 
     public Board(Board board) {
         for (int row = 0; row < 8; row++) {
-            this.squares[row] = Arrays.copyOf(board.squares[row], board.squares[row].length);
+            for (int col = 0; col < 8; col++) {
+                Piece piece = board.squares[row][col];
+                this.squares[row][col] = piece != null ? piece.copy() : null;
+            }
         }
     }
 
