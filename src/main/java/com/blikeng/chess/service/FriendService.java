@@ -69,6 +69,14 @@ public class FriendService {
         JwtPrincipal principal = JwtService.getCurrentUser();
         if (principal == null || principal.userId() == null) throw new InvalidUserException();
 
-        return;
+        UserEntity user = userRepository.findByUsernameIgnoreCase(principal.username()).orElseThrow(InvalidUserException::new);
+        UserEntity friend = userRepository.findByUsernameIgnoreCase(usernameDTO.username()).orElseThrow(NotFoundException::new);
+
+        FriendId friendId = FriendId.generate(user.getId(), friend.getId());
+        if (!friendRepository.existsById(friendId)) {
+            throw new NotFoundException();
+        }
+
+        friendRepository.deleteById(friendId);
     }
 }

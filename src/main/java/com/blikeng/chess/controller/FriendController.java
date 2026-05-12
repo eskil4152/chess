@@ -11,7 +11,6 @@ import com.blikeng.chess.service.FriendService;
 import com.blikeng.chess.dto.UsernameDTO;
 import com.blikeng.chess.dto.FriendDTO;
 import java.util.List;
-import java.util.UUID;
 
 @Controller
 @RequestMapping("/api/friends")
