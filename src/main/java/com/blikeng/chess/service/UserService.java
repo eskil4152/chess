@@ -1,31 +1,54 @@
 package com.blikeng.chess.service;
 
 import com.blikeng.chess.dto.ProfileDTO;
+import com.blikeng.chess.entity.FriendId;
 import com.blikeng.chess.entity.UserEntity;
+import com.blikeng.chess.exception.types.InvalidUserException;
 import com.blikeng.chess.exception.types.UserNotFoundException;
 import com.blikeng.chess.model.GameStatus;
+import com.blikeng.chess.repository.FriendRepository;
 import com.blikeng.chess.repository.UserRepository;
+import com.blikeng.chess.security.JwtPrincipal;
+import com.blikeng.chess.security.JwtService;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final FriendRepository friendRepository;
 
-    public UserService(UserRepository userRepository){
+    public UserService(UserRepository userRepository, FriendRepository friendRepository){
         this.userRepository = userRepository;
+        this.friendRepository = friendRepository;
     }
 
     public ProfileDTO getUser(String username) {
+        JwtPrincipal principal = JwtService.getCurrentUser();
+        if (principal == null || principal.userId() == null) throw new InvalidUserException();
+
         if (username == null || username.trim().isBlank()) throw new UserNotFoundException();
         username = username.trim();
 
-        return userRepository.findByUsernameIgnoreCase(username)
-                .map(self -> new ProfileDTO(
-                        self.getUsername(), self.getBio(), self.getAvatarUrl(), self.getElo()
-                ))
-                .orElseThrow(UserNotFoundException::new);
+        UserEntity user = userRepository.findByUsernameIgnoreCase(username).orElseThrow(UserNotFoundException::new);
+
+        boolean isFriend = false;
+        boolean isSelf = username.equals(principal.username());
+        if (!isSelf){
+            isFriend = friendRepository.existsById(
+                FriendId.generate(principal.userId(), user.getId())
+            );
+        }
+
+        return new ProfileDTO(
+            user.getUsername(),
+            user.getBio(),
+            user.getAvatarUrl(),
+            user.getElo(),
+            isFriend
+        );
     }
 
     public int[] updateUserElo(UUID whiteId, UUID blackId, GameStatus status){

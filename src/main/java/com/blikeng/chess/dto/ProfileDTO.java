@@ -4,6 +4,7 @@ public record ProfileDTO (
         String username,
         String bio,
         String avatarUrl,
-        int elo
+        int elo,
+        boolean isFriend
 ){
 }
