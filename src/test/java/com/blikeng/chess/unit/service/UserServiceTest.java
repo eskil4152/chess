@@ -2,6 +2,7 @@ package com.blikeng.chess.unit.service;
 
 import com.blikeng.chess.dto.ProfileDTO;
 import com.blikeng.chess.entity.UserEntity;
+import com.blikeng.chess.exception.types.InvalidUserException;
 import com.blikeng.chess.exception.types.UserNotFoundException;
 import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.repository.UserRepository;
@@ -74,7 +75,7 @@ class UserServiceTest {
     void updateUserEloShouldThrowWhenUserNotFound() {
         when(userRepository.findById(any())).thenReturn(Optional.empty());
         assertThatThrownBy(() -> userService.updateUserElo(UUID.randomUUID(), UUID.randomUUID(), GameStatus.WHITE_WIN))
-                .isInstanceOf(java.util.NoSuchElementException.class);
+                .isInstanceOf(UserNotFoundException.class);
     }
 
     @Test
