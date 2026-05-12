@@ -5,14 +5,20 @@ import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.types.InvalidUserException;
 import com.blikeng.chess.exception.types.UserNotFoundException;
 import com.blikeng.chess.model.GameStatus;
+import com.blikeng.chess.repository.FriendRepository;
 import com.blikeng.chess.repository.UserRepository;
+import com.blikeng.chess.security.JwtPrincipal;
+import com.blikeng.chess.security.UserRole;
 import com.blikeng.chess.service.UserService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -26,6 +32,7 @@ import static org.mockito.Mockito.*;
 class UserServiceTest {
 
     @Mock UserRepository userRepository;
+    @Mock FriendRepository friendRepository;
     @InjectMocks UserService userService;
 
     private UserEntity user;
@@ -33,9 +40,34 @@ class UserServiceTest {
     @BeforeEach
     void setup() {
         user = new UserEntity("someUser", "hash");
+        var principal = new JwtPrincipal(user.getId(), user.getUsername(), UserRole.USER);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(principal, null));
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     // --- Get User ---
+
+    @Test
+    void getUserShouldThrowWhenPrincipalIsNull() {
+        SecurityContextHolder.clearContext();
+        assertThatThrownBy(() -> userService.getUser("someUser"))
+                .isInstanceOf(InvalidUserException.class);
+    }
+
+    @Test
+    void getUserShouldThrowWhenUserIdIsNull() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        new JwtPrincipal(null, "someUser", UserRole.USER), null));
+        assertThatThrownBy(() -> userService.getUser("someUser"))
+                .isInstanceOf(InvalidUserException.class);
+    }
+
     @Test
     void getUserShouldReturnProfileDTOWhenFound() {
         when(userRepository.findByUsernameIgnoreCase("someUser")).thenReturn(Optional.of(user));
@@ -67,6 +99,23 @@ class UserServiceTest {
         when(userRepository.findByUsernameIgnoreCase("someUser")).thenReturn(Optional.of(user));
         ProfileDTO dto = userService.getUser("  someUser  ");
         assertThat(dto.username()).isEqualTo("someUser");
+    }
+
+    @Test
+    void getUserShouldReturnIsFriendTrueWhenFriends() {
+        UserEntity other = new UserEntity("otherUser", "hash");
+        when(userRepository.findByUsernameIgnoreCase("otherUser")).thenReturn(Optional.of(other));
+        when(friendRepository.existsById(any())).thenReturn(true);
+        ProfileDTO dto = userService.getUser("otherUser");
+        assertThat(dto.isFriend()).isTrue();
+    }
+
+    @Test
+    void getUserShouldReturnIsFriendFalseForSelf() {
+        when(userRepository.findByUsernameIgnoreCase("someUser")).thenReturn(Optional.of(user));
+        ProfileDTO dto = userService.getUser("someUser");
+        assertThat(dto.isFriend()).isFalse();
+        verify(friendRepository, never()).existsById(any());
     }
 
 

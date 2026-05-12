@@ -40,7 +40,7 @@ class UserControllerTest {
     @Test
     void shouldGetUser() throws Exception {
         when(userService.getUser("someUser"))
-                .thenReturn(new ProfileDTO("someUser", "bio text", null, 850));
+                .thenReturn(new ProfileDTO("someUser", "bio text", null, 850, false));
 
         mockMvc.perform(get("/api/user/someUser"))
                 .andExpect(status().isOk())
