@@ -134,7 +134,7 @@ class MatchmakingServiceTest {
         setupSecurityContext(user1.getId());
         when(authService.findUserById(user1.getId())).thenReturn(Optional.empty());
         assertThatThrownBy(() -> matchmakingService.queuePlayer())
-                .isInstanceOf(java.util.NoSuchElementException.class);
+                .isInstanceOf(InvalidUserException.class);
     }
 
     @Test
