@@ -129,7 +129,10 @@ public class MoveExecutor {
     private boolean hasAnyLegalMove(Board board, Game game, Piece piece, Position from, Color color) {
         for (Position to : moveGenerator.getPseudoLegalMoves(game, board, from)) {
             boolean isEnPassantMove = piece.getPieceType() == PieceType.PAWN && to.equals(game.getEnPassantTarget());
-            if (!kingLeftInCheck(board, game, new Move(from, to, null), piece, color, isEnPassantMove)) {
+            boolean isPromotion = piece.getPieceType() == PieceType.PAWN
+                    && ((color == Color.WHITE && to.row() == 7) || (color == Color.BLACK && to.row() == 0));
+            PieceType promo = isPromotion ? PieceType.QUEEN : null;
+            if (!kingLeftInCheck(board, game, new Move(from, to, promo), piece, color, isEnPassantMove)) {
                 return true;
             }
         }

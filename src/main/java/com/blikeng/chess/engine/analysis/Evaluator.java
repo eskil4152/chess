@@ -40,7 +40,7 @@ public class Evaluator {
         List<Position> moves = moveGenerator.getPseudoLegalMoves(game, game.getBoard(), from);
         for (int m = 0; m < moves.size() && state[1] > state[0]; m++) {
             Position to = moves.get(m);
-            PieceType[] promotions = getPromotions(piece, to, isWhite);
+            PieceType[] promotions = getPromotions(piece, to);
             for (int p = 0; p < promotions.length && state[1] > state[0]; p++) {
                 Game copy = new Game(game);
                 if (moveExecutor.performMove(copy, new Move(from, to, promotions[p])) != null)
@@ -55,9 +55,10 @@ public class Evaluator {
         else state[1] = Math.min(state[1], score);
     }
 
-    private static PieceType[] getPromotions(Piece piece, Position to, boolean isWhite) {
+    private static PieceType[] getPromotions(Piece piece, Position to) {
         boolean isPromotion = piece.getPieceType() == PieceType.PAWN
-                && (isWhite ? to.row() == 7 : to.row() == 0);
+                && ((piece.getColor() == Color.WHITE && to.row() == 7)
+                 || (piece.getColor() == Color.BLACK && to.row() == 0));
         return isPromotion
                 ? new PieceType[]{PieceType.QUEEN, PieceType.ROOK, PieceType.BISHOP, PieceType.KNIGHT}
                 : new PieceType[]{null};
@@ -86,7 +87,7 @@ public class Evaluator {
         List<Position> moves = moveGenerator.getPseudoLegalMoves(game, game.getBoard(), from);
         for (int m = 0; m < moves.size() && state.beta > state.alpha; m++) {
             Position to = moves.get(m);
-            PieceType[] promotions = getPromotions(piece, to, isWhite);
+            PieceType[] promotions = getPromotions(piece, to);
             for (int p = 0; p < promotions.length && state.beta > state.alpha; p++) {
                 Game copy = new Game(game);
                 if (moveExecutor.performMove(copy, new Move(from, to, promotions[p])) != null) {
