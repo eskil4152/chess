@@ -64,8 +64,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
                 case "OFFER_DRAW" -> gameService.handleDraw(userId, objectMapper.treeToValue(json, WsDrawDTO.class));
 
-                case "PING" -> notificationService.sendToSession(session, "PONG");
-
                 default -> { /* ignore */ }
             }
         } catch (ApiException e) {
