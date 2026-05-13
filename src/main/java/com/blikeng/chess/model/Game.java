@@ -1,5 +1,6 @@
 package com.blikeng.chess.model;
 
+import com.blikeng.chess.model.timecontrol.TimeControl;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,11 +12,17 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Getter
 public class Game {
-    public Game(UUID id, UUID whiteId, String whiteUsername, UUID blackId, String blackUsername, int whiteElo, int blackElo) {
-        this(id, whiteId, whiteUsername, blackId, blackUsername, whiteElo, blackElo, false);
-    }
-
-    public Game(UUID id, UUID whiteId, String whiteUsername, UUID blackId, String blackUsername, int whiteElo, int blackElo, boolean botGame) {
+    public Game(
+        UUID id,
+        UUID whiteId,
+        String whiteUsername,
+        UUID blackId,
+        String blackUsername,
+        int whiteElo,
+        int blackElo,
+        boolean botGame,
+        TimeControl timeControl
+    ) {
         this.id = id;
         this.whiteId = whiteId;
         this.whiteUsername = whiteUsername;
@@ -25,6 +32,7 @@ public class Game {
         this.blackElo = blackElo;
         this.botGame = botGame;
         this.board = new Board();
+        this.timeControl = timeControl;
     }
 
     public Game(Game other) {
@@ -48,6 +56,7 @@ public class Game {
         this.halfMoveClock = other.halfMoveClock;
         this.endedBy = other.endedBy;
         this.positionHistory = new HashMap<>(other.positionHistory);
+        this.timeControl = other.timeControl;
     }
 
     private final UUID id;
@@ -93,6 +102,8 @@ public class Game {
 
     @Setter
     private Position enPassantTarget;
+
+    private final TimeControl timeControl;
 
     public void switchTurn() {
         isWhiteTurn = !isWhiteTurn;

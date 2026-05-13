@@ -15,7 +15,8 @@ public class PgnConverter {
                 original.getId(),
                 original.getWhiteId(), original.getWhiteUsername(),
                 original.getBlackId(), original.getBlackUsername(),
-                original.getWhiteElo(), original.getBlackElo()
+                original.getWhiteElo(), original.getBlackElo(),
+                original.isBotGame(), original.getTimeControl()
         );
 
         StringBuilder pgn = new StringBuilder();
