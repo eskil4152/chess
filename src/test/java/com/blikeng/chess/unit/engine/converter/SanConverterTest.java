@@ -5,6 +5,7 @@ import com.blikeng.chess.model.Game;
 import com.blikeng.chess.model.Move;
 import com.blikeng.chess.model.Position;
 import com.blikeng.chess.model.piece.*;
+import com.blikeng.chess.model.timecontrol.TimeControl;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -14,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SanConverterTest {
 
     private Game newGame() {
-        Game game = new Game(UUID.randomUUID(), UUID.randomUUID(), "white", UUID.randomUUID(), "black", 800, 800);
+        Game game = new Game(UUID.randomUUID(), UUID.randomUUID(), "white", UUID.randomUUID(), "black", 800, 800, TimeControl.BLITZ_3_0 , 1000, 1000, 0);
         game.setWhiteKingPosition(new Position(7, 4));
         game.setBlackKingPosition(new Position(0, 4));
         return game;

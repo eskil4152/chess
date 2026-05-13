@@ -149,7 +149,7 @@ public class GameService {
             if (!isUserTurn(game, userId)) return;
 
             boolean isWhite = game.getWhiteId().equals(userId);
-            if (handleTime(game, isWhite)) {
+            if (!game.isBotGame() && handleTime(game, isWhite)) {
                 GameStatus flagStatus = isWhite ? GameStatus.BLACK_WIN : GameStatus.WHITE_WIN;
                 handleGameEnd(game, flagStatus);
                 return;
@@ -170,13 +170,14 @@ public class GameService {
                 game.setWhiteDraw(false);
                 game.setBlackDraw(false);
 
-                int increment = game.getTimeControl().incrementSeconds() * 1000;
-                if (isWhite) game.setWhiteRemainingMs(game.getWhiteRemainingMs() + increment);
-                else game.setBlackRemainingMs(game.getBlackRemainingMs() + increment);
+                if (!game.isBotGame()) {
+                    int increment = game.getTimeControl().incrementSeconds() * 1000;
+                    if (isWhite) game.setWhiteRemainingMs(game.getWhiteRemainingMs() + increment);
+                    else game.setBlackRemainingMs(game.getBlackRemainingMs() + increment);
 
-                game.setTurnStartTime(System.currentTimeMillis());
-
-                scheduleFlagCheck(game, !isWhite);
+                    game.setTurnStartTime(System.currentTimeMillis());
+                    scheduleFlagCheck(game, !isWhite);
+                }
 
                 eventPublisher.publishEvent(new MoveMadeEvent(
                         game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move(), game.isWhiteTurn()

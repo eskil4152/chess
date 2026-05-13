@@ -81,7 +81,7 @@ class GameControllerTest {
         UUID whiteId = UUID.randomUUID();
         UUID blackId = UUID.randomUUID();
         when(gameService.restoreGameState())
-                .thenReturn(new GameStateDTO(gameId, whiteId, "white", blackId, "black", List.of(), false, false, 800, 800));
+                .thenReturn(new GameStateDTO(gameId, whiteId, "white", blackId, "black", List.of(), false, false, 800, 800, 50000, 50000));
 
         mockMvc.perform(get("/api/games/active"))
                 .andExpect(status().isOk())

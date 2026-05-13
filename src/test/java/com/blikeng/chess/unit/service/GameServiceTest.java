@@ -16,6 +16,7 @@ import com.blikeng.chess.model.piece.Color;
 import com.blikeng.chess.model.piece.King;
 import com.blikeng.chess.model.piece.Pawn;
 import com.blikeng.chess.model.piece.Queen;
+import com.blikeng.chess.model.timecontrol.TimeControl;
 import com.blikeng.chess.notifications.NotificationService;
 import com.blikeng.chess.notifications.events.MatchEndedEvent;
 import com.blikeng.chess.notifications.events.MatchStartedEvent;
@@ -79,7 +80,7 @@ class GameServiceTest {
     @SuppressWarnings("unchecked")
     private Game beginAndGetGame() {
         stubSave();
-        gameService.beginGame(white, black);
+        gameService.beginGame(white, black, TimeControl.BLITZ_3_0);
         ConcurrentHashMap<UUID, Game> gamesMap = (ConcurrentHashMap<UUID, Game>)
                 ReflectionTestUtils.getField(gameService, "games");
         assert gamesMap != null;
@@ -103,7 +104,7 @@ class GameServiceTest {
     @Test
     void beginGameShouldSaveEntityAndPublishEvent() {
         stubSave();
-        gameService.beginGame(white, black);
+        gameService.beginGame(white, black, TimeControl.BLITZ_3_0);
 
         verify(gameRepository).save(any());
         ArgumentCaptor<MatchStartedEvent> captor = ArgumentCaptor.forClass(MatchStartedEvent.class);
@@ -116,7 +117,7 @@ class GameServiceTest {
     @Test
     void beginGameShouldAddBothPlayersToActiveGames() {
         stubSave();
-        gameService.beginGame(white, black);
+        gameService.beginGame(white, black, TimeControl.BLITZ_3_0);
         assertThat(gameService.isInGame(white.getId())).isTrue();
         assertThat(gameService.isInGame(black.getId())).isTrue();
     }

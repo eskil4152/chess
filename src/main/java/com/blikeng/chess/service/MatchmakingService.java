@@ -39,7 +39,7 @@ public class MatchmakingService {
             if (gameService.isInGame(userId)) throw new ExistingGameException();
             if (queue.containsKey(userId)) return;
 
-            TimeControl requestedTc = timeControlDTO.timeControl();
+            TimeControl requestedTc = timeControlDTO.resolved();
 
             var best = queue.entrySet().stream()
                     .filter(e -> e.getValue().timeControl.equals(requestedTc))
