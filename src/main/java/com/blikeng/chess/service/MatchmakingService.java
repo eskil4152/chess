@@ -23,7 +23,8 @@ public class MatchmakingService {
         this.gameService = gameService;
     }
 
-    private final ConcurrentHashMap<UserEntity, TimeControl> queue = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, QueueEntry> queue = new ConcurrentHashMap<>();
+    private record QueueEntry(UserEntity user, TimeControl timeControl) {}
 
     public void queuePlayer(TimeControlDTO timeControlDTO) {
         JwtPrincipal jwtPrincipal = JwtService.getCurrentUser();
@@ -36,23 +37,23 @@ public class MatchmakingService {
 
         synchronized (queue) {
             if (gameService.isInGame(userId)) throw new ExistingGameException();
-            if (queue.containsKey(user)) return;
+            if (queue.containsKey(userId)) return;
 
             TimeControl requestedTc = timeControlDTO.timeControl();
 
             var best = queue.entrySet().stream()
                     .filter(e -> e.getValue().equals(requestedTc))
-                    .min(Comparator.comparingInt(e -> Math.abs(e.getKey().getElo() - user.getElo())))
-                    .filter(e -> Math.abs(e.getKey().getElo() - user.getElo()) <= 200)
+                    .min(Comparator.comparingInt(e -> Math.abs(e.getValue().user.getElo() - user.getElo())))
+                    .filter(e -> Math.abs(e.getValue().user.getElo() - user.getElo()) <= 200)
                     .orElse(null);
 
             if (best == null) {
-                queue.put(user, timeControlDTO.timeControl());
+                queue.put(userId, new QueueEntry(user, requestedTc));
                 return;
             }
 
             queue.remove(best.getKey());
-            matched = best.getKey();
+            matched = best.getValue().user();
 
             gameService.beginGame(matched, user);
         }
