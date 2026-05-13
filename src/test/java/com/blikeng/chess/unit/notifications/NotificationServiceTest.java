@@ -14,12 +14,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.socket.PingMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -147,6 +149,42 @@ class NotificationServiceTest {
 
         notificationService.removeSession(session.getId());
         assertThat(locks).doesNotContainKey(session.getId());
+    }
+
+    // --- pingAllSessions ---
+
+    @Test
+    void pingAllSessionsShouldPingOpenSessions() throws IOException {
+        WebSocketSession session = openSession();
+        when(presenceService.getAllSessions()).thenReturn(List.of(session));
+
+        notificationService.pingAllSessions();
+
+        verify(session).sendMessage(any(PingMessage.class));
+    }
+
+    @Test
+    void pingAllSessionsShouldRemoveClosedSessions() throws IOException {
+        WebSocketSession session = closedSession();
+        UUID userId = UUID.randomUUID();
+        when(session.getAttributes()).thenReturn(Map.of("userId", userId));
+        when(presenceService.getAllSessions()).thenReturn(List.of(session));
+
+        notificationService.pingAllSessions();
+
+        verify(presenceService).removeSession(userId, session);
+    }
+
+    @Test
+    void pingAllSessionsShouldContinueAfterIoException() throws IOException {
+        WebSocketSession failing = openSession();
+        WebSocketSession healthy = openSession();
+        doThrow(new IOException("ping failed")).when(failing).sendMessage(any(PingMessage.class));
+        when(presenceService.getAllSessions()).thenReturn(List.of(failing, healthy));
+
+        assertThatCode(() -> notificationService.pingAllSessions()).doesNotThrowAnyException();
+
+        verify(healthy).sendMessage(any(PingMessage.class));
     }
 
     @Test

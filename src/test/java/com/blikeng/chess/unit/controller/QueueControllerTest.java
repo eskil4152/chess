@@ -2,6 +2,7 @@ package com.blikeng.chess.unit.controller;
 
 import com.blikeng.chess.config.SecurityConfig;
 import com.blikeng.chess.controller.QueueController;
+import com.blikeng.chess.dto.TimeControlDTO;
 import com.blikeng.chess.exception.types.ExistingGameException;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.ratelimit.RateLimitingService;
@@ -40,17 +41,23 @@ class QueueControllerTest {
 
     @Test
     void shouldJoinQueue() throws Exception {
-        mockMvc.perform(post("/api/queue").with(csrf()))
+        TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
+        mockMvc.perform(post("/api/queue").with(csrf()).content("{\"timeControl\":\"BLITZ_5_0\"}").header("content-type", "application/json"))
                 .andExpect(status().isOk());
 
-        verify(matchmakingService).queuePlayer();
+        verify(matchmakingService).queuePlayer(timeControlDTO);
     }
 
     @Test
     void shouldReturn409WhenAlreadyInGame() throws Exception {
-        doThrow(new ExistingGameException()).when(matchmakingService).queuePlayer();
+        TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
 
-        mockMvc.perform(post("/api/queue").with(csrf()))
+        doThrow(new ExistingGameException()).when(matchmakingService).queuePlayer(timeControlDTO);
+
+        mockMvc.perform(post("/api/queue")
+                .content("{\"timeControl\":\"BLITZ_5_0\"}")
+                .header("content-type", "application/json")
+                .with(csrf()))
                 .andExpect(status().isConflict());
     }
 

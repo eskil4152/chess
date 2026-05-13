@@ -6,6 +6,7 @@ import com.blikeng.chess.model.Position;
 import com.blikeng.chess.model.piece.Bishop;
 import com.blikeng.chess.model.piece.Color;
 import com.blikeng.chess.model.piece.Rook;
+import com.blikeng.chess.model.timecontrol.TimeControl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -20,7 +21,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 class FenConverterTest {
 
     private Game newGame() {
-        return new Game(UUID.randomUUID(), UUID.randomUUID(), "white", UUID.randomUUID(), "black", 800, 800);
+        return new Game(UUID.randomUUID(), UUID.randomUUID(), "white", UUID.randomUUID(), "black", 800, 800, TimeControl.BLITZ_3_0, 1000, 1000, 1000);
     }
 
     @Test

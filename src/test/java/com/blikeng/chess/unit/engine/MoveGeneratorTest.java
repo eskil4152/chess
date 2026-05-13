@@ -5,6 +5,7 @@ import com.blikeng.chess.model.Board;
 import com.blikeng.chess.model.Game;
 import com.blikeng.chess.model.Position;
 import com.blikeng.chess.model.piece.*;
+import com.blikeng.chess.model.timecontrol.TimeControl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +23,7 @@ class MoveGeneratorTest {
     @BeforeEach
     void setup() {
         gen = new MoveGenerator();
-        game = new Game(UUID.randomUUID(), UUID.randomUUID(), "w", UUID.randomUUID(), "b", 800, 800);
+        game = new Game(UUID.randomUUID(), UUID.randomUUID(), "w", UUID.randomUUID(), "b", 800, 800, TimeControl.BLITZ_3_0, 1000, 1000, 1000);
         game.setWhiteKingPosition(new Position(0, 4));
         game.setBlackKingPosition(new Position(7, 4));
         board = game.getBoard();

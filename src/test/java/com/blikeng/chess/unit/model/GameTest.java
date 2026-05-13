@@ -3,6 +3,7 @@ package com.blikeng.chess.unit.model;
 import com.blikeng.chess.model.Game;
 import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.model.Position;
+import com.blikeng.chess.model.timecontrol.TimeControl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +22,7 @@ class GameTest {
     void setup() {
         whiteId = UUID.randomUUID();
         blackId = UUID.randomUUID();
-        game = new Game(UUID.randomUUID(), whiteId, "white", blackId, "black", 800, 800);
+        game = new Game(UUID.randomUUID(), whiteId, "white", blackId, "black", 800, 800, TimeControl.BLITZ_3_0, 1000, 1000, 1000);
     }
 
     @Test

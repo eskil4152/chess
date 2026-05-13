@@ -1,8 +1,10 @@
 package com.blikeng.chess.unit.service;
 
+import com.blikeng.chess.dto.TimeControlDTO;
 import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.types.ExistingGameException;
 import com.blikeng.chess.exception.types.InvalidUserException;
+import com.blikeng.chess.model.timecontrol.TimeControl;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.UserRole;
 import com.blikeng.chess.service.AuthService;
@@ -55,28 +57,33 @@ class MatchmakingServiceTest {
 
     @Test
     void queuePlayerShouldAddToQueueWhenEmpty() {
+        TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
+
         setupSecurityContext(user1.getId());
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
 
-        matchmakingService.queuePlayer();
+        matchmakingService.queuePlayer(timeControlDTO);
 
-        verify(gameService, never()).beginGame(any(), any());
+        verify(gameService, never()).beginGame(any(), any(), any());
     }
 
     @Test
     void queuePlayerShouldBeNoOpWhenAlreadyQueued() {
+        TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
+
         setupSecurityContext(user1.getId());
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
 
-        matchmakingService.queuePlayer();
-        matchmakingService.queuePlayer();
+        matchmakingService.queuePlayer(timeControlDTO);
+        matchmakingService.queuePlayer(timeControlDTO);
 
         verify(authService, times(2)).findUserById(user1.getId());
-        verify(gameService, never()).beginGame(any(), any());
+        verify(gameService, never()).beginGame(any(), any(), any());
     }
 
     @Test
     void queuePlayerShouldStartGameWhenMatchFound() {
+        TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
         user1.setElo(800);
         user2.setElo(850);
 
@@ -84,15 +91,17 @@ class MatchmakingServiceTest {
         when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
 
         setupSecurityContext(user1.getId());
-        matchmakingService.queuePlayer();
+        matchmakingService.queuePlayer(timeControlDTO);
         setupSecurityContext(user2.getId());
-        matchmakingService.queuePlayer();
+        matchmakingService.queuePlayer(timeControlDTO);
 
-        verify(gameService).beginGame(user1, user2);
+        verify(gameService).beginGame(user1, user2, TimeControl.BLITZ_5_0);
     }
 
     @Test
     void queuePlayerShouldNotMatchWhenEloDiffTooLarge() {
+        TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
+
         user1.setElo(800);
         user2.setElo(1100);
 
@@ -100,15 +109,17 @@ class MatchmakingServiceTest {
         when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
 
         setupSecurityContext(user1.getId());
-        matchmakingService.queuePlayer();
+        matchmakingService.queuePlayer(timeControlDTO);
         setupSecurityContext(user2.getId());
-        matchmakingService.queuePlayer();
+        matchmakingService.queuePlayer(timeControlDTO);
 
-        verify(gameService, never()).beginGame(any(), any());
+        verify(gameService, never()).beginGame(any(), any(), any());
     }
 
     @Test
     void queuePlayerShouldMatchClosestEloFromMultipleCandidates() {
+        TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
+
         UserEntity user3 = new UserEntity("user3", "h");
         user1.setElo(500);  // diff to user3(650) = 150
         user2.setElo(750);  // diff to user3(650) = 100  ← closer, should be matched
@@ -119,21 +130,21 @@ class MatchmakingServiceTest {
         when(authService.findUserById(user3.getId())).thenReturn(Optional.of(user3));
 
         setupSecurityContext(user1.getId());
-        matchmakingService.queuePlayer(); // queued (empty)
+        matchmakingService.queuePlayer(timeControlDTO); // queued (empty)
         setupSecurityContext(user2.getId());
-        matchmakingService.queuePlayer(); // diff to user1 = 250 > 200, queued
+        matchmakingService.queuePlayer(timeControlDTO); // diff to user1 = 250 > 200, queued
         setupSecurityContext(user3.getId());
-        matchmakingService.queuePlayer(); // min picks user2 (100) over user1 (150)
+        matchmakingService.queuePlayer(timeControlDTO); // min picks user2 (100) over user1 (150)
 
-        verify(gameService).beginGame(user2, user3);
-        verify(gameService, never()).beginGame(eq(user1), any());
+        verify(gameService).beginGame(user2, user3, timeControlDTO.resolved());
+        verify(gameService, never()).beginGame(eq(user1), any(), any());
     }
 
     @Test
     void queuePlayerShouldThrowWhenUserNotFound() {
         setupSecurityContext(user1.getId());
         when(authService.findUserById(user1.getId())).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> matchmakingService.queuePlayer())
+        assertThatThrownBy(() -> matchmakingService.queuePlayer(any()))
                 .isInstanceOf(InvalidUserException.class);
     }
 
@@ -142,46 +153,50 @@ class MatchmakingServiceTest {
         setupSecurityContext(user1.getId());
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
         when(gameService.isInGame(user1.getId())).thenReturn(true);
-        assertThatThrownBy(() -> matchmakingService.queuePlayer())
+        assertThatThrownBy(() -> matchmakingService.queuePlayer(any()))
                 .isInstanceOf(ExistingGameException.class);
     }
 
     @Test
     void queuePlayerShouldThrowWhenNotAuthenticated() {
-        assertThatThrownBy(() -> matchmakingService.queuePlayer())
+        assertThatThrownBy(() -> matchmakingService.queuePlayer(new TimeControlDTO("BLITZ_5_0")))
                 .isInstanceOf(InvalidUserException.class);
     }
 
     @Test
     void dequeuePlayerShouldRemoveFromQueue() {
+        TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
+
         user1.setElo(800);
         user2.setElo(810);
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
         when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
 
         setupSecurityContext(user1.getId());
-        matchmakingService.queuePlayer();
+        matchmakingService.queuePlayer(timeControlDTO);
         matchmakingService.dequeuePlayer(user1.getId());
         setupSecurityContext(user2.getId());
-        matchmakingService.queuePlayer();
+        matchmakingService.queuePlayer(timeControlDTO);
 
-        verify(gameService, never()).beginGame(any(), any());
+        verify(gameService, never()).beginGame(any(), any(), any());
     }
 
     @Test
     void dequeuePlayerByHttpShouldRemoveFromQueue() {
+        TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
+
         user1.setElo(800);
         user2.setElo(810);
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
         when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
 
         setupSecurityContext(user1.getId());
-        matchmakingService.queuePlayer();
+        matchmakingService.queuePlayer(timeControlDTO);
         matchmakingService.dequeuePlayer();
         setupSecurityContext(user2.getId());
-        matchmakingService.queuePlayer();
+        matchmakingService.queuePlayer(timeControlDTO);
 
-        verify(gameService, never()).beginGame(any(), any());
+        verify(gameService, never()).beginGame(any(), any(), any());
     }
 
     @Test

@@ -143,7 +143,7 @@ class BotServiceTest {
     @Test
     void scheduledRunnableShouldCallMakeMoveWhenGameIsActive() throws Exception {
         UUID gameId = UUID.randomUUID();
-        Game game = new Game(gameId, BOT_ID, "Bot-Easy", PLAYER_ID, "player", 800, 800, true);
+        Game game = new Game(gameId, BOT_ID, "Bot-Easy", PLAYER_ID, "player", true);
         when(gameService.getActiveGame(BOT_ID)).thenReturn(Optional.of(game));
 
         MatchStartedEvent event = new MatchStartedEvent(gameId, BOT_ID, "Bot-Easy", PLAYER_ID, "player", 800, 800);
@@ -174,7 +174,7 @@ class BotServiceTest {
     void scheduledRunnableShouldNotCallMakeMoveWhenNoLegalMoves() throws Exception {
         UUID gameId = UUID.randomUUID();
         // Stalemate: white king at a1, all escape squares covered, not in check
-        Game game = new Game(gameId, BOT_ID, "Bot-Easy", PLAYER_ID, "player", 800, 800, true);
+        Game game = new Game(gameId, BOT_ID, "Bot-Easy", PLAYER_ID, "player", true);
         for (int r = 0; r < 8; r++)
             for (int c = 0; c < 8; c++)
                 game.getBoard().setPiece(r, c, null);
@@ -196,9 +196,9 @@ class BotServiceTest {
     }
 
     @Test
-    void scheduledRunnableShouldAppendPromoCharWhenBotPromotes() throws Exception {
+    void scheduledRunnableShouldAppendPromoCharWhenBotPromotes() {
         UUID gameId = UUID.randomUUID();
-        Game game = new Game(gameId, BOT_ID, "Bot-Easy", PLAYER_ID, "player", 800, 800, true);
+        Game game = new Game(gameId, BOT_ID, "Bot-Easy", PLAYER_ID, "player", true);
         for (int r = 0; r < 8; r++)
             for (int c = 0; c < 8; c++)
                 game.getBoard().setPiece(r, c, null);

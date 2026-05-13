@@ -1,11 +1,9 @@
 package com.blikeng.chess.controller;
 
+import com.blikeng.chess.dto.TimeControlDTO;
 import com.blikeng.chess.service.MatchmakingService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/queue")
@@ -17,8 +15,8 @@ public class QueueController {
     }
 
     @PostMapping
-    public ResponseEntity<String> joinQueue() {
-        matchmakingService.queuePlayer();
+    public ResponseEntity<String> joinQueue(@RequestBody TimeControlDTO timeControlDTO) {
+        matchmakingService.queuePlayer(timeControlDTO);
 
         return ResponseEntity.ok("Joined queue");
     }

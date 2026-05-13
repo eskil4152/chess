@@ -9,6 +9,7 @@ import com.blikeng.chess.model.piece.Color;
 import com.blikeng.chess.model.piece.King;
 import com.blikeng.chess.model.piece.Knight;
 import com.blikeng.chess.model.piece.Rook;
+import com.blikeng.chess.model.timecontrol.TimeControl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +28,7 @@ class SquareAttackedTest {
     void setup() {
         moveGenerator = new MoveGenerator();
         squareAttacked = new SquareAttacked(moveGenerator);
-        game = new Game(UUID.randomUUID(), UUID.randomUUID(), "w", UUID.randomUUID(), "b", 800, 800);
+        game = new Game(UUID.randomUUID(), UUID.randomUUID(), "w", UUID.randomUUID(), "b", 800, 800, TimeControl.BLITZ_3_0, 1000, 1000, 1000);
         game.setWhiteKingPosition(new Position(0, 4));
         game.setBlackKingPosition(new Position(7, 4));
         board = game.getBoard();

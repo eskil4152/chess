@@ -1,5 +1,6 @@
 package com.blikeng.chess.model;
 
+import com.blikeng.chess.model.timecontrol.TimeControl;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,11 +12,19 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Getter
 public class Game {
-    public Game(UUID id, UUID whiteId, String whiteUsername, UUID blackId, String blackUsername, int whiteElo, int blackElo) {
-        this(id, whiteId, whiteUsername, blackId, blackUsername, whiteElo, blackElo, false);
-    }
-
-    public Game(UUID id, UUID whiteId, String whiteUsername, UUID blackId, String blackUsername, int whiteElo, int blackElo, boolean botGame) {
+    public Game(
+        UUID id,
+        UUID whiteId,
+        String whiteUsername,
+        UUID blackId,
+        String blackUsername,
+        int whiteElo,
+        int blackElo,
+        TimeControl timeControl,
+        int whiteRemainingTime,
+        int blackRemainingTime,
+        long turnStartTime
+    ) {
         this.id = id;
         this.whiteId = whiteId;
         this.whiteUsername = whiteUsername;
@@ -23,8 +32,34 @@ public class Game {
         this.blackUsername = blackUsername;
         this.whiteElo = whiteElo;
         this.blackElo = blackElo;
+        this.botGame = false;
+        this.board = new Board();
+        this.timeControl = timeControl;
+        this.whiteRemainingMs = whiteRemainingTime;
+        this.blackRemainingMs = blackRemainingTime;
+        this.turnStartTime = turnStartTime;
+    }
+
+    public Game(
+        UUID id,
+        UUID whiteId,
+        String whiteUsername,
+        UUID blackId,
+        String blackUsername,
+        boolean botGame
+    ) {
+        this.id = id;
+        this.whiteId = whiteId;
+        this.whiteUsername = whiteUsername;
+        this.blackId = blackId;
+        this.blackUsername = blackUsername;
+        this.whiteElo = 0;
+        this.blackElo = 0;
         this.botGame = botGame;
         this.board = new Board();
+        this.timeControl = null;
+        this.whiteRemainingMs = 0;
+        this.blackRemainingMs = 0;
     }
 
     public Game(Game other) {
@@ -48,6 +83,10 @@ public class Game {
         this.halfMoveClock = other.halfMoveClock;
         this.endedBy = other.endedBy;
         this.positionHistory = new HashMap<>(other.positionHistory);
+        this.timeControl = other.timeControl;
+        this.whiteRemainingMs = other.whiteRemainingMs;
+        this.blackRemainingMs = other.blackRemainingMs;
+        this.turnStartTime = other.turnStartTime;
     }
 
     private final UUID id;
@@ -93,6 +132,17 @@ public class Game {
 
     @Setter
     private Position enPassantTarget;
+
+    private final TimeControl timeControl;
+
+    @Setter
+    private int whiteRemainingMs;
+
+    @Setter
+    private int blackRemainingMs;
+
+    @Setter
+    private long turnStartTime;
 
     public void switchTurn() {
         isWhiteTurn = !isWhiteTurn;

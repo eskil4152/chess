@@ -12,10 +12,17 @@ public class PgnConverter {
 
     public static String toPgn(Game original){
         Game game = new Game(
-                original.getId(),
-                original.getWhiteId(), original.getWhiteUsername(),
-                original.getBlackId(), original.getBlackUsername(),
-                original.getWhiteElo(), original.getBlackElo()
+            original.getId(),
+            original.getWhiteId(),
+            original.getWhiteUsername(),
+            original.getBlackId(),
+            original.getBlackUsername(),
+            original.getWhiteElo(),
+            original.getBlackElo(),
+            original.getTimeControl(),
+            original.getWhiteRemainingMs(),
+            original.getBlackRemainingMs(),
+            original.getTurnStartTime()
         );
 
         StringBuilder pgn = new StringBuilder();
