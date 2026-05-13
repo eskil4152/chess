@@ -80,6 +80,8 @@ public class GameService {
                 startTime
         ));
 
+        System.out.println("Starting a game of " + timeControl);
+
         Game game = new Game(
             gameEntity.getId(),
             whitePlayer.getId(),
@@ -89,8 +91,8 @@ public class GameService {
             gameEntity.getWhite().getElo(),
             gameEntity.getBlack().getElo(),
             timeControl,
-            timeControl.initialSeconds(),
-            timeControl.initialSeconds(),
+            timeControl.initialSeconds() * 1000,
+            timeControl.initialSeconds() * 1000,
             startTime.toEpochMilli()
         );
 
@@ -210,10 +212,19 @@ public class GameService {
 
         UUID userId = jwtPrincipal.userId();
 
-        GameStateDTO gameNullable =  games.values().stream()
+        GameStateDTO gameNullable = games.values().stream()
                 .filter(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId))
                 .findFirst()
-                .map(game -> new GameStateDTO(
+                .map(game -> {
+                    long elapsed = System.currentTimeMillis() - game.getTurnStartTime();
+                    int whiteRemaining = game.isWhiteTurn()
+                            ? Math.max(0, game.getWhiteRemainingMs() - (int) elapsed)
+                            : game.getWhiteRemainingMs();
+                    int blackRemaining = game.isWhiteTurn()
+                            ? game.getBlackRemainingMs()
+                            : Math.max(0, game.getBlackRemainingMs() - (int) elapsed);
+
+                    return new GameStateDTO(
                         game.getId(),
                         game.getWhiteId(),
                         game.getWhiteUsername(),
@@ -224,9 +235,10 @@ public class GameService {
                         game.isBlackDraw(),
                         game.getWhiteElo(),
                         game.getBlackElo(),
-                        game.getWhiteRemainingMs(),
-                        game.getBlackRemainingMs()
-                ))
+                        whiteRemaining,
+                        blackRemaining
+                    );
+                })
                 .orElse(null);
 
         if (gameNullable == null) throw new GameNotFoundException();
@@ -302,6 +314,7 @@ public class GameService {
     }
 
     private void handleGameEnd(Game game, GameStatus gameStatus) {
+        game.setStatus(gameStatus);
         String moves = PgnConverter.toPgn(game);
 
         gameRepository.findById(game.getId()).ifPresent(entity -> {

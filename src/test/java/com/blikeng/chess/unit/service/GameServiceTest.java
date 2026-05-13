@@ -40,11 +40,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -524,5 +527,107 @@ class GameServiceTest {
     void restoreGameStateShouldThrowWhenNotAuthenticated() {
         assertThatThrownBy(() -> gameService.restoreGameState())
                 .isInstanceOf(InvalidUserException.class);
+    }
+
+    // --- Timeout (handleTime) ---
+
+    @Test
+    void makeMoveShouldEndGameWithTimeoutWhenWhiteFlagsOnMove() {
+        Game game = beginAndGetGame();
+        game.setWhiteRemainingMs(0);
+
+        when(gameRepository.findById(game.getId())).thenReturn(Optional.of(savedEntity));
+        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
+
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
+
+        ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher, atLeast(1)).publishEvent(captor.capture());
+        assertThat(captor.getAllValues()).anyMatch(e ->
+                e instanceof MatchEndedEvent ev && ev.status() == GameStatus.BLACK_WIN);
+        assertThat(gameService.isInGame(game.getWhiteId())).isFalse();
+    }
+
+    @Test
+    void makeMoveShouldEndGameWithTimeoutWhenBlackFlagsOnMove() {
+        Game game = beginAndGetGame();
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
+
+        game.setBlackRemainingMs(0);
+
+        when(gameRepository.findById(game.getId())).thenReturn(Optional.of(savedEntity));
+        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
+
+        gameService.makeMove(game.getBlackId(), new WsMoveDTO(game.getId().toString(), "e7e5"));
+
+        ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher, atLeast(1)).publishEvent(captor.capture());
+        assertThat(captor.getAllValues()).anyMatch(e ->
+                e instanceof MatchEndedEvent ev && ev.status() == GameStatus.WHITE_WIN);
+        assertThat(gameService.isInGame(game.getBlackId())).isFalse();
+    }
+
+    // --- Clock update (ONGOING branch) ---
+
+    @Test
+    void makeMoveShouldResetTurnClockAfterValidMove() {
+        Game game = beginAndGetGame();
+        long before = System.currentTimeMillis();
+
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
+
+        assertThat(game.getTurnStartTime()).isGreaterThanOrEqualTo(before);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void makeMoveShouldAddIncrementAfterValidMove() {
+        stubSave();
+        gameService.beginGame(white, black, TimeControl.BLITZ_3_2);
+        ConcurrentHashMap<UUID, Game> gamesMap = (ConcurrentHashMap<UUID, Game>)
+                ReflectionTestUtils.getField(gameService, "games");
+        assert gamesMap != null;
+        Game game = gamesMap.values().iterator().next();
+        int initialMs = game.getWhiteRemainingMs();
+
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
+
+        assertThat(game.getWhiteRemainingMs()).isGreaterThan(initialMs);
+    }
+
+    // --- Scheduled flag check ---
+
+    @Test
+    void scheduledFlagCheckShouldFlagPlayerOnTimeout() {
+        Game game = beginAndGetGame();
+        game.setBlackRemainingMs(100);
+
+        when(gameRepository.findById(any())).thenReturn(Optional.of(savedEntity));
+        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
+
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
+
+        await().atMost(2, TimeUnit.SECONDS).until(() -> !gameService.isInGame(game.getWhiteId()));
+
+        ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher, atLeast(1)).publishEvent(captor.capture());
+        assertThat(captor.getAllValues()).anyMatch(e ->
+                e instanceof MatchEndedEvent ev && ev.status() == GameStatus.WHITE_WIN);
+    }
+
+    @Test
+    void scheduledFlagCheckShouldNotEndAlreadyEndedGame() throws InterruptedException {
+        Game game = beginAndGetGame();
+        game.setBlackRemainingMs(100);
+
+        when(gameRepository.findById(any())).thenReturn(Optional.of(savedEntity));
+        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
+
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
+        gameService.resignGame(game.getBlackId(), new WsResignDTO(game.getId().toString()));
+
+        Thread.sleep(300);
+
+        verify(userService, times(1)).updateUserElo(any(), any(), any());
     }
 }

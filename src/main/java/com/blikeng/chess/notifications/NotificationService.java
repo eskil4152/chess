@@ -53,7 +53,7 @@ public class NotificationService {
         sendToUser(event.blackId(), payload);
     }
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void onMatchEnded(MatchEndedEvent event) {
         String payload = serialize(new WsGameEndedDTO(event.gameId(), event.status(), event.endedBy(), event.whiteElo(), event.blackElo()));
         sendToUser(event.whiteId(), payload);
