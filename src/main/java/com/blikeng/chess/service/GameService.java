@@ -12,6 +12,7 @@ import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.types.*;
 import com.blikeng.chess.model.*;
+import com.blikeng.chess.model.timecontrol.TimeControl;
 import com.blikeng.chess.notifications.NotificationService;
 import com.blikeng.chess.notifications.events.MatchEndedEvent;
 import com.blikeng.chess.notifications.events.MatchStartedEvent;
@@ -28,8 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Service
@@ -44,6 +44,9 @@ public class GameService {
 
     private final ConcurrentHashMap<UUID, Game> games = new ConcurrentHashMap<>();
 
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
+    private final ConcurrentHashMap<UUID, ScheduledFuture<?>> flagTasks = new ConcurrentHashMap<>();
+
     public GameService(
             GameRepository gameRepository,
             ApplicationEventPublisher eventPublisher,
@@ -56,7 +59,7 @@ public class GameService {
     }
 
     @Transactional
-    public void beginGame(UserEntity player1, UserEntity player2) {
+    public void beginGame(UserEntity player1, UserEntity player2, TimeControl timeControl) {
         UserEntity whitePlayer;
         UserEntity blackPlayer;
 
@@ -68,16 +71,32 @@ public class GameService {
             blackPlayer = player1;
         }
 
+        Instant startTime = Instant.now();
+
         GameEntity gameEntity = gameRepository.save(new GameEntity(
                 whitePlayer,
                 blackPlayer,
                 GameStatus.ONGOING,
-                Instant.now()
+                startTime
         ));
 
-        Game game = new Game(gameEntity.getId(), whitePlayer.getId(), whitePlayer.getUsername(), blackPlayer.getId(), blackPlayer.getUsername(), gameEntity.getWhite().getElo(), gameEntity.getBlack().getElo());
+        Game game = new Game(
+            gameEntity.getId(),
+            whitePlayer.getId(),
+            whitePlayer.getUsername(),
+            blackPlayer.getId(),
+            blackPlayer.getUsername(),
+            gameEntity.getWhite().getElo(),
+            gameEntity.getBlack().getElo(),
+            timeControl,
+            timeControl.initialSeconds(),
+            timeControl.initialSeconds(),
+            startTime.toEpochMilli()
+        );
 
         games.put(game.getId(), game);
+
+        scheduleFlagCheck(game, true);
 
         eventPublisher.publishEvent(new MatchStartedEvent(
                 game.getId(),
@@ -101,7 +120,14 @@ public class GameService {
         UUID blackId = playerIsWhite ? bot.id() : player.getId();
         String blackUsername = playerIsWhite ? bot.username() : player.getUsername();
 
-        Game game = new Game(UUID.randomUUID(), whiteId, whiteUsername, blackId, blackUsername, player.getElo(), player.getElo(), true);
+        Game game = new Game(
+            UUID.randomUUID(),
+            whiteId,
+            whiteUsername,
+            blackId,
+            blackUsername,
+            true
+        );
 
         games.put(game.getId(), game);
 
@@ -122,6 +148,13 @@ public class GameService {
         try {
             if (!isUserTurn(game, userId)) return;
 
+            boolean isWhite = game.getWhiteId().equals(userId);
+            if (handleTime(game, isWhite)) {
+                GameStatus flagStatus = isWhite ? GameStatus.BLACK_WIN : GameStatus.WHITE_WIN;
+                handleGameEnd(game, flagStatus);
+                return;
+            }
+
             if (moveDTO.move().length() < 4) throw new InvalidMoveException();
 
             String move = moveDTO.move();
@@ -136,6 +169,14 @@ public class GameService {
 
                 game.setWhiteDraw(false);
                 game.setBlackDraw(false);
+
+                int increment = game.getTimeControl().incrementSeconds() * 1000;
+                if (isWhite) game.setWhiteRemainingMs(game.getWhiteRemainingMs() + increment);
+                else game.setBlackRemainingMs(game.getBlackRemainingMs() + increment);
+
+                game.setTurnStartTime(System.currentTimeMillis());
+
+                scheduleFlagCheck(game, !isWhite);
 
                 eventPublisher.publishEvent(new MoveMadeEvent(
                         game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move(), game.isWhiteTurn()
@@ -181,7 +222,9 @@ public class GameService {
                         game.isWhiteDraw(),
                         game.isBlackDraw(),
                         game.getWhiteElo(),
-                        game.getBlackElo()
+                        game.getBlackElo(),
+                        game.getWhiteRemainingMs(),
+                        game.getBlackRemainingMs()
                 ))
                 .orElse(null);
 
@@ -276,6 +319,7 @@ public class GameService {
 
         eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, game.getEndedBy(), newElo[0], newElo[1]));
         games.remove(game.getId());
+        flagTasks.remove(game.getId());
 
         logger.info("Game ended: {}. Black: {}. White: {}. Result: {}", game.getId(), game.getWhiteUsername(), game.getBlackUsername(), gameStatus.name());
     }
@@ -290,5 +334,45 @@ public class GameService {
 
     private boolean isUserTurn(Game game, UUID userId) {
         return game.isWhiteTurn() ? game.getWhiteId().equals(userId) : game.getBlackId().equals(userId);
+    }
+
+    private boolean handleTime(Game game, boolean isWhite){
+        long now = System.currentTimeMillis();
+        long elapsed = now - game.getTurnStartTime();
+
+        int remaining = (isWhite ? game.getWhiteRemainingMs() : game.getBlackRemainingMs()) - (int) elapsed;
+
+        if (isWhite) game.setWhiteRemainingMs(remaining);
+        else game.setBlackRemainingMs(remaining);
+
+        if (remaining <= 0){
+            game.setEndedBy(EndedBy.TIMEOUT);
+            return true;
+        }
+
+        return false;
+    }
+
+    private void scheduleFlagCheck(Game game, boolean isWhite){
+        ScheduledFuture<?> prev = flagTasks.remove(game.getId());
+        if (prev != null) prev.cancel(false);
+
+        long remainingMs = isWhite ? game.getWhiteRemainingMs() : game.getBlackRemainingMs();
+
+        ScheduledFuture<?> task = scheduler.schedule(() -> {
+            ReentrantLock lock = game.lockGame();
+            lock.lock();
+
+            try {
+                if (game.getStatus() != GameStatus.ONGOING) return;
+                game.setEndedBy(EndedBy.TIMEOUT);
+                GameStatus result = isWhite ? GameStatus.BLACK_WIN : GameStatus.WHITE_WIN;
+                handleGameEnd(game, result);
+            } finally {
+                lock.unlock();
+            }
+        }, remainingMs, TimeUnit.MILLISECONDS);
+
+        flagTasks.put(game.getId(), task);
     }
 }

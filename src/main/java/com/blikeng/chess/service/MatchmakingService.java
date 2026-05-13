@@ -42,7 +42,7 @@ public class MatchmakingService {
             TimeControl requestedTc = timeControlDTO.timeControl();
 
             var best = queue.entrySet().stream()
-                    .filter(e -> e.getValue().equals(requestedTc))
+                    .filter(e -> e.getValue().timeControl.equals(requestedTc))
                     .min(Comparator.comparingInt(e -> Math.abs(e.getValue().user.getElo() - user.getElo())))
                     .filter(e -> Math.abs(e.getValue().user.getElo() - user.getElo()) <= 200)
                     .orElse(null);
@@ -55,7 +55,7 @@ public class MatchmakingService {
             queue.remove(best.getKey());
             matched = best.getValue().user();
 
-            gameService.beginGame(matched, user);
+            gameService.beginGame(matched, user, requestedTc);
         }
     }
 
