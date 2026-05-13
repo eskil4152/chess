@@ -1,8 +1,10 @@
 package com.blikeng.chess.service;
 
+import com.blikeng.chess.dto.TimeControlDTO;
 import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.types.ExistingGameException;
 import com.blikeng.chess.exception.types.InvalidUserException;
+import com.blikeng.chess.model.timecontrol.TimeControl;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
 import org.springframework.stereotype.Service;
@@ -21,34 +23,36 @@ public class MatchmakingService {
         this.gameService = gameService;
     }
 
-    private final ConcurrentHashMap<UUID, UserEntity> queue = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UserEntity, TimeControl> queue = new ConcurrentHashMap<>();
 
-    public void queuePlayer() {
+    public void queuePlayer(TimeControlDTO timeControlDTO) {
         JwtPrincipal jwtPrincipal = JwtService.getCurrentUser();
         if (jwtPrincipal == null) throw new InvalidUserException();
 
         UUID userId = jwtPrincipal.userId();
-
         UserEntity user = authService.findUserById(userId).orElseThrow(InvalidUserException::new);
 
         UserEntity matched;
 
         synchronized (queue) {
             if (gameService.isInGame(userId)) throw new ExistingGameException();
-            if (queue.containsKey(userId)) return;
+            if (queue.containsKey(user)) return;
+
+            TimeControl requestedTc = timeControlDTO.timeControl();
 
             var best = queue.entrySet().stream()
-                    .min(Comparator.comparingInt(e -> Math.abs(e.getValue().getElo() - user.getElo())))
-                    .filter(e -> Math.abs(e.getValue().getElo() - user.getElo()) <= 200)
+                    .filter(e -> e.getValue().equals(requestedTc))
+                    .min(Comparator.comparingInt(e -> Math.abs(e.getKey().getElo() - user.getElo())))
+                    .filter(e -> Math.abs(e.getKey().getElo() - user.getElo()) <= 200)
                     .orElse(null);
 
             if (best == null) {
-                queue.put(userId, user);
+                queue.put(user, timeControlDTO.timeControl());
                 return;
             }
 
             queue.remove(best.getKey());
-            matched = best.getValue();
+            matched = best.getKey();
 
             gameService.beginGame(matched, user);
         }
