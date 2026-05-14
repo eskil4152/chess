@@ -80,8 +80,6 @@ public class GameService {
                 startTime
         ));
 
-        System.out.println("Starting a game of " + timeControl);
-
         Game game = new Game(
             gameEntity.getId(),
             whitePlayer.getId(),

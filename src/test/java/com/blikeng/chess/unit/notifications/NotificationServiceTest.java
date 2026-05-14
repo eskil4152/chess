@@ -164,7 +164,7 @@ class NotificationServiceTest {
     }
 
     @Test
-    void pingAllSessionsShouldRemoveClosedSessions() throws IOException {
+    void pingAllSessionsShouldRemoveClosedSessions() {
         WebSocketSession session = closedSession();
         UUID userId = UUID.randomUUID();
         when(session.getAttributes()).thenReturn(Map.of("userId", userId));
