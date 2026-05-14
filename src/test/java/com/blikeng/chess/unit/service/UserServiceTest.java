@@ -262,29 +262,28 @@ class UserServiceTest {
 
     @Test
     void updateUserShouldThrowOnUnknownField() {
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
-        assertThatThrownBy(() -> userService.updateUser(new ProfileEditDTO("username", "hacker")))
-                .isInstanceOf(BadEditException.class);
-    }
+        ProfileEditDTO profileEditDTO = new ProfileEditDTO("username", "hacker");
 
-    @Test
-    void updateUserShouldThrowOnBlankValue() {
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
-        assertThatThrownBy(() -> userService.updateUser(new ProfileEditDTO("bio", "   ")))
+        assertThatThrownBy(() -> userService.updateUser(profileEditDTO))
                 .isInstanceOf(BadEditException.class);
     }
 
     @Test
     void updateUserShouldThrowWhenPrincipalIsNull() {
+        ProfileEditDTO profileEditDTO = new ProfileEditDTO("bio", "x");
+
         SecurityContextHolder.clearContext();
-        assertThatThrownBy(() -> userService.updateUser(new ProfileEditDTO("bio", "x")))
+        assertThatThrownBy(() -> userService.updateUser(profileEditDTO))
                 .isInstanceOf(InvalidUserException.class);
     }
 
     @Test
     void updateUserShouldThrowWhenUserNotFound() {
+        ProfileEditDTO profileEditDTO = new ProfileEditDTO("bio", "x");
+
         when(userRepository.findById(user.getId())).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> userService.updateUser(new ProfileEditDTO("bio", "x")))
+        assertThatThrownBy(() -> userService.updateUser(profileEditDTO))
                 .isInstanceOf(InvalidUserException.class);
     }
 
@@ -292,11 +291,13 @@ class UserServiceTest {
 
     @Test
     void updatePasswordShouldHashAndSaveNewPassword() {
+        PasswordDTO passwordDTO = new PasswordDTO("oldPass", "newPass123");
+
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(passwordService.checkPassword("oldPass", user.getPassword())).thenReturn(true);
         when(passwordService.hashPassword("newPass123")).thenReturn("hashed");
 
-        userService.updatePassword(new PasswordDTO("oldPass", "newPass123"));
+        userService.updatePassword(passwordDTO);
 
         assertThat(user.getPassword()).isEqualTo("hashed");
         verify(userRepository).save(user);
@@ -304,43 +305,55 @@ class UserServiceTest {
 
     @Test
     void updatePasswordShouldThrowOnWrongOldPassword() {
+        PasswordDTO passwordDTO = new PasswordDTO("wrong", "newPass123");
+
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(passwordService.checkPassword("wrong", user.getPassword())).thenReturn(false);
 
-        assertThatThrownBy(() -> userService.updatePassword(new PasswordDTO("wrong", "newPass123")))
+        assertThatThrownBy(() -> userService.updatePassword(passwordDTO))
                 .isInstanceOf(InvalidPasswordException.class);
     }
 
     @Test
     void updatePasswordShouldThrowWhenNewPasswordTooShort() {
-        assertThatThrownBy(() -> userService.updatePassword(new PasswordDTO("old", "short")))
+        PasswordDTO passwordDTO = new PasswordDTO("old", "short");
+
+        assertThatThrownBy(() -> userService.updatePassword(passwordDTO))
                 .isInstanceOf(BadEditException.class);
     }
 
     @Test
     void updatePasswordShouldThrowWhenNewPasswordTooLong() {
         String tooLong = "a".repeat(129);
-        assertThatThrownBy(() -> userService.updatePassword(new PasswordDTO("old", tooLong)))
+        PasswordDTO passwordDTO = new PasswordDTO("old", tooLong);
+
+        assertThatThrownBy(() -> userService.updatePassword(passwordDTO))
                 .isInstanceOf(BadEditException.class);
     }
 
     @Test
     void updatePasswordShouldThrowWhenNewPasswordBlank() {
-        assertThatThrownBy(() -> userService.updatePassword(new PasswordDTO("old", "   ")))
+        PasswordDTO passwordDTO = new PasswordDTO("old", "   ");
+
+        assertThatThrownBy(() -> userService.updatePassword(passwordDTO))
                 .isInstanceOf(BadEditException.class);
     }
 
     @Test
     void updatePasswordShouldThrowWhenPrincipalIsNull() {
+        PasswordDTO passwordDTO = new PasswordDTO("old", "newPass123");
+
         SecurityContextHolder.clearContext();
-        assertThatThrownBy(() -> userService.updatePassword(new PasswordDTO("old", "newPass123")))
+        assertThatThrownBy(() -> userService.updatePassword(passwordDTO))
                 .isInstanceOf(InvalidUserException.class);
     }
 
     @Test
     void updatePasswordShouldThrowWhenUserNotFound() {
+        PasswordDTO passwordDTO = new PasswordDTO("old", "newPass123");
+
         when(userRepository.findById(user.getId())).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> userService.updatePassword(new PasswordDTO("old", "newPass123")))
+        assertThatThrownBy(() -> userService.updatePassword(passwordDTO))
                 .isInstanceOf(InvalidUserException.class);
     }
 

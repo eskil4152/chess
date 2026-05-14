@@ -98,7 +98,7 @@ public class UserService {
 
         UserEntity user = userRepository.findById(principal.userId()).orElseThrow(InvalidUserException::new);
 
-        if (profileEditDTO.field().isBlank() || profileEditDTO.newValue().isBlank()) throw new BadEditException();
+        if (profileEditDTO.field().isBlank()) throw new BadEditException();
 
         switch (profileEditDTO.field()) {
             case "bio" -> user.setBio(profileEditDTO.newValue().trim());
