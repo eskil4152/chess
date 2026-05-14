@@ -25,13 +25,16 @@ public class UserEntity {
     private String username;
 
     @Column(nullable = false)
+    @Setter
     private String password;
 
+    @Setter
     private String bio;
 
     private String email;
 
     @Column(name = "avatarurl")
+    @Setter
     private String avatarUrl;
 
     @Setter
