@@ -115,14 +115,19 @@ class FriendServiceTest {
 
     @Test
     void addFriendShouldThrowWhenPrincipalIsNull() {
-        assertThatThrownBy(() -> friendService.addFriend(new UsernameDTO("alice")))
+        UsernameDTO usernameDTO = new UsernameDTO("alice");
+
+        assertThatThrownBy(() -> friendService.addFriend(usernameDTO))
                 .isInstanceOf(InvalidUserException.class);
     }
 
     @Test
     void addFriendShouldThrowWhenUserIdIsNull() {
         setupSecurityContextWithNullUserId();
-        assertThatThrownBy(() -> friendService.addFriend(new UsernameDTO("alice")))
+
+        UsernameDTO usernameDTO = new UsernameDTO("alice");
+
+        assertThatThrownBy(() -> friendService.addFriend(usernameDTO))
                 .isInstanceOf(InvalidUserException.class);
     }
 
@@ -132,7 +137,9 @@ class FriendServiceTest {
         when(userRepository.findByUsernameIgnoreCase("me")).thenReturn(Optional.of(currentUser));
         when(userRepository.findByUsernameIgnoreCase("nobody")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> friendService.addFriend(new UsernameDTO("nobody")))
+        UsernameDTO usernameDTO = new UsernameDTO("nobody");
+
+        assertThatThrownBy(() -> friendService.addFriend(usernameDTO))
                 .isInstanceOf(NotFoundException.class);
     }
 
@@ -143,15 +150,18 @@ class FriendServiceTest {
         when(userRepository.findByUsernameIgnoreCase("alice")).thenReturn(Optional.of(otherUser));
         when(friendRepository.existsById(any())).thenReturn(true);
 
-        assertThatThrownBy(() -> friendService.addFriend(new UsernameDTO("alice")))
+        UsernameDTO usernameDTO = new UsernameDTO("alice");
+
+        assertThatThrownBy(() -> friendService.addFriend(usernameDTO))
                 .isInstanceOf(AlreadyFriendsException.class);
     }
 
     @Test
     void addFriendShouldThrowWhenAddingSelf() {
         setupSecurityContext();
+        UsernameDTO usernameDTO = new UsernameDTO("me");
 
-        assertThatThrownBy(() -> friendService.addFriend(new UsernameDTO("me")))
+        assertThatThrownBy(() -> friendService.addFriend(usernameDTO))
                 .isInstanceOf(FriendYourselfException.class);
 
         verify(friendRepository, never()).save(any());
@@ -173,14 +183,18 @@ class FriendServiceTest {
 
     @Test
     void removeFriendShouldThrowWhenPrincipalIsNull() {
-        assertThatThrownBy(() -> friendService.removeFriend(new UsernameDTO("alice")))
+        UsernameDTO usernameDTO = new UsernameDTO("alice");
+
+        assertThatThrownBy(() -> friendService.removeFriend(usernameDTO))
                 .isInstanceOf(InvalidUserException.class);
     }
 
     @Test
     void removeFriendShouldThrowWhenUserIdIsNull() {
         setupSecurityContextWithNullUserId();
-        assertThatThrownBy(() -> friendService.removeFriend(new UsernameDTO("alice")))
+        UsernameDTO usernameDTO = new UsernameDTO("alice");
+
+        assertThatThrownBy(() -> friendService.removeFriend(usernameDTO))
                 .isInstanceOf(InvalidUserException.class);
     }
 
@@ -190,7 +204,9 @@ class FriendServiceTest {
         when(userRepository.findByUsernameIgnoreCase("me")).thenReturn(Optional.of(currentUser));
         when(userRepository.findByUsernameIgnoreCase("nobody")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> friendService.removeFriend(new UsernameDTO("nobody")))
+        UsernameDTO usernameDTO = new UsernameDTO("nobody");
+
+        assertThatThrownBy(() -> friendService.removeFriend(usernameDTO))
                 .isInstanceOf(NotFoundException.class);
     }
 
@@ -201,7 +217,9 @@ class FriendServiceTest {
         when(userRepository.findByUsernameIgnoreCase("alice")).thenReturn(Optional.of(otherUser));
         when(friendRepository.existsById(any())).thenReturn(false);
 
-        assertThatThrownBy(() -> friendService.removeFriend(new UsernameDTO("alice")))
+        UsernameDTO usernameDTO = new UsernameDTO("alice");
+
+        assertThatThrownBy(() -> friendService.removeFriend(usernameDTO))
                 .isInstanceOf(NotFoundException.class);
     }
 

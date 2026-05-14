@@ -142,24 +142,31 @@ class MatchmakingServiceTest {
 
     @Test
     void queuePlayerShouldThrowWhenUserNotFound() {
+        TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
+
         setupSecurityContext(user1.getId());
         when(authService.findUserById(user1.getId())).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> matchmakingService.queuePlayer(any()))
+        assertThatThrownBy(() -> matchmakingService.queuePlayer(timeControlDTO))
                 .isInstanceOf(InvalidUserException.class);
     }
 
     @Test
     void queuePlayerShouldThrowWhenUserIsAlreadyInGame() {
+        TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
+
         setupSecurityContext(user1.getId());
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
         when(gameService.isInGame(user1.getId())).thenReturn(true);
-        assertThatThrownBy(() -> matchmakingService.queuePlayer(any()))
+
+        assertThatThrownBy(() -> matchmakingService.queuePlayer(timeControlDTO))
                 .isInstanceOf(ExistingGameException.class);
     }
 
     @Test
     void queuePlayerShouldThrowWhenNotAuthenticated() {
-        assertThatThrownBy(() -> matchmakingService.queuePlayer(new TimeControlDTO("BLITZ_5_0")))
+        TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
+
+        assertThatThrownBy(() -> matchmakingService.queuePlayer(timeControlDTO))
                 .isInstanceOf(InvalidUserException.class);
     }
 

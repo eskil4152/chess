@@ -141,7 +141,7 @@ class BotServiceTest {
     // --- scheduleBotMove (Runnable) ---
 
     @Test
-    void scheduledRunnableShouldCallMakeMoveWhenGameIsActive() throws Exception {
+    void scheduledRunnableShouldCallMakeMoveWhenGameIsActive() {
         UUID gameId = UUID.randomUUID();
         Game game = new Game(gameId, BOT_ID, "Bot-Easy", PLAYER_ID, "player", true);
         when(gameService.getActiveGame(BOT_ID)).thenReturn(Optional.of(game));
@@ -157,7 +157,7 @@ class BotServiceTest {
     }
 
     @Test
-    void scheduledRunnableShouldNotCallMakeMoveWhenGameNoLongerActive() throws Exception {
+    void scheduledRunnableShouldNotCallMakeMoveWhenGameNoLongerActive() {
         UUID gameId = UUID.randomUUID();
         when(gameService.getActiveGame(BOT_ID)).thenReturn(Optional.empty());
 
@@ -171,7 +171,7 @@ class BotServiceTest {
     }
 
     @Test
-    void scheduledRunnableShouldNotCallMakeMoveWhenNoLegalMoves() throws Exception {
+    void scheduledRunnableShouldNotCallMakeMoveWhenNoLegalMoves() {
         UUID gameId = UUID.randomUUID();
         // Stalemate: white king at a1, all escape squares covered, not in check
         Game game = new Game(gameId, BOT_ID, "Bot-Easy", PLAYER_ID, "player", true);
@@ -222,7 +222,7 @@ class BotServiceTest {
     }
 
     @Test
-    void scheduledRunnableShouldHandleInterruptedException() throws Exception {
+    void scheduledRunnableShouldHandleInterruptedException() {
         UUID gameId = UUID.randomUUID();
         botService.onMatchStarted(new MatchStartedEvent(gameId, BOT_ID, "Bot-Easy", PLAYER_ID, "player", 800, 800));
 
@@ -237,7 +237,7 @@ class BotServiceTest {
     }
 
     @Test
-    void scheduledRunnableShouldLogAndSwallowGeneralException() throws Exception {
+    void scheduledRunnableShouldLogAndSwallowGeneralException() {
         UUID gameId = UUID.randomUUID();
         when(gameService.getActiveGame(BOT_ID)).thenThrow(new RuntimeException("boom"));
 

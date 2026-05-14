@@ -85,7 +85,7 @@ public class BotService {
 
                     gameService.makeMove(botId, new WsMoveDTO(gameId.toString(), uci));
                 });
-            } catch (InterruptedException e) {
+            } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
             } catch (Exception e) {
                 logger.warn("Bot move failed for game {}: {}", gameId, e.getMessage());

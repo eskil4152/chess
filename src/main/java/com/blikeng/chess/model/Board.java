@@ -3,8 +3,6 @@ package com.blikeng.chess.model;
 import com.blikeng.chess.model.piece.Knight;
 import com.blikeng.chess.model.piece.Piece;
 
-import java.util.Arrays;
-
 import static com.blikeng.chess.engine.SetupBoard.setupBoard;
 
 public class Board {
