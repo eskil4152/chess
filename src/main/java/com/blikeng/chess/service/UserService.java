@@ -98,9 +98,11 @@ public class UserService {
 
         UserEntity user = userRepository.findById(principal.userId()).orElseThrow(InvalidUserException::new);
 
+        if (profileEditDTO.field().isBlank() || profileEditDTO.newValue().isBlank()) throw new BadEditException();
+
         switch (profileEditDTO.field()) {
-            case "bio" -> user.setBio(profileEditDTO.newValue());
-            case "avatarUrl" -> user.setAvatarUrl(profileEditDTO.newValue());
+            case "bio" -> user.setBio(profileEditDTO.newValue().trim());
+            case "avatarUrl" -> user.setAvatarUrl(profileEditDTO.newValue().trim());
             default -> throw new BadEditException();
         }
 
@@ -121,7 +123,7 @@ public class UserService {
 
         if (!passwordService.checkPassword(passwordDTO.oldPassword(), user.getPassword())) throw new InvalidPasswordException();
 
-        user.setPassword(passwordDTO.newPassword());
+        user.setPassword(passwordService.hashPassword(passwordDTO.newPassword()));
         userRepository.save(user);
     }
 

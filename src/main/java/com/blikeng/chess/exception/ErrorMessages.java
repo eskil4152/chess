@@ -19,4 +19,6 @@ public final class ErrorMessages {
     public static final String NOT_FOUND = "Requested entity could not be found";
     public static final String ALREADY_FRIENDS = "You are already friends";
     public static final String FRIEND_YOURSELF = "You can't befriend yourself";
+
+    public static final String BAD_PROFILE_EDIT = "Invalid profile edit";
 }
