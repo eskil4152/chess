@@ -1,8 +1,12 @@
 package com.blikeng.chess.service;
 
+import com.blikeng.chess.dto.PasswordDTO;
 import com.blikeng.chess.dto.ProfileDTO;
+import com.blikeng.chess.dto.ProfileEditDTO;
 import com.blikeng.chess.entity.FriendId;
 import com.blikeng.chess.entity.UserEntity;
+import com.blikeng.chess.exception.types.BadEditException;
+import com.blikeng.chess.exception.types.InvalidPasswordException;
 import com.blikeng.chess.exception.types.InvalidUserException;
 import com.blikeng.chess.exception.types.UserNotFoundException;
 import com.blikeng.chess.model.GameStatus;
@@ -10,6 +14,7 @@ import com.blikeng.chess.repository.FriendRepository;
 import com.blikeng.chess.repository.UserRepository;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
+import com.blikeng.chess.security.PasswordService;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -19,10 +24,12 @@ import java.util.UUID;
 public class UserService {
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
+    private final PasswordService passwordService;
 
-    public UserService(UserRepository userRepository, FriendRepository friendRepository){
+    public UserService(UserRepository userRepository, FriendRepository friendRepository, PasswordService passwordService){
         this.userRepository = userRepository;
         this.friendRepository = friendRepository;
+        this.passwordService = passwordService;
     }
 
     public ProfileDTO getUser(String username) {
@@ -83,6 +90,39 @@ public class UserService {
         userRepository.save(black);
 
         return new int[]{whiteElo, blackElo};
+    }
+
+    public void updateUser(ProfileEditDTO profileEditDTO){
+        JwtPrincipal principal = JwtService.getCurrentUser();
+        if (principal == null || principal.userId() == null) throw new InvalidUserException();
+
+        UserEntity user = userRepository.findById(principal.userId()).orElseThrow(InvalidUserException::new);
+
+        switch (profileEditDTO.field()) {
+            case "bio" -> user.setBio(profileEditDTO.newValue());
+            case "avatarUrl" -> user.setAvatarUrl(profileEditDTO.newValue());
+            default -> throw new BadEditException();
+        }
+
+        userRepository.save(user);
+    }
+
+    public void updatePassword(PasswordDTO passwordDTO){
+        JwtPrincipal principal = JwtService.getCurrentUser();
+        if (principal == null || principal.userId() == null) throw new InvalidUserException();
+
+        if (
+            passwordDTO.newPassword().isBlank() ||
+            passwordDTO.newPassword().trim().length() > 128 ||
+            passwordDTO.newPassword().trim().length() < 8
+        ) throw new BadEditException();
+
+        UserEntity user = userRepository.findById(principal.userId()).orElseThrow(InvalidUserException::new);
+
+        if (!passwordService.checkPassword(passwordDTO.oldPassword(), user.getPassword())) throw new InvalidPasswordException();
+
+        user.setPassword(passwordDTO.newPassword());
+        userRepository.save(user);
     }
 
     private int calculateNewElo(int playerElo, int opponentElo, double score, int kFactor) {
