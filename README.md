@@ -1,8 +1,7 @@
 # Chess
 
 A real-time multiplayer chess server built with Spring Boot and Java.
-Full-rule chess gameplay over WebSockets, auto-matchmaking by Elo rating, resign and draw-by-agreement,
-PGN export, persistent game history, and JWT-based authentication —
+Full-rule chess gameplay over WebSockets, auto-matchmaking by Elo rating with selectable time controls, bot opponents at three difficulty levels, a friends system, resign and draw-by-agreement, PGN export, persistent game history, and JWT-based authentication —
 with a complete chess engine written from scratch: move generation, legal move validation, all draw conditions
 (50-move rule, threefold repetition, insufficient material, stalemate), SAN/PGN conversion, and a minimax evaluator.
 No external chess libraries.
@@ -21,7 +20,9 @@ No external chess libraries.
 - [Architecture](#architecture)
 - [Features](#features)
   - [Authentication & Security](#authentication--security)
-  - [Matchmaking](#matchmaking)
+  - [Matchmaking & Time Controls](#matchmaking--time-controls)
+  - [Bot Opponents](#bot-opponents)
+  - [Friends](#friends)
   - [Chess Engine](#chess-engine)
   - [WebSocket & Real-Time Gameplay](#websocket--real-time-gameplay)
   - [Evaluator](#evaluator)
@@ -87,13 +88,54 @@ Game state is kept in memory during a match (one `Game` object per active game, 
 
 ---
 
-### Matchmaking
+### Matchmaking & Time Controls
 
-- Players join the queue via `POST /api/queue` or automatically on WebSocket connect if not already in an active game.
-- The queue finds the closest Elo match within a **200-point window**.
+- Players join the queue via `POST /api/queue` with a chosen time control (e.g. `BLITZ_5_0`). The queue finds the closest Elo match within a **200-point window** for the same time control.
 - If no suitable opponent is found, the player waits until one connects.
 - The queue is backed by a `ConcurrentHashMap` and all match decisions are made inside a `synchronized` block to prevent race conditions.
 - Players can leave the queue via `DELETE /api/queue` or on disconnect if not yet matched.
+
+**Supported time controls**
+
+| Category | Name          | Initial | Increment |
+|----------|---------------|---------|-----------|
+| Bullet   | `BULLET_1_0`  | 1 min   | 0 s       |
+| Bullet   | `BULLET_1_1`  | 1 min   | 1 s       |
+| Bullet   | `BULLET_2_0`  | 2 min   | 0 s       |
+| Blitz    | `BLITZ_3_0`   | 3 min   | 0 s       |
+| Blitz    | `BLITZ_3_2`   | 3 min   | 2 s       |
+| Blitz    | `BLITZ_5_0`   | 5 min   | 0 s       |
+| Rapid    | `RAPID_10_0`  | 10 min  | 0 s       |
+| Rapid    | `RAPID_10_5`  | 10 min  | 5 s       |
+| Rapid    | `RAPID_15_0`  | 15 min  | 0 s       |
+| Rapid    | `RAPID_15_10` | 15 min  | 10 s      |
+| Rapid    | `RAPID_30_0`  | 30 min  | 0 s       |
+| Rapid    | `RAPID_60_0`  | 60 min  | 0 s       |
+
+A player who runs out of time loses; the game ends with `TIMEOUT` as the reason in the `GAME_ENDED` event.
+
+---
+
+### Bot Opponents
+
+Players can start a game against a computer opponent at three difficulty levels via `POST /api/bot/{difficulty}`.
+
+| Difficulty | Search Depth | Noise |
+|------------|-------------|-------|
+| `EASY`     | 1           | ±300  |
+| `MEDIUM`   | 2           | ±100  |
+| `HARD`     | 3           | none  |
+
+- Bot moves are calculated by the built-in minimax evaluator and scheduled asynchronously on a thread pool, with a short artificial delay to avoid instant responses.
+- The bot reacts to `MatchStartedEvent` (when playing white) and `MoveMadeEvent` (on each subsequent turn) via `@TransactionalEventListener`, so moves are never scheduled before the preceding transaction commits.
+- Bot games use the same game flow as human games: all draw conditions, resignations, and PGN persistence apply normally.
+
+---
+
+### Friends
+
+- Users can maintain a friends list: add and remove friends by username, and retrieve the full list.
+- Backed by a `friends` join table with a composite primary key.
 
 ---
 
@@ -135,17 +177,17 @@ Moves are submitted in **UCI notation** — a 4-character string for normal move
 
 **WebSocket Events**
 
-| Direction       | Type           | Description                                                                                                                                                                         |
-|-----------------|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Client → Server | `MOVE`         | Submit a move in UCI notation (e.g. `e2e4`, `e7e8q`)                                                                                                                                |
-| Client → Server | `RESIGN`       | Forfeit the game; the opponent is awarded the win                                                                                                                                   |
-| Client → Server | `OFFER_DRAW`   | Propose a draw; the game ends when both players have sent this                                                                                                                      |
-| Server → Client | `GAME_STARTED` | Match found — includes game ID, player IDs, usernames, and Elo ratings                                                                                                              |
-| Server → Client | `MOVE`         | Move broadcast to both players after a valid move                                                                                                                                   |
-| Server → Client | `DRAW_OFFER`   | Forwarded to the opponent when one player offers a draw                                                                                                                             |
-| Server → Client | `GAME_ENDED`   | Game over — includes result, how it ended (`CHECKMATE`, `STALEMATE`, `RESIGNATION`, `AGREEMENT`, `FIFTY_MOVE_RULE`, `REPETITION`, `INSUFFICIENT_MATERIAL`), and updated Elo ratings |
-| Server → Client | `GAME_STATE`   | Full game state sent to a player who reconnects mid-game                                                                                                                            |
-| Server → Client | `ERROR`        | Structured error with HTTP status code and message                                                                                                                                  |
+| Direction       | Type           | Description                                                                                                                                                                                    |
+|-----------------|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Client → Server | `MOVE`         | Submit a move in UCI notation (e.g. `e2e4`, `e7e8q`)                                                                                                                                           |
+| Client → Server | `RESIGN`       | Forfeit the game; the opponent is awarded the win                                                                                                                                              |
+| Client → Server | `OFFER_DRAW`   | Propose a draw; the game ends when both players have sent this                                                                                                                                 |
+| Server → Client | `GAME_STARTED` | Match found — includes game ID, player IDs, usernames, and Elo ratings                                                                                                                         |
+| Server → Client | `MOVE`         | Move broadcast to both players after a valid move                                                                                                                                              |
+| Server → Client | `DRAW_OFFER`   | Forwarded to the opponent when one player offers a draw                                                                                                                                        |
+| Server → Client | `GAME_ENDED`   | Game over — includes result, how it ended (`CHECKMATE`, `STALEMATE`, `RESIGNATION`, `AGREEMENT`, `FIFTY_MOVE_RULE`, `REPETITION`, `INSUFFICIENT_MATERIAL`, `TIMEOUT`), and updated Elo ratings |
+| Server → Client | `GAME_STATE`   | Full game state sent to a player who reconnects mid-game                                                                                                                                       |
+| Server → Client | `ERROR`        | Structured error with HTTP status code and message                                                                                                                                             |
 
 **Reconnection**
 - On connect, if the user already has an active game, the full move history is sent as a `GAME_STATE` event so the client can reconstruct the board without server-side board serialization.
@@ -214,19 +256,25 @@ Completed games are stored with their move list converted to **PGN** format usin
 
 ## API Overview
 
-| Method | Endpoint                   | Description                                    |
-|--------|----------------------------|------------------------------------------------|
-| POST   | /api/auth/register         | Register                                       |
-| POST   | /api/auth/login            | Login                                          |
-| POST   | /api/auth/logout           | Logout                                         |
-| GET    | /api/auth                  | Check auth status                              |
-| GET    | /api/user/{username}       | Get user profile (username, Elo, bio)          |
-| POST   | /api/queue                 | Join the matchmaking queue                     |
-| DELETE | /api/queue                 | Leave the matchmaking queue                    |
-| GET    | /api/games/active          | Get the current user's active game state       |
-| GET    | /api/games/user/{username} | Get game history for a user                    |
-| GET    | /api/games/{id}            | Get a specific game by ID (includes PGN)       |
-| WS     | /ws                        | WebSocket endpoint                             |
+| Method | Endpoint                      | Description                                              |
+|--------|-------------------------------|----------------------------------------------------------|
+| POST   | /api/auth/register            | Register                                                 |
+| POST   | /api/auth/login               | Login                                                    |
+| POST   | /api/auth/logout              | Logout                                                   |
+| GET    | /api/auth                     | Check auth status                                        |
+| GET    | /api/user/{username}          | Get user profile (username, Elo, bio)                    |
+| PATCH  | /api/user/edit                | Update the current user's profile (bio, avatar URL)      |
+| PATCH  | /api/user/edit-password       | Change the current user's password                       |
+| POST   | /api/queue                    | Join the matchmaking queue (body: `{ timeControl }`)     |
+| DELETE | /api/queue                    | Leave the matchmaking queue                              |
+| POST   | /api/bot/{difficulty}         | Start a game against a bot (`EASY`, `MEDIUM`, `HARD`)    |
+| GET    | /api/friends                  | Get the current user's friend list                       |
+| POST   | /api/friends/add              | Add a friend by username                                 |
+| DELETE | /api/friends/remove           | Remove a friend by username                              |
+| GET    | /api/games/active             | Get the current user's active game state                 |
+| GET    | /api/games/user/{username}    | Get game history for a user                              |
+| GET    | /api/games/{id}               | Get a specific game by ID (includes PGN)                 |
+| WS     | /ws                           | WebSocket endpoint                                       |
 
 ---
 
