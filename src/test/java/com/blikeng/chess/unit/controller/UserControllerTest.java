@@ -145,7 +145,7 @@ class UserControllerTest {
 
     @Test
     void shouldEditPassword() throws Exception {
-        mockMvc.perform(put("/api/user/edit-password")
+        mockMvc.perform(patch("/api/user/edit-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PasswordDTO("oldPass", "newPass123")))
                         .with(csrf()))
@@ -156,7 +156,7 @@ class UserControllerTest {
     void editPasswordShouldReturn401OnNullUser() throws Exception {
         doThrow(new InvalidUserException()).when(userService).updatePassword(any());
 
-        mockMvc.perform(put("/api/user/edit-password")
+        mockMvc.perform(patch("/api/user/edit-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PasswordDTO("old", "newPass123")))
                         .with(csrf()))
@@ -167,7 +167,7 @@ class UserControllerTest {
     void editPasswordShouldReturn400OnWrongOldPassword() throws Exception {
         doThrow(new InvalidPasswordException()).when(userService).updatePassword(any());
 
-        mockMvc.perform(put("/api/user/edit-password")
+        mockMvc.perform(patch("/api/user/edit-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PasswordDTO("wrong", "newPass123")))
                         .with(csrf()))
@@ -178,7 +178,7 @@ class UserControllerTest {
     void editPasswordShouldReturn400OnBadNewPassword() throws Exception {
         doThrow(new BadEditException()).when(userService).updatePassword(any());
 
-        mockMvc.perform(put("/api/user/edit-password")
+        mockMvc.perform(patch("/api/user/edit-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PasswordDTO("old", "short")))
                         .with(csrf()))
@@ -188,7 +188,7 @@ class UserControllerTest {
     @Test
     @WithAnonymousUser
     void editPasswordShouldReturn401WhenUnauthenticated() throws Exception {
-        mockMvc.perform(put("/api/user/edit-password")
+        mockMvc.perform(patch("/api/user/edit-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PasswordDTO("old", "newPass123")))
                         .with(csrf()))

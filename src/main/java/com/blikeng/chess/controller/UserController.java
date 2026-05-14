@@ -31,7 +31,7 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/edit-password")
+    @PatchMapping("/edit-password")
     public ResponseEntity<Void> editPassword(
         @RequestBody PasswordDTO passwordDTO
     ){
