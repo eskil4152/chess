@@ -1,9 +1,7 @@
 package com.blikeng.chess.service;
 
 import com.blikeng.chess.dto.GameStateDTO;
-import com.blikeng.chess.dto.websocket.WsDrawDTO;
-import com.blikeng.chess.dto.websocket.WsMoveDTO;
-import com.blikeng.chess.dto.websocket.WsResignDTO;
+import com.blikeng.chess.dto.websocket.*;
 import com.blikeng.chess.engine.MoveExecutor;
 import com.blikeng.chess.engine.PositionMapper;
 import com.blikeng.chess.engine.converter.PgnConverter;
