@@ -293,14 +293,6 @@ public class GameService {
         }
     }
 
-    public void handleChallenge(UUID userId, WsChallengeDTO challengeDTO){
-
-    }
-
-    public void handleChallengeResponse(UUID userId, WsChallengeResponseDTO challengeResponseDTO){
-
-    }
-
     private void handleBotGameEnd(Game game, GameStatus gameStatus) {
         if (!game.getMoves().isEmpty()) {
             eventPublisher.publishEvent(new MoveMadeEvent(

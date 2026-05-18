@@ -3,6 +3,7 @@ package com.blikeng.chess.websocket;
 import com.blikeng.chess.dto.websocket.*;
 import com.blikeng.chess.exception.ApiException;
 import com.blikeng.chess.notifications.NotificationService;
+import com.blikeng.chess.service.ChallengeService;
 import com.blikeng.chess.service.GameService;
 import com.blikeng.chess.service.MatchmakingService;
 import com.blikeng.chess.service.PresenceService;
@@ -26,16 +27,21 @@ public class WebSocketHandler extends TextWebSocketHandler {
     private final PresenceService presenceService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final NotificationService notificationService;
+    private final ChallengeService challengeService;
     private final Logger logger = LoggerFactory.getLogger(WebSocketHandler.class);
 
     public WebSocketHandler(
-            GameService gameService, MatchmakingService matchmakingService,
+            GameService gameService,
+            MatchmakingService matchmakingService,
             PresenceService presenceService,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            ChallengeService challengeService
+    ) {
         this.gameService = gameService;
         this.matchmakingService = matchmakingService;
         this.presenceService = presenceService;
         this.notificationService = notificationService;
+        this.challengeService = challengeService;
     }
 
     @Override
@@ -61,9 +67,9 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
                 case "OFFER_DRAW" -> gameService.handleDraw(userId, objectMapper.treeToValue(json, WsDrawDTO.class));
 
-                case "CHALLENGE" -> gameService.handleChallenge(userId, objectMapper.treeToValue(json, WsChallengeDTO.class));
+                case "CHALLENGE" -> challengeService.handleChallenge(userId, objectMapper.treeToValue(json, WsChallengeDTO.class));
 
-                case "CHALLENGE_RESPONSE" -> gameService.handleChallengeResponse(userId, objectMapper.treeToValue(json, WsChallengeResponseDTO.class));
+                case "CHALLENGE_RESPONSE" -> challengeService.handleChallengeResponse(userId, objectMapper.treeToValue(json, WsChallengeResponseDTO.class));
 
                 default -> { /* ignore */ }
             }

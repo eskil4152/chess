@@ -21,4 +21,6 @@ public final class ErrorMessages {
     public static final String FRIEND_YOURSELF = "You can't befriend yourself";
 
     public static final String BAD_PROFILE_EDIT = "Invalid profile edit";
+
+    public static final String INVALID_CHALLENGE = "Invalid challenge";
 }
