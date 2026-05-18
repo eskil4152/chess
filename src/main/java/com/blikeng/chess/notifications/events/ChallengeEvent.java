@@ -4,9 +4,9 @@ import java.util.UUID;
 
 public record ChallengeEvent(
     UUID challengeId,
-    UUID senderId,
-    String senderUsername,
-    UUID receiverId,
+    UUID challengerId,
+    String challengerUsername,
+    UUID challengedId,
     String timeControl
 ) {
 }

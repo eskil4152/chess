@@ -7,5 +7,6 @@ public enum WsMessageType {
     RESIGN,
     OFFER_DRAW,
     GAME_ENDED,
-    CHALLENGE
+    CHALLENGE,
+    CHALLENGE_DECLINED
 }

@@ -13,7 +13,6 @@ import com.blikeng.chess.notifications.NotificationService;
 import com.blikeng.chess.notifications.events.ChallengeEvent;
 import com.blikeng.chess.notifications.events.ChallengeDeclinedEvent;
 import com.blikeng.chess.repository.UserRepository;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -35,10 +34,12 @@ public class ChallengeService {
         this.notificationService = notificationService;
     }
 
+    // TODO: Scheduled sweeps or TTL
     private final ConcurrentHashMap<UUID, Challenge> challenges = new ConcurrentHashMap<>();
 
     public void handleChallenge(UUID userId, WsChallengeDTO challengeDTO){
         // TODO: Deny if receiver is in game
+        // TODO: Check if invite between 2 players already exists
 
         if (userId.equals(challengeDTO.receiver())) throw new InvalidChallengeException();
 
@@ -63,7 +64,7 @@ public class ChallengeService {
             challenge.id(),
             userId,
             sender.getUsername(),
-            challengeDTO.receiver(),
+            challenge.challengedId(),
             timeControl.label()
         ));
     }
@@ -72,21 +73,21 @@ public class ChallengeService {
         Challenge challenge = challenges.remove(challengeResponseDTO.challengeId());
         if (challenge == null) throw new NotFoundException();
 
-        UserEntity user = userRepository.findById(userId)
+        UserEntity challenged = userRepository.findById(userId)
             .orElseThrow(InvalidUserException::new);
 
-        if (!challenge.receiverId().equals(userId)) throw new NotFoundException();
+        if (!challenge.challengedId().equals(userId)) throw new NotFoundException();
 
-        UserEntity challenger = userRepository.findById(challenge.senderId())
+        UserEntity challenger = userRepository.findById(challenge.challengerId())
             .orElseThrow(UserNotFoundException::new);
 
         if (challengeResponseDTO.accepted()) {
-            gameService.beginGame(challenger, user, challenge.timeControl());
+            gameService.beginGame(challenger, challenged, challenge.timeControl());
         } else {
             notificationService.onChallengeDeclined(new ChallengeDeclinedEvent(
                 challenge.id(),
                 challenger.getId(),
-                user.getUsername()
+                challenged.getUsername()
             ));
         }
     }

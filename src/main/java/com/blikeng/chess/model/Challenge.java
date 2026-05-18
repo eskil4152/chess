@@ -6,8 +6,8 @@ import java.util.UUID;
 
 public record Challenge(
     UUID id,
-    UUID senderId,
-    UUID receiverId,
+    UUID challengerId,
+    UUID challengedId,
     TimeControl timeControl
 ) {
 }

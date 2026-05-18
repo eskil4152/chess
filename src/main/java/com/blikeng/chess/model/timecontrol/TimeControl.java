@@ -26,8 +26,8 @@ public record TimeControl(int initialSeconds, int incrementSeconds) {
 
     public String label() {
         return switch (initialSeconds / 60) {
-            case 1 -> "Bullet " + (initialSeconds / 60) + "+" + incrementSeconds;
-            case 3 -> "Blitz " + (initialSeconds / 60) + "+" + incrementSeconds;
+            case 1, 2 -> "Bullet " + (initialSeconds / 60) + "+" + incrementSeconds;
+            case 3, 5 -> "Blitz " + (initialSeconds / 60) + "+" + incrementSeconds;
             case 10, 15, 30, 60 -> "Rapid " + (initialSeconds / 60) + "+" + incrementSeconds;
             default -> (initialSeconds / 60) + "+" + incrementSeconds;
         };
@@ -46,5 +46,5 @@ public record TimeControl(int initialSeconds, int incrementSeconds) {
     public static final TimeControl RAPID_15_0 = new TimeControl(15, 0);
     public static final TimeControl RAPID_15_10 = new TimeControl(15, 10);
     public static final TimeControl RAPID_30_0 = new TimeControl(30, 0);
-    public static final TimeControl RAPID_60_0 = new TimeControl(50, 0);
+    public static final TimeControl RAPID_60_0 = new TimeControl(60, 0);
 }

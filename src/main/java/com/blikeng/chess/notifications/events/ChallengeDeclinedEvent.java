@@ -4,7 +4,7 @@ import java.util.UUID;
 
 public record ChallengeDeclinedEvent(
     UUID challengeId,
-    UUID inviterId,
-    String respondee
+    UUID challengerId,
+    String challengedUsername
 ) {
 }
