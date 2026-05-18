@@ -1,5 +1,6 @@
 package com.blikeng.chess.unit.notifications;
 
+import com.blikeng.chess.dto.websocket.*;
 import com.blikeng.chess.model.EndedBy;
 import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.notifications.NotificationService;
@@ -185,6 +186,58 @@ class NotificationServiceTest {
         assertThatCode(() -> notificationService.pingAllSessions()).doesNotThrowAnyException();
 
         verify(healthy).sendMessage(any(PingMessage.class));
+    }
+
+    // --- Challenge notifications ---
+
+    @Test
+    void onChallengeShouldSendToBothChallengerAndChallenged() throws IOException {
+        UUID challengerId = UUID.randomUUID();
+        UUID challengedId = UUID.randomUUID();
+        WebSocketSession challengerSession = openSession();
+        WebSocketSession challengedSession = openSession();
+        when(presenceService.getSessions(challengerId)).thenReturn(Set.of(challengerSession));
+        when(presenceService.getSessions(challengedId)).thenReturn(Set.of(challengedSession));
+
+        notificationService.onChallenge(challengerId, challengedId, new WsOutgoingChallengeDTO(UUID.randomUUID(), "challenger", "Blitz 5+0"));
+
+        verify(challengerSession).sendMessage(any(TextMessage.class));
+        verify(challengedSession).sendMessage(any(TextMessage.class));
+    }
+
+    @Test
+    void onChallengeCancelledShouldSendToChallenged() throws IOException {
+        UUID challengedId = UUID.randomUUID();
+        WebSocketSession session = openSession();
+        when(presenceService.getSessions(challengedId)).thenReturn(Set.of(session));
+
+        notificationService.onChallengeCancelled(challengedId, new WsOutgoingChallengeCancelledDTO(UUID.randomUUID(), "challenger"));
+
+        verify(session).sendMessage(any(TextMessage.class));
+    }
+
+    @Test
+    void onChallengeDeclinedShouldSendToChallenger() throws IOException {
+        UUID challengerId = UUID.randomUUID();
+        WebSocketSession session = openSession();
+        when(presenceService.getSessions(challengerId)).thenReturn(Set.of(session));
+
+        notificationService.onChallengeDeclined(challengerId, new WsOutgoingChallengeResponseDTO(UUID.randomUUID(), "challenged"));
+
+        verify(session).sendMessage(any(TextMessage.class));
+    }
+
+    @Test
+    void onChallengeExpiredShouldSendToChallenger() throws IOException {
+        UUID challengerId = UUID.randomUUID();
+        WebSocketSession session = openSession();
+        when(presenceService.getSessions(challengerId)).thenReturn(Set.of(session));
+
+        notificationService.onChallengeExpired(challengerId);
+
+        ArgumentCaptor<TextMessage> captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session).sendMessage(captor.capture());
+        assertThat(captor.getValue().getPayload()).contains("CHALLENGE_EXPIRED");
     }
 
     @Test

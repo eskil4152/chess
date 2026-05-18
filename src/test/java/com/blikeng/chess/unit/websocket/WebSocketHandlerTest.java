@@ -1,10 +1,9 @@
 package com.blikeng.chess.unit.websocket;
 
-import com.blikeng.chess.dto.websocket.WsDrawDTO;
-import com.blikeng.chess.dto.websocket.WsMoveDTO;
-import com.blikeng.chess.dto.websocket.WsResignDTO;
+import com.blikeng.chess.dto.websocket.*;
 import com.blikeng.chess.exception.types.InvalidMoveException;
 import com.blikeng.chess.notifications.NotificationService;
+import com.blikeng.chess.service.ChallengeService;
 import com.blikeng.chess.service.GameService;
 import com.blikeng.chess.service.MatchmakingService;
 import com.blikeng.chess.service.PresenceService;
@@ -36,6 +35,7 @@ class WebSocketHandlerTest {
     @Mock MatchmakingService matchmakingService;
     @Mock PresenceService presenceService;
     @Mock NotificationService notificationService;
+    @Mock ChallengeService challengeService;
     @InjectMocks WebSocketHandler handler;
 
     private WebSocketSession session;
@@ -89,6 +89,36 @@ class WebSocketHandlerTest {
         handler.handleTextMessage(session, new TextMessage(payload));
 
         verify(gameService).handleDraw(eq(userId), any(WsDrawDTO.class));
+    }
+
+    @Test
+    void shouldHandleMessageOfTypeChallenge() {
+        String receiverId = UUID.randomUUID().toString();
+        String payload = String.format("{\"type\":\"CHALLENGE\",\"receiver\":\"%s\",\"timeControl\":\"BLITZ_5_0\"}", receiverId);
+
+        handler.handleTextMessage(session, new TextMessage(payload));
+
+        verify(challengeService).handleChallenge(eq(userId), any(WsChallengeDTO.class));
+    }
+
+    @Test
+    void shouldHandleMessageOfTypeChallengeResponse() {
+        String challengeId = UUID.randomUUID().toString();
+        String payload = String.format("{\"type\":\"CHALLENGE_RESPONSE\",\"challengeId\":\"%s\",\"accepted\":true}", challengeId);
+
+        handler.handleTextMessage(session, new TextMessage(payload));
+
+        verify(challengeService).handleChallengeResponse(eq(userId), any(WsChallengeResponseDTO.class));
+    }
+
+    @Test
+    void shouldHandleMessageOfTypeCancelChallenge() {
+        String challengeId = UUID.randomUUID().toString();
+        String payload = String.format("{\"type\":\"CANCEL_CHALLENGE\",\"challengeId\":\"%s\"}", challengeId);
+
+        handler.handleTextMessage(session, new TextMessage(payload));
+
+        verify(challengeService).cancelChallenge(eq(userId), any(WsCancelChallengeDTO.class));
     }
 
     @Test
