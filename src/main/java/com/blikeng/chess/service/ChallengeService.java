@@ -15,8 +15,10 @@ import com.blikeng.chess.dto.websocket.WsOutgoingChallengeCancelledDTO;
 import com.blikeng.chess.dto.websocket.WsOutgoingChallengeDTO;
 import com.blikeng.chess.dto.websocket.WsOutgoingChallengeResponseDTO;
 import com.blikeng.chess.repository.UserRepository;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -36,8 +38,17 @@ public class ChallengeService {
         this.notificationService = notificationService;
     }
 
-    // TODO: Scheduled sweeps or TTL
     private final ConcurrentHashMap<UUID, Challenge> challenges = new ConcurrentHashMap<>();
+
+    @Scheduled(fixedRate = 60000L)
+    private void clearStaleChallenges(){
+        for (Challenge challenge : challenges.values()) {
+            if (challenge.sent().isBefore(Instant.now().minusSeconds(600))) {
+                challenges.remove(challenge.id());
+                notificationService.onChallengeExpired(challenge.challengerId());
+            }
+        }
+    }
 
     public void handleChallenge(UUID userId, WsChallengeDTO challengeDTO){
         // TODO: Deny if receiver is in game
@@ -57,7 +68,8 @@ public class ChallengeService {
             UUID.randomUUID(),
             userId,
             receiver.getId(),
-            timeControl
+            timeControl,
+            Instant.now()
         );
 
         challenges.put(challenge.id(), challenge);

@@ -67,6 +67,11 @@ public class NotificationService {
         sendToUser(challengerId, serialize(dto));
     }
 
+    public void onChallengeExpired(UUID challengerId){
+        String payload = serialize(new WsChallengeExpired());
+        sendToUser(challengerId, payload);
+    }
+
     public void sendDrawOffer(UUID gameId, UUID userId){
         String payload = serialize(new WsDrawDTO(gameId.toString()));
         sendToUser(userId, payload);
