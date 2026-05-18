@@ -4,10 +4,7 @@ import com.blikeng.chess.dto.websocket.WsCancelChallengeDTO;
 import com.blikeng.chess.dto.websocket.WsChallengeDTO;
 import com.blikeng.chess.dto.websocket.WsChallengeResponseDTO;
 import com.blikeng.chess.entity.UserEntity;
-import com.blikeng.chess.exception.types.InvalidChallengeException;
-import com.blikeng.chess.exception.types.InvalidUserException;
-import com.blikeng.chess.exception.types.NotFoundException;
-import com.blikeng.chess.exception.types.UserNotFoundException;
+import com.blikeng.chess.exception.types.*;
 import com.blikeng.chess.model.Challenge;
 import com.blikeng.chess.model.timecontrol.TimeControl;
 import com.blikeng.chess.notifications.NotificationService;
@@ -19,6 +16,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -51,16 +49,29 @@ public class ChallengeService {
     }
 
     public void handleChallenge(UUID userId, WsChallengeDTO challengeDTO){
-        // TODO: Deny if receiver is in game
-        // TODO: Check if invite between 2 players already exists
-
         if (userId.equals(challengeDTO.receiver())) throw new InvalidChallengeException();
 
         UserEntity receiver = userRepository.findById(challengeDTO.receiver())
             .orElseThrow(UserNotFoundException::new);
 
+        if (gameService.isInGame(receiver.getId())) throw new AlreadyInGameException();
+
+        if (challenges.values().stream()
+            .anyMatch(challenge -> challenge.challengerId().equals(userId) && challenge.challengedId().equals(challengeDTO.receiver()))
+        ) throw new AlreadyChallengedException();
+
         UserEntity sender = userRepository.findById(userId)
             .orElseThrow(InvalidUserException::new);
+
+        Optional<Challenge> mutual = challenges.values().stream()
+            .filter(c -> c.challengedId().equals(userId) && c.challengerId().equals(challengeDTO.receiver()))
+            .findFirst();
+
+        if (mutual.isPresent()) {
+            challenges.remove(mutual.get().id());
+            gameService.beginGame(receiver, sender, mutual.get().timeControl());
+            return;
+        }
 
         TimeControl timeControl = TimeControl.fromName(challengeDTO.timeControl());
 
