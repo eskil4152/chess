@@ -1,12 +1,7 @@
 package com.blikeng.chess.notifications;
 
-import com.blikeng.chess.dto.websocket.WsDrawDTO;
-import com.blikeng.chess.dto.websocket.WsGameEndedDTO;
-import com.blikeng.chess.dto.websocket.WsGameStartedDTO;
-import com.blikeng.chess.dto.websocket.WsMoveDTO;
-import com.blikeng.chess.notifications.events.MatchEndedEvent;
-import com.blikeng.chess.notifications.events.MatchStartedEvent;
-import com.blikeng.chess.notifications.events.MoveMadeEvent;
+import com.blikeng.chess.dto.websocket.*;
+import com.blikeng.chess.notifications.events.*;
 import com.blikeng.chess.service.PresenceService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,6 +53,20 @@ public class NotificationService {
         String payload = serialize(new WsGameEndedDTO(event.gameId(), event.status(), event.endedBy(), event.whiteElo(), event.blackElo()));
         sendToUser(event.whiteId(), payload);
         sendToUser(event.blackId(), payload);
+    }
+
+    public void onChallenge(ChallengeEvent event){
+        String payload = serialize(new WsOutgoingChallengeDTO(event.challengeId(), event.senderUsername(), event.timeControl()));
+        sendToUser(event.receiverId(), payload);
+    }
+
+    public void onChallengeDeclined(ChallengeDeclinedEvent event){
+        String payload = serialize(new WsOutgoingChallengeResponseDTO(
+            event.challengeId(),
+            event.respondee()
+        ));
+
+        sendToUser(event.inviterId(), payload);
     }
 
     public void sendDrawOffer(UUID gameId, UUID userId){

@@ -9,8 +9,9 @@ import com.blikeng.chess.exception.types.NotFoundException;
 import com.blikeng.chess.exception.types.UserNotFoundException;
 import com.blikeng.chess.model.Challenge;
 import com.blikeng.chess.model.timecontrol.TimeControl;
+import com.blikeng.chess.notifications.NotificationService;
 import com.blikeng.chess.notifications.events.ChallengeEvent;
-import com.blikeng.chess.notifications.events.ChallengeResponseEvent;
+import com.blikeng.chess.notifications.events.ChallengeDeclinedEvent;
 import com.blikeng.chess.repository.UserRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -22,21 +23,23 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ChallengeService {
     private final UserRepository userRepository;
     private final GameService gameService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final NotificationService notificationService;
 
     public ChallengeService(
         UserRepository userRepository,
         GameService gameService,
-        ApplicationEventPublisher eventPublisher
+        NotificationService notificationService
     ){
         this.userRepository = userRepository;
         this.gameService = gameService;
-        this.eventPublisher = eventPublisher;
+        this.notificationService = notificationService;
     }
 
     private final ConcurrentHashMap<UUID, Challenge> challenges = new ConcurrentHashMap<>();
 
     public void handleChallenge(UUID userId, WsChallengeDTO challengeDTO){
+        // TODO: Deny if receiver is in game
+
         if (userId.equals(challengeDTO.receiver())) throw new InvalidChallengeException();
 
         UserEntity receiver = userRepository.findById(challengeDTO.receiver())
@@ -45,20 +48,23 @@ public class ChallengeService {
         UserEntity sender = userRepository.findById(userId)
             .orElseThrow(InvalidUserException::new);
 
+        TimeControl timeControl = TimeControl.fromName(challengeDTO.timeControl());
+
         Challenge challenge = new Challenge(
             UUID.randomUUID(),
             userId,
             receiver.getId(),
-            TimeControl.fromName(challengeDTO.timeControl())
+            timeControl
         );
 
         challenges.put(challenge.id(), challenge);
 
-        eventPublisher.publishEvent(new ChallengeEvent(
+        notificationService.onChallenge(new ChallengeEvent(
             challenge.id(),
             userId,
             sender.getUsername(),
-            challengeDTO.receiver()
+            challengeDTO.receiver(),
+            timeControl.label()
         ));
     }
 
@@ -77,9 +83,10 @@ public class ChallengeService {
         if (challengeResponseDTO.accepted()) {
             gameService.beginGame(challenger, user, challenge.timeControl());
         } else {
-            eventPublisher.publishEvent(new ChallengeResponseEvent(
+            notificationService.onChallengeDeclined(new ChallengeDeclinedEvent(
                 challenge.id(),
-                false
+                challenger.getId(),
+                user.getUsername()
             ));
         }
     }

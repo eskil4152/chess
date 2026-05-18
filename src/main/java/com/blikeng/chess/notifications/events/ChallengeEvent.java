@@ -6,6 +6,7 @@ public record ChallengeEvent(
     UUID challengeId,
     UUID senderId,
     String senderUsername,
-    UUID receiverId
+    UUID receiverId,
+    String timeControl
 ) {
 }

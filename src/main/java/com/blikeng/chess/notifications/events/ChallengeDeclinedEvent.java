@@ -2,8 +2,9 @@ package com.blikeng.chess.notifications.events;
 
 import java.util.UUID;
 
-public record ChallengeResponseEvent(
+public record ChallengeDeclinedEvent(
     UUID challengeId,
-    boolean accepted
+    UUID inviterId,
+    String respondee
 ) {
 }
