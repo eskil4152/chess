@@ -1,5 +1,6 @@
 package com.blikeng.chess.service;
 
+import com.blikeng.chess.dto.websocket.WsCancelChallengeDTO;
 import com.blikeng.chess.dto.websocket.WsChallengeDTO;
 import com.blikeng.chess.dto.websocket.WsChallengeResponseDTO;
 import com.blikeng.chess.entity.UserEntity;
@@ -10,8 +11,9 @@ import com.blikeng.chess.exception.types.UserNotFoundException;
 import com.blikeng.chess.model.Challenge;
 import com.blikeng.chess.model.timecontrol.TimeControl;
 import com.blikeng.chess.notifications.NotificationService;
-import com.blikeng.chess.notifications.events.ChallengeEvent;
-import com.blikeng.chess.notifications.events.ChallengeDeclinedEvent;
+import com.blikeng.chess.dto.websocket.WsOutgoingChallengeCancelledDTO;
+import com.blikeng.chess.dto.websocket.WsOutgoingChallengeDTO;
+import com.blikeng.chess.dto.websocket.WsOutgoingChallengeResponseDTO;
 import com.blikeng.chess.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -60,23 +62,19 @@ public class ChallengeService {
 
         challenges.put(challenge.id(), challenge);
 
-        notificationService.onChallenge(new ChallengeEvent(
-            challenge.id(),
-            userId,
-            sender.getUsername(),
+        notificationService.onChallenge(
             challenge.challengedId(),
-            timeControl.label()
-        ));
+            new WsOutgoingChallengeDTO(challenge.id(), sender.getUsername(), timeControl.label())
+        );
     }
 
     public void handleChallengeResponse(UUID userId, WsChallengeResponseDTO challengeResponseDTO){
-        Challenge challenge = challenges.remove(challengeResponseDTO.challengeId());
-        if (challenge == null) throw new NotFoundException();
+        Challenge challenge = challenges.get(challengeResponseDTO.challengeId());
+        if (challenge == null || !challenge.challengedId().equals(userId)) throw new NotFoundException();
+        challenges.remove(challengeResponseDTO.challengeId());
 
         UserEntity challenged = userRepository.findById(userId)
             .orElseThrow(InvalidUserException::new);
-
-        if (!challenge.challengedId().equals(userId)) throw new NotFoundException();
 
         UserEntity challenger = userRepository.findById(challenge.challengerId())
             .orElseThrow(UserNotFoundException::new);
@@ -84,13 +82,24 @@ public class ChallengeService {
         if (challengeResponseDTO.accepted()) {
             gameService.beginGame(challenger, challenged, challenge.timeControl());
         } else {
-            notificationService.onChallengeDeclined(new ChallengeDeclinedEvent(
-                challenge.id(),
+            notificationService.onChallengeDeclined(
                 challenger.getId(),
-                challenged.getUsername()
-            ));
+                new WsOutgoingChallengeResponseDTO(challenge.id(), challenged.getUsername())
+            );
         }
     }
 
-    public void cancelChallenge(){}
+    public void cancelChallenge(UUID userId, WsCancelChallengeDTO cancelDTO){
+        Challenge challenge = challenges.get(cancelDTO.challengeId());
+        if (challenge == null || !challenge.challengerId().equals(userId)) throw new NotFoundException();
+        challenges.remove(cancelDTO.challengeId());
+
+        UserEntity challenger = userRepository.findById(userId)
+            .orElseThrow(InvalidUserException::new);
+
+        notificationService.onChallengeCancelled(
+            challenge.challengedId(),
+            new WsOutgoingChallengeCancelledDTO(challenge.id(), challenger.getUsername())
+        );
+    }
 }

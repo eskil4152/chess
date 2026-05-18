@@ -71,6 +71,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
                 case "CHALLENGE_RESPONSE" -> challengeService.handleChallengeResponse(userId, objectMapper.treeToValue(json, WsChallengeResponseDTO.class));
 
+                case "CANCEL_CHALLENGE" -> challengeService.cancelChallenge(userId, objectMapper.treeToValue(json, WsCancelChallengeDTO.class));
+
                 default -> { /* ignore */ }
             }
         } catch (ApiException e) {
