@@ -55,18 +55,16 @@ public class NotificationService {
         sendToUser(event.blackId(), payload);
     }
 
-    public void onChallenge(ChallengeEvent event){
-        String payload = serialize(new WsOutgoingChallengeDTO(event.challengeId(), event.challengerUsername(), event.timeControl()));
-        sendToUser(event.challengedId(), payload);
+    public void onChallenge(UUID challengedId, WsOutgoingChallengeDTO dto){
+        sendToUser(challengedId, serialize(dto));
     }
 
-    public void onChallengeDeclined(ChallengeDeclinedEvent event){
-        String payload = serialize(new WsOutgoingChallengeResponseDTO(
-            event.challengeId(),
-            event.challengedUsername()
-        ));
+    public void onChallengeCancelled(UUID challengedId, WsOutgoingChallengeCancelledDTO dto){
+        sendToUser(challengedId, serialize(dto));
+    }
 
-        sendToUser(event.challengerId(), payload);
+    public void onChallengeDeclined(UUID challengerId, WsOutgoingChallengeResponseDTO dto){
+        sendToUser(challengerId, serialize(dto));
     }
 
     public void sendDrawOffer(UUID gameId, UUID userId){
