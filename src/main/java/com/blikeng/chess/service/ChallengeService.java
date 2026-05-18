@@ -86,6 +86,7 @@ public class ChallengeService {
         challenges.put(challenge.id(), challenge);
 
         notificationService.onChallenge(
+            challenge.challengerId(),
             challenge.challengedId(),
             new WsOutgoingChallengeDTO(challenge.id(), sender.getUsername(), timeControl.label())
         );

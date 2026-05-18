@@ -55,8 +55,9 @@ public class NotificationService {
         sendToUser(event.blackId(), payload);
     }
 
-    public void onChallenge(UUID challengedId, WsOutgoingChallengeDTO dto){
+    public void onChallenge(UUID challengerId, UUID challengedId, WsOutgoingChallengeDTO dto){
         sendToUser(challengedId, serialize(dto));
+        sendToUser(challengerId, serialize(dto));
     }
 
     public void onChallengeCancelled(UUID challengedId, WsOutgoingChallengeCancelledDTO dto){
