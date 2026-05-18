@@ -1,9 +1,6 @@
 package com.blikeng.chess.websocket;
 
-import com.blikeng.chess.dto.websocket.WsDrawDTO;
-import com.blikeng.chess.dto.websocket.WsErrorDTO;
-import com.blikeng.chess.dto.websocket.WsMoveDTO;
-import com.blikeng.chess.dto.websocket.WsResignDTO;
+import com.blikeng.chess.dto.websocket.*;
 import com.blikeng.chess.exception.ApiException;
 import com.blikeng.chess.notifications.NotificationService;
 import com.blikeng.chess.service.GameService;
@@ -63,6 +60,10 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case "RESIGN" -> gameService.resignGame(userId, objectMapper.treeToValue(json, WsResignDTO.class));
 
                 case "OFFER_DRAW" -> gameService.handleDraw(userId, objectMapper.treeToValue(json, WsDrawDTO.class));
+
+                case "CHALLENGE" -> gameService.handleChallenge(userId, objectMapper.treeToValue(json, WsChallengeDTO.class));
+
+                case "CHALLENGE_RESPONSE" -> gameService.handleChallengeResponse(userId, objectMapper.treeToValue(json, WsChallengeResponseDTO.class));
 
                 default -> { /* ignore */ }
             }
