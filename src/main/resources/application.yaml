@@ -9,9 +9,17 @@ spring:
     enabled: true
     baseline-on-migrate: true
     placeholders:
-      admin_password: ${admin.password}
+      admin_password: ${ADMIN_PASSWORD:$2y$12$Sr02udJa6JObVAJnma46gedjUtHZKh70.hdpn7j6uLJQtKc44IgTW}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
 
 app:
+  prometheus:
+    token: ${PROMETHEUS_TOKEN:developmentPrometheusToken}
   jwt:
     secret: ${JWT_SECRET:superSecretKeyForTheDevelopmentWhichIsAbsolutelySecureEnoughAndFarEnoughBitsToBeAbleToBeMadeIntoASecureEnoughKey}
 
@@ -22,6 +30,3 @@ rate-limit:
     max-tokens: ${REGISTER_TOKENS:1000}
   other:
     max-tokens: ${OTHER_TOKENS:1000}
-
-admin:
-  password: ${ADMIN_PASSWORD}
