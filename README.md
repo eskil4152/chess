@@ -19,16 +19,17 @@ No external chess libraries.
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
 - [Features](#features)
-  - [Authentication & Security](#authentication--security)
-  - [Matchmaking & Time Controls](#matchmaking--time-controls)
-  - [Bot Opponents](#bot-opponents)
-  - [Friends](#friends)
-  - [Chess Engine](#chess-engine)
-  - [WebSocket & Real-Time Gameplay](#websocket--real-time-gameplay)
-  - [Evaluator](#evaluator)
-  - [PGN & FEN Export](#pgn--fen-export)
-  - [Elo Rating](#elo-rating)
-  - [Database & Persistence](#database--persistence)
+    - [Authentication & Security](#authentication--security)
+    - [Matchmaking & Time Controls](#matchmaking--time-controls)
+    - [Bot Opponents](#bot-opponents)
+    - [Friends](#friends)
+    - [Challenges](#challenges)
+    - [Chess Engine](#chess-engine)
+    - [WebSocket & Real-Time Gameplay](#websocket--real-time-gameplay)
+    - [Evaluator](#evaluator)
+    - [PGN & FEN Export](#pgn--fen-export)
+    - [Elo Rating](#elo-rating)
+    - [Database & Persistence](#database--persistence)
 - [API Overview](#api-overview)
 - [CI/CD Pipeline](#cicd-pipeline)
 - [Testing](#testing)
@@ -46,6 +47,7 @@ No external chess libraries.
 | Password Hashing | BCrypt                                    |
 | Database         | PostgreSQL (schema managed via Flyway)    |
 | CI/CD            | GitHub Actions (self-hosted runner)       |
+| Monitoring       | OpenTelemetry (OTLP), Grafana Cloud       |
 | Code Quality     | SonarCloud                                |
 | Rate Limiting    | Caffeine, Bucket4j                        |
 | Testing          | JUnit 5, Mockito, AssertJ                 |
@@ -121,10 +123,10 @@ A player who runs out of time loses; the game ends with `TIMEOUT` as the reason 
 Players can start a game against a computer opponent at three difficulty levels via `POST /api/bot/{difficulty}`.
 
 | Difficulty | Search Depth | Noise |
-|------------|-------------|-------|
-| `EASY`     | 1           | ±300  |
-| `MEDIUM`   | 2           | ±100  |
-| `HARD`     | 3           | none  |
+|------------|--------------|-------|
+| `EASY`     | 1            | ±300  |
+| `MEDIUM`   | 2            | ±100  |
+| `HARD`     | 3            | none  |
 
 - Bot moves are calculated by the built-in minimax evaluator and scheduled asynchronously on a thread pool, with a short artificial delay to avoid instant responses.
 - The bot reacts to `MatchStartedEvent` (when playing white) and `MoveMadeEvent` (on each subsequent turn) via `@TransactionalEventListener`, so moves are never scheduled before the preceding transaction commits.
@@ -136,6 +138,26 @@ Players can start a game against a computer opponent at three difficulty levels 
 
 - Users can maintain a friends list: add and remove friends by username, and retrieve the full list.
 - Backed by a `friends` join table with a composite primary key.
+
+---
+
+### Challenges
+
+Players can challenge friends to a game directly over WebSocket, bypassing the matchmaking queue.
+
+| Direction       | Type                  | Description                                                        |
+|-----------------|-----------------------|--------------------------------------------------------------------|
+| Client → Server | `CHALLENGE`           | Send a challenge to a friend with a chosen time control            |
+| Client → Server | `CHALLENGE_RESPONSE`  | Accept or decline an incoming challenge                            |
+| Client → Server | `CANCEL_CHALLENGE`    | Cancel a pending outgoing challenge                                |
+| Server → Client | `CHALLENGE`           | Delivered to the challenged player                                 |
+| Server → Client | `CHALLENGE_DECLINED`  | Notifies the challenger when their challenge is declined           |
+| Server → Client | `CHALLENGE_CANCELLED` | Notifies the challenged player when the challenger cancels         |
+| Server → Client | `CHALLENGE_EXPIRED`   | Sent to both parties when a challenge times out without a response |
+
+- Duplicate challenges to the same player are rejected.
+- Challenges expire automatically after a timeout.
+- Accepted challenges start a game using the same flow as matched games.
 
 ---
 
@@ -184,7 +206,7 @@ Moves are submitted in **UCI notation** — a 4-character string for normal move
 | Client → Server | `OFFER_DRAW`   | Propose a draw; the game ends when both players have sent this                                                                                                                                 |
 | Server → Client | `GAME_STARTED` | Match found — includes game ID, player IDs, usernames, and Elo ratings                                                                                                                         |
 | Server → Client | `MOVE`         | Move broadcast to both players after a valid move                                                                                                                                              |
-| Server → Client | `DRAW_OFFER`   | Forwarded to the opponent when one player offers a draw                                                                                                                                        |
+| Server → Client | `OFFER_DRAW`   | Forwarded to the opponent when one player offers a draw                                                                                                                                        |
 | Server → Client | `GAME_ENDED`   | Game over — includes result, how it ended (`CHECKMATE`, `STALEMATE`, `RESIGNATION`, `AGREEMENT`, `FIFTY_MOVE_RULE`, `REPETITION`, `INSUFFICIENT_MATERIAL`, `TIMEOUT`), and updated Elo ratings |
 | Server → Client | `GAME_STATE`   | Full game state sent to a player who reconnects mid-game                                                                                                                                       |
 | Server → Client | `ERROR`        | Structured error with HTTP status code and message                                                                                                                                             |
@@ -192,6 +214,9 @@ Moves are submitted in **UCI notation** — a 4-character string for normal move
 **Reconnection**
 - On connect, if the user already has an active game, the full move history is sent as a `GAME_STATE` event so the client can reconstruct the board without server-side board serialization.
 - Active game state is also available via `GET /api/games/active`.
+
+**Keep-Alive**
+- The server sends a WebSocket `PingMessage` to all open sessions every 20 seconds to keep connections alive and evict stale sessions.
 
 **Presence**
 - Sessions are tracked per user in a `ConcurrentHashMap`. A player is considered connected as long as at least one session is open.
@@ -275,6 +300,12 @@ Completed games are stored with their move list converted to **PGN** format usin
 | GET    | /api/games/user/{username}    | Get game history for a user                              |
 | GET    | /api/games/{id}               | Get a specific game by ID (includes PGN)                 |
 | WS     | /ws                           | WebSocket endpoint                                       |
+
+---
+
+## Monitoring
+
+Application metrics are collected via the **OpenTelemetry Java agent** (attached at startup as a `-javaagent`) and exported to **Grafana Cloud** using the OTLP protocol. This covers JVM metrics, HTTP request rates, latency, and error counts with no code changes required.
 
 ---
 
