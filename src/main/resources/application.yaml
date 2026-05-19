@@ -5,15 +5,28 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/chess}
     username: ${SPRING_DATASOURCE_USERNAME:eskil}
     password: ${SPRING_DATASOURCE_PASSWORD:password}
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    placeholders:
+      admin_password: ${ADMIN_PASSWORD:$2y$12$Sr02udJa6JObVAJnma46gedjUtHZKh70.hdpn7j6uLJQtKc44IgTW}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
 
 app:
+  prometheus:
+    token: ${PROMETHEUS_TOKEN:developmentPrometheusToken}
   jwt:
     secret: ${JWT_SECRET:superSecretKeyForTheDevelopmentWhichIsAbsolutelySecureEnoughAndFarEnoughBitsToBeAbleToBeMadeIntoASecureEnoughKey}
 
 rate-limit:
   login:
-    max-tokens: 5
+    max-tokens: ${LOGIN_TOKENS:1000}
   register:
-    max-tokens: 10
+    max-tokens: ${REGISTER_TOKENS:1000}
   other:
-    max-tokens: 60
+    max-tokens: ${OTHER_TOKENS:1000}

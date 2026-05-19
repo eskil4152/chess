@@ -12,6 +12,8 @@ spring:
 app:
   jwt:
     secret: test-secret-key-that-is-at-least-64-bytes-long-for-testing-purposes-only-here
+  prometheus:
+    token: "test token"
 
 rate-limit:
   login:
