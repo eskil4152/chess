@@ -4,7 +4,7 @@ VALUES
     (
         gen_random_uuid(),
         'superuser',
-        '${admin.password}',
+        '${admin_password}',
         'There can only be one.',
         null,
         null,

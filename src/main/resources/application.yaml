@@ -5,6 +5,11 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/chess}
     username: ${SPRING_DATASOURCE_USERNAME:eskil}
     password: ${SPRING_DATASOURCE_PASSWORD:password}
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    placeholders:
+      admin_password: ${admin.password}
 
 app:
   jwt:
