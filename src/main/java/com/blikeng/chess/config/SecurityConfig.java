@@ -1,7 +1,6 @@
 package com.blikeng.chess.config;
 
 import com.blikeng.chess.security.JwtAuthFilter;
-import com.blikeng.chess.security.PrometheusAuthFilter;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
@@ -21,11 +20,9 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
-    private final PrometheusAuthFilter prometheusAuthFilter;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter, PrometheusAuthFilter prometheusAuthFilter) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
-        this.prometheusAuthFilter = prometheusAuthFilter;
     }
 
     @Bean
@@ -56,14 +53,12 @@ public class SecurityConfig {
             .authorizeHttpRequests( request -> {
                     request.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();
                     request.requestMatchers("/api/auth/**").permitAll();
-                    request.requestMatchers("/actuator/**").permitAll();
                     request.anyRequest().authenticated();
             })
             .httpBasic(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .csrf(AbstractHttpConfigurer::disable)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-            .addFilterBefore(prometheusAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling(it ->
                     it.authenticationEntryPoint((request, response, authException) ->
                             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token")
