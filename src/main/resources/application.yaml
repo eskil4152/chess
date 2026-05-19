@@ -12,8 +12,11 @@ app:
 
 rate-limit:
   login:
-    max-tokens: 5
+    max-tokens: ${LOGIN_TOKENS:1000}
   register:
-    max-tokens: 10
+    max-tokens: ${REGISTER_TOKENS:1000}
   other:
-    max-tokens: 60
+    max-tokens: ${OTHER_TOKENS:1000}
+
+admin:
+  password: ${ADMIN_PASSWORD}
