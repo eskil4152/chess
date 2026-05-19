@@ -51,18 +51,19 @@ public class SecurityConfig {
 
         http
             .authorizeHttpRequests( request -> {
-                    request.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();
-                    request.requestMatchers("/api/auth/**").permitAll();
-                    request.anyRequest().authenticated();
+                request.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();
+                request.requestMatchers("/api/auth/**").permitAll();
+                request.requestMatchers("/actuator/**").permitAll();
+                request.anyRequest().authenticated();
             })
             .httpBasic(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .csrf(AbstractHttpConfigurer::disable)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling(it ->
-                    it.authenticationEntryPoint((request, response, authException) ->
-                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token")
-                    )
+                it.authenticationEntryPoint((request, response, authException) ->
+                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token")
+                )
             );
 
         return http.build();

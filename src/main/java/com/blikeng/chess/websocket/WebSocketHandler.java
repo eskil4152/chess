@@ -84,12 +84,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    public void handleTransportError(WebSocketSession session, Throwable exception) {
-        UUID userId = getUserId(session);
-        logger.warn("Transport error for user {}: {}", userId, exception.getMessage(), exception);
-    }
-
-    @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         UUID userId = getUserId(session);
         presenceService.removeSession(userId, session);

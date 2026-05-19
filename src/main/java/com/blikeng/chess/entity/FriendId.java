@@ -1,6 +1,7 @@
 package com.blikeng.chess.entity;
 
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.UUID;
 
 import com.blikeng.chess.exception.types.FriendYourselfException;
@@ -30,5 +31,17 @@ public class FriendId implements Serializable {
         }
 
         return new FriendId(b, a);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof FriendId other)) return false;
+        return Objects.equals(userA, other.userA) && Objects.equals(userB, other.userB);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(userA, userB);
     }
 }
