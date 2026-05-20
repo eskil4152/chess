@@ -43,7 +43,7 @@ public class NotificationService {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onMoveMade(MoveMadeEvent event) {
-        String payload = serialize(new WsMoveDTO(event.gameId().toString(), event.move()));
+        String payload = serialize(new WsMoveDTO(event.gameId().toString(), event.move(), event.increment()));
         sendToUser(event.whiteId(), payload);
         sendToUser(event.blackId(), payload);
     }

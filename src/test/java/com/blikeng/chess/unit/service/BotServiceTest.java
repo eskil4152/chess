@@ -113,7 +113,7 @@ class BotServiceTest {
 
     @Test
     void onMoveMadeShouldScheduleMoveWhenWhiteTurnAndWhiteIsBot() {
-        MoveMadeEvent event = new MoveMadeEvent(UUID.randomUUID(), BOT_ID, PLAYER_ID, "e7e5", true);
+        MoveMadeEvent event = new MoveMadeEvent(UUID.randomUUID(), BOT_ID, PLAYER_ID, "e7e5", true, 0);
 
         botService.onMoveMade(event);
 
@@ -122,7 +122,7 @@ class BotServiceTest {
 
     @Test
     void onMoveMadeShouldScheduleMoveWhenBlackTurnAndBlackIsBot() {
-        MoveMadeEvent event = new MoveMadeEvent(UUID.randomUUID(), PLAYER_ID, BOT_ID, "e2e4", false);
+        MoveMadeEvent event = new MoveMadeEvent(UUID.randomUUID(), PLAYER_ID, BOT_ID, "e2e4", false, 0);
 
         botService.onMoveMade(event);
 
@@ -131,7 +131,7 @@ class BotServiceTest {
 
     @Test
     void onMoveMadeShouldNotScheduleMoveWhenNextPlayerIsHuman() {
-        MoveMadeEvent event = new MoveMadeEvent(UUID.randomUUID(), PLAYER_ID, UUID.randomUUID(), "e2e4", true);
+        MoveMadeEvent event = new MoveMadeEvent(UUID.randomUUID(), PLAYER_ID, UUID.randomUUID(), "e2e4", true, 0);
 
         botService.onMoveMade(event);
 

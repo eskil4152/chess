@@ -6,9 +6,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public record WsMoveDTO(
         WsMessageType type,
         String gameId,
-        String move
+        String move,
+        Integer increment
 ) {
-    public WsMoveDTO(String gameId, String move) {
-        this(WsMessageType.MOVE, gameId, move);
+    public WsMoveDTO(String gameId, String move, Integer increment) {
+        this(WsMessageType.MOVE, gameId, move, increment);
     }
 }

@@ -7,6 +7,7 @@ public record MoveMadeEvent(
         UUID whiteId,
         UUID blackId,
         String move,
-        boolean whiteTurn
+        boolean whiteTurn,
+        int increment
 ) {
 }

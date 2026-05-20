@@ -83,7 +83,7 @@ class NotificationServiceTest {
         when(presenceService.getSessions(whiteId)).thenReturn(Set.of(ws));
         when(presenceService.getSessions(blackId)).thenReturn(Set.of(bs));
 
-        notificationService.onMoveMade(new MoveMadeEvent(gameId, whiteId, blackId, "e2e4", true));
+        notificationService.onMoveMade(new MoveMadeEvent(gameId, whiteId, blackId, "e2e4", true, 0));
 
         verify(ws).sendMessage(any(TextMessage.class));
         verify(bs).sendMessage(any(TextMessage.class));

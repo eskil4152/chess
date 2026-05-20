@@ -178,7 +178,7 @@ public class GameService {
                 }
 
                 eventPublisher.publishEvent(new MoveMadeEvent(
-                        game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move(), game.isWhiteTurn()
+                        game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move(), game.isWhiteTurn(), game.getTimeControl().initialSeconds() * 1000
                 ));
             } else if (gameStatus != null) {
                 game.addMove(moveDTO.move());
@@ -296,7 +296,7 @@ public class GameService {
     private void handleBotGameEnd(Game game, GameStatus gameStatus) {
         if (!game.getMoves().isEmpty()) {
             eventPublisher.publishEvent(new MoveMadeEvent(
-                    game.getId(), game.getWhiteId(), game.getBlackId(), game.getMoves().getLast(), game.isWhiteTurn()
+                    game.getId(), game.getWhiteId(), game.getBlackId(), game.getMoves().getLast(), game.isWhiteTurn(), game.getTimeControl().initialSeconds() * 1000
             ));
         }
 
@@ -321,7 +321,7 @@ public class GameService {
 
         if (!game.getMoves().isEmpty()) {
             eventPublisher.publishEvent(new MoveMadeEvent(
-                    game.getId(), game.getWhiteId(), game.getBlackId(), game.getMoves().getLast(), game.isWhiteTurn()
+                    game.getId(), game.getWhiteId(), game.getBlackId(), game.getMoves().getLast(), game.isWhiteTurn(), game.getTimeControl().initialSeconds() * 1000
             ));
         }
 
