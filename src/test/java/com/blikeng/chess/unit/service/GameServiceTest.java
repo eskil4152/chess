@@ -311,7 +311,7 @@ class GameServiceTest {
         game.setBlackKingPosition(new Position(7, 0));
 
         when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
-        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(userService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "d7c7"));
 
@@ -336,7 +336,7 @@ class GameServiceTest {
         game.setBlackKingPosition(new Position(7, 7));
 
         when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
-        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(userService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "g5g7"));
 
@@ -369,7 +369,7 @@ class GameServiceTest {
         gameService.makeMove(moverId, new WsMoveDTO(game.getId().toString(), "g5g7"));
 
         verify(gameRepository, never()).findById(any());
-        verify(userService, never()).updateUserElo(any(), any(), any());
+        verify(userService, never()).updateUserElo(any(), any(), any(), any());
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(1)).publishEvent(captor.capture());
         assertThat(captor.getAllValues()).anyMatch(MatchEndedEvent.class::isInstance);
@@ -382,7 +382,7 @@ class GameServiceTest {
         gameService.resignGame(game.getWhiteId(), new WsResignDTO(game.getId().toString()));
 
         verify(gameRepository, never()).findById(any());
-        verify(userService, never()).updateUserElo(any(), any(), any());
+        verify(userService, never()).updateUserElo(any(), any(), any(), any());
         assertThat(gameService.isInGame(game.getWhiteId())).isFalse();
     }
 
@@ -396,7 +396,7 @@ class GameServiceTest {
         gameService.handleDraw(botId, new WsDrawDTO(game.getId().toString()));
 
         verify(gameRepository, never()).findById(any());
-        verify(userService, never()).updateUserElo(any(), any(), any());
+        verify(userService, never()).updateUserElo(any(), any(), any(), any());
         assertThat(gameService.isInGame(humanId)).isFalse();
     }
 
@@ -414,7 +414,7 @@ class GameServiceTest {
     void resignGameShouldEndGameWithBlackWinWhenWhiteResigns() {
         Game game = beginAndGetGame();
         when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
-        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(userService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.resignGame(game.getWhiteId(), new WsResignDTO(game.getId().toString()));
 
@@ -429,7 +429,7 @@ class GameServiceTest {
     void resignGameShouldEndGameWithWhiteWinWhenBlackResigns() {
         Game game = beginAndGetGame();
         when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
-        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(userService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.resignGame(game.getBlackId(), new WsResignDTO(game.getId().toString()));
 
@@ -473,7 +473,7 @@ class GameServiceTest {
     void handleDrawShouldEndGameWhenBothPlayersAccept() {
         Game game = beginAndGetGame();
         when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
-        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(userService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.handleDraw(white.getId(), new WsDrawDTO(game.getId().toString()));
         gameService.handleDraw(black.getId(), new WsDrawDTO(game.getId().toString()));
@@ -537,7 +537,7 @@ class GameServiceTest {
         game.setWhiteRemainingMs(0);
 
         when(gameRepository.findById(game.getId())).thenReturn(Optional.of(savedEntity));
-        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(userService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
 
@@ -556,7 +556,7 @@ class GameServiceTest {
         game.setBlackRemainingMs(0);
 
         when(gameRepository.findById(game.getId())).thenReturn(Optional.of(savedEntity));
-        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(userService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.makeMove(game.getBlackId(), new WsMoveDTO(game.getId().toString(), "e7e5"));
 
@@ -603,7 +603,7 @@ class GameServiceTest {
         game.setBlackRemainingMs(100);
 
         when(gameRepository.findById(any())).thenReturn(Optional.of(savedEntity));
-        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(userService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
 
@@ -621,13 +621,13 @@ class GameServiceTest {
         game.setBlackRemainingMs(100);
 
         when(gameRepository.findById(any())).thenReturn(Optional.of(savedEntity));
-        when(userService.updateUserElo(any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(userService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
         gameService.resignGame(game.getBlackId(), new WsResignDTO(game.getId().toString()));
 
         Thread.sleep(300);
 
-        verify(userService, times(1)).updateUserElo(any(), any(), any());
+        verify(userService, times(1)).updateUserElo(any(), any(), any(), any());
     }
 }

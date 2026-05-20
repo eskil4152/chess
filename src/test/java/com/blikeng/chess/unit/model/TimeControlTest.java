@@ -21,7 +21,7 @@ class TimeControlTest {
         assertThat(TimeControl.fromName("RAPID_15_0")).isEqualTo(TimeControl.RAPID_15_0);
         assertThat(TimeControl.fromName("RAPID_15_10")).isEqualTo(TimeControl.RAPID_15_10);
         assertThat(TimeControl.fromName("RAPID_30_0")).isEqualTo(TimeControl.RAPID_30_0);
-        assertThat(TimeControl.fromName("RAPID_60_0")).isEqualTo(TimeControl.RAPID_60_0);
+        assertThat(TimeControl.fromName("CLASSICAL_60_0")).isEqualTo(TimeControl.CLASSICAL_60_0);
     }
 
     @Test
@@ -31,8 +31,8 @@ class TimeControlTest {
     }
 
     @Test
-    void constructorShouldConvertMinutesToSeconds() {
-        TimeControl tc = new TimeControl(5, 0);
-        assertThat(tc.initialSeconds()).isEqualTo(300);
+    void initialSecondsShouldBeMinutesTimedSixty() {
+        assertThat(TimeControl.BLITZ_5_0.initialSeconds()).isEqualTo(300);
+        assertThat(TimeControl.RAPID_10_0.initialSeconds()).isEqualTo(600);
     }
 }
