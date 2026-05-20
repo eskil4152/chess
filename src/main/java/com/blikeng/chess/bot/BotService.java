@@ -83,7 +83,7 @@ public class BotService {
                         uci += Character.toLowerCase(PieceType.toChar(eval.promoPiece()));
                     }
 
-                    gameService.makeMove(botId, new WsMoveDTO(gameId.toString(), uci));
+                    gameService.makeMove(botId, new WsMoveDTO(gameId.toString(), uci, 0, game.isWhiteTurn()));
                 });
             } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();

@@ -204,8 +204,8 @@ class GameServiceTest {
     @Test
     void makeMoveShouldAllowBlackMoveWhenItIsBlacksTurn() {
         Game game = beginAndGetGame();
-        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
-        gameService.makeMove(game.getBlackId(), new WsMoveDTO(game.getId().toString(), "e7e5"));
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4", null, null));
+        gameService.makeMove(game.getBlackId(), new WsMoveDTO(game.getId().toString(), "e7e5", null, null));
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(3)).publishEvent(captor.capture());
@@ -221,7 +221,7 @@ class GameServiceTest {
     // --- Make Move ---
     @Test
     void makeMoveShouldThrowWhenGameNotFound() {
-        WsMoveDTO dto = new WsMoveDTO(UUID.randomUUID().toString(), "e2e4");
+        WsMoveDTO dto = new WsMoveDTO(UUID.randomUUID().toString(), "e2e4", null, null);
         UUID whiteId = white.getId();
         assertThatThrownBy(() -> gameService.makeMove(whiteId, dto))
                 .isInstanceOf(GameNotFoundException.class);
@@ -229,7 +229,7 @@ class GameServiceTest {
 
     @Test
     void makeMoveShouldThrowOnInvalidUUIDFormat() {
-        WsMoveDTO dto = new WsMoveDTO("not-valid-uuid", "e2e4");
+        WsMoveDTO dto = new WsMoveDTO("not-valid-uuid", "e2e4", null, null);
         UUID whiteId = white.getId();
         assertThatThrownBy(() -> gameService.makeMove(whiteId, dto))
                 .isInstanceOf(InvalidUUIDException.class);
@@ -238,7 +238,7 @@ class GameServiceTest {
     @Test
     void makeMoveShouldThrowWhenMoveTooShort() {
         Game game = beginAndGetGame();
-        WsMoveDTO dto = new WsMoveDTO(game.getId().toString(), "e2");
+        WsMoveDTO dto = new WsMoveDTO(game.getId().toString(), "e2", null, null);
         UUID whiteId = game.getWhiteId();
         assertThatThrownBy(() -> gameService.makeMove(whiteId, dto))
                 .isInstanceOf(InvalidMoveException.class);
@@ -247,7 +247,7 @@ class GameServiceTest {
     @Test
     void makeMoveShouldReturnEarlyWhenNotPlayersTurn() {
         Game game = beginAndGetGame();
-        WsMoveDTO dto = new WsMoveDTO(game.getId().toString(), "e7e5");
+        WsMoveDTO dto = new WsMoveDTO(game.getId().toString(), "e7e5", null, null);
         gameService.makeMove(game.getBlackId(), dto);
         verify(eventPublisher, times(1)).publishEvent(any(MatchStartedEvent.class));
     }
@@ -255,7 +255,7 @@ class GameServiceTest {
     @Test
     void makeMoveShouldPublishMoveMadeEventForValidMove() {
         Game game = beginAndGetGame();
-        WsMoveDTO dto = new WsMoveDTO(game.getId().toString(), "e2e4");
+        WsMoveDTO dto = new WsMoveDTO(game.getId().toString(), "e2e4", null, null);
         gameService.makeMove(game.getWhiteId(), dto);
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
@@ -266,7 +266,7 @@ class GameServiceTest {
     @Test
     void makeMoveShouldNotPublishEventForInvalidMove() {
         Game game = beginAndGetGame();
-        WsMoveDTO dto = new WsMoveDTO(game.getId().toString(), "e2d3");
+        WsMoveDTO dto = new WsMoveDTO(game.getId().toString(), "e2d3", null, null);
         gameService.makeMove(game.getWhiteId(), dto);
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
@@ -287,7 +287,7 @@ class GameServiceTest {
         game.getBoard().setPiece(7, 7, new King(Color.BLACK));
         game.setBlackKingPosition(new Position(7, 7));
 
-        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "c7c8q"));
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "c7c8q", null, null));
 
         assertThat(game.getBoard().getPiece(7, 2)).isInstanceOf(Queen.class);
     }
@@ -313,7 +313,7 @@ class GameServiceTest {
         when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
         when(userService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
-        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "d7c7"));
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "d7c7", null, null));
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
@@ -338,7 +338,7 @@ class GameServiceTest {
         when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
         when(userService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
-        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "g5g7"));
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "g5g7", null, null));
 
         verify(gameRepository).findById(game.getId());
         verify(gameRepository, atLeast(2)).save(any());
@@ -366,7 +366,7 @@ class GameServiceTest {
         game.setBlackKingPosition(new Position(7, 7));
 
         UUID moverId = game.getWhiteId();
-        gameService.makeMove(moverId, new WsMoveDTO(game.getId().toString(), "g5g7"));
+        gameService.makeMove(moverId, new WsMoveDTO(game.getId().toString(), "g5g7", null, null));
 
         verify(gameRepository, never()).findById(any());
         verify(userService, never()).updateUserElo(any(), any(), any(), any());
@@ -539,7 +539,7 @@ class GameServiceTest {
         when(gameRepository.findById(game.getId())).thenReturn(Optional.of(savedEntity));
         when(userService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
-        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4", null, null));
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(1)).publishEvent(captor.capture());
@@ -551,14 +551,14 @@ class GameServiceTest {
     @Test
     void makeMoveShouldEndGameWithTimeoutWhenBlackFlagsOnMove() {
         Game game = beginAndGetGame();
-        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4", null, null));
 
         game.setBlackRemainingMs(0);
 
         when(gameRepository.findById(game.getId())).thenReturn(Optional.of(savedEntity));
         when(userService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
-        gameService.makeMove(game.getBlackId(), new WsMoveDTO(game.getId().toString(), "e7e5"));
+        gameService.makeMove(game.getBlackId(), new WsMoveDTO(game.getId().toString(), "e7e5", null, null));
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(1)).publishEvent(captor.capture());
@@ -574,7 +574,7 @@ class GameServiceTest {
         Game game = beginAndGetGame();
         long before = System.currentTimeMillis();
 
-        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4", null, null));
 
         assertThat(game.getTurnStartTime()).isGreaterThanOrEqualTo(before);
     }
@@ -590,7 +590,7 @@ class GameServiceTest {
         Game game = gamesMap.values().iterator().next();
         int initialMs = game.getWhiteRemainingMs();
 
-        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4", null, null));
 
         assertThat(game.getWhiteRemainingMs()).isGreaterThan(initialMs);
     }
@@ -605,7 +605,7 @@ class GameServiceTest {
         when(gameRepository.findById(any())).thenReturn(Optional.of(savedEntity));
         when(userService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
-        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4", null, null));
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> !gameService.isInGame(game.getWhiteId()));
 
@@ -623,7 +623,7 @@ class GameServiceTest {
         when(gameRepository.findById(any())).thenReturn(Optional.of(savedEntity));
         when(userService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
-        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4"));
+        gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4", null, null));
         gameService.resignGame(game.getBlackId(), new WsResignDTO(game.getId().toString()));
 
         Thread.sleep(300);

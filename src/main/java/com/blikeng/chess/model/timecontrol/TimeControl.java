@@ -28,12 +28,12 @@ public enum TimeControl {
         this.increment = increment;
     }
 
-    public int initialSeconds() {
-        return initialMinutes * 60;
+    public int initialMs() {
+        return initialMinutes * 60 * 1000;
     }
 
-    public int incrementSeconds() {
-        return increment;
+    public int incrementMs() {
+        return increment * 1000;
     }
 
     public TcType type() {

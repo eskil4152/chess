@@ -32,7 +32,7 @@ class TimeControlTest {
 
     @Test
     void initialSecondsShouldBeMinutesTimedSixty() {
-        assertThat(TimeControl.BLITZ_5_0.initialSeconds()).isEqualTo(300);
-        assertThat(TimeControl.RAPID_10_0.initialSeconds()).isEqualTo(600);
+        assertThat(TimeControl.BLITZ_5_0.initialMs()).isEqualTo(300000);
+        assertThat(TimeControl.RAPID_10_0.initialMs()).isEqualTo(600000);
     }
 }
