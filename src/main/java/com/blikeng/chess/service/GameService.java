@@ -178,7 +178,7 @@ public class GameService {
                 }
 
                 eventPublisher.publishEvent(new MoveMadeEvent(
-                        game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move(), game.isWhiteTurn(), game.getTimeControl().initialMs()
+                        game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move(), game.isWhiteTurn(), game.getTimeControl().incrementMs()
                 ));
             } else if (gameStatus != null) {
                 game.addMove(moveDTO.move());

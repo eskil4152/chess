@@ -7,9 +7,10 @@ public record WsMoveDTO(
         WsMessageType type,
         String gameId,
         String move,
-        Integer increment
+        Integer increment,
+        Boolean whiteMove
 ) {
-    public WsMoveDTO(String gameId, String move, Integer increment) {
-        this(WsMessageType.MOVE, gameId, move, increment);
+    public WsMoveDTO(String gameId, String move, Integer increment, Boolean whiteMove) {
+        this(WsMessageType.MOVE, gameId, move, increment, whiteMove);
     }
 }
