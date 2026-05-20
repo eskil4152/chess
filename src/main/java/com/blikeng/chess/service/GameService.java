@@ -325,7 +325,7 @@ public class GameService {
             ));
         }
 
-        int[] newElo = userService.updateUserElo(game.getWhiteId(), game.getBlackId(), gameStatus);
+        int[] newElo = userService.updateUserElo(game.getTimeControl(), game.getWhiteId(), game.getBlackId(), gameStatus);
 
         eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, game.getEndedBy(), newElo[0], newElo[1]));
         games.remove(game.getId());
