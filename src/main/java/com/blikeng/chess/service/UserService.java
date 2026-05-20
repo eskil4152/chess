@@ -18,7 +18,6 @@ import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.PasswordService;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -81,16 +80,12 @@ public class UserService {
         double whiteScore = whiteWin ? 1.0 : drawScore;
         double blackScore = 1.0 - whiteScore;
 
-        int[] elos;
-        int initialMinutes = timeControl.initialSeconds() / 60;
-
-        if (initialMinutes <= 2) {
-            elos = handleBulletElo(white, black, whiteScore, blackScore);
-        } else if (initialMinutes <= 5) {
-            elos = handleBlitzElo(white, black, whiteScore, blackScore);
-        } else {
-            elos = handleRapidElo(white, black, whiteScore, blackScore);
-        }
+        int[] elos = switch (timeControl.type()) {
+            case BULLET -> handleBulletElo(white, black, whiteScore, blackScore);
+            case BLITZ -> handleBlitzElo(white, black, whiteScore, blackScore);
+            case RAPID -> handleRapidElo(white, black, whiteScore, blackScore);
+            case CLASSICAL -> handleClassicalElo(white, black, whiteScore, blackScore);
+        };
 
         userRepository.save(white);
         userRepository.save(black);
@@ -185,6 +180,21 @@ public class UserService {
         black.setRapidGames(black.getRapidGames() + 1);
         if (blackElo > 2399) black.setBeen2400Rapid(true);
         black.setRapidElo(blackElo);
+
+        return new int[]{whiteElo, blackElo};
+    }
+
+    private int[] handleClassicalElo(UserEntity white, UserEntity black, double whiteScore, double blackScore){
+        int whiteElo = calculateNewElo(white.getClassicalElo(), black.getClassicalElo(), whiteScore, getKFactor(white.getClassicalGames(), white.isBeen2400Classical()));
+        int blackElo = calculateNewElo(black.getClassicalElo(), white.getClassicalElo(), blackScore, getKFactor(black.getClassicalGames(), black.isBeen2400Classical()));
+
+        white.setClassicalGames(white.getClassicalGames() + 1);
+        if (whiteElo > 2399) white.setBeen2400Classical(true);
+        white.setClassicalElo(whiteElo);
+
+        black.setClassicalGames(black.getClassicalGames() + 1);
+        if (blackElo > 2399) black.setBeen2400Classical(true);
+        black.setClassicalElo(blackElo);
 
         return new int[]{whiteElo, blackElo};
     }

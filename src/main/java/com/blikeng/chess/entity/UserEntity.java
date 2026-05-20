@@ -37,18 +37,21 @@ public class UserEntity {
 
     private String avatarUrl;
 
+    private int bulletGames = 0;
     private int bulletElo = 800;
     private boolean been2400Bullet = false;
 
+    private int blitzGames = 0;
     private int blitzElo = 800;
     private boolean been2400Blitz = false;
 
+    private int rapidGames = 0;
     private int rapidElo = 800;
     private boolean been2400Rapid = false;
 
-    private int blitzGames = 0;
-    private int rapidGames = 0;
-    private int bulletGames = 0;
+    private int classicalGames = 0;
+    private int classicalElo = 800;
+    private boolean been2400Classical = false;
 
     @Enumerated(EnumType.STRING)
     private UserRole role = UserRole.USER;
