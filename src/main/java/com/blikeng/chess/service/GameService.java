@@ -84,8 +84,8 @@ public class GameService {
             whitePlayer.getUsername(),
             blackPlayer.getId(),
             blackPlayer.getUsername(),
-            gameEntity.getWhite().getElo(),
-            gameEntity.getBlack().getElo(),
+            gameEntity.getWhite().getElo(timeControl),
+            gameEntity.getBlack().getElo(timeControl),
             timeControl,
             timeControl.initialSeconds() * 1000,
             timeControl.initialSeconds() * 1000,
@@ -97,13 +97,13 @@ public class GameService {
         scheduleFlagCheck(game, true);
 
         eventPublisher.publishEvent(new MatchStartedEvent(
-                game.getId(),
-                whitePlayer.getId(),
-                whitePlayer.getUsername(),
-                blackPlayer.getId(),
-                blackPlayer.getUsername(),
-                whitePlayer.getElo(),
-                blackPlayer.getElo()
+            game.getId(),
+            whitePlayer.getId(),
+            whitePlayer.getUsername(),
+            blackPlayer.getId(),
+            blackPlayer.getUsername(),
+            gameEntity.getWhite().getElo(timeControl),
+            gameEntity.getBlack().getElo(timeControl)
         ));
 
         logger.info("Game started: {}. White: {}. Black: {}", game.getId(), whitePlayer.getUsername(), blackPlayer.getUsername());
@@ -130,7 +130,7 @@ public class GameService {
         games.put(game.getId(), game);
 
         eventPublisher.publishEvent(new MatchStartedEvent(
-                game.getId(), whiteId, whiteUsername, blackId, blackUsername, player.getElo(), player.getElo()
+                game.getId(), whiteId, whiteUsername, blackId, blackUsername, 0, 0
         ));
 
         logger.info("Bot game started: {}. White: {}. Black: {}", game.getId(), whiteUsername, blackUsername);
