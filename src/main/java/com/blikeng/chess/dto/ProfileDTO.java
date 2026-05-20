@@ -10,6 +10,8 @@ public record ProfileDTO (
         int blitzGames,
         int rapidElo,
         int rapidGames,
+        int classicalElo,
+        int classicalGames,
         boolean isFriend
 ){
 }

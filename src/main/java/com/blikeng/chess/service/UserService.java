@@ -59,6 +59,8 @@ public class UserService {
             user.getBlitzGames(),
             user.getRapidElo(),
             user.getRapidGames(),
+            user.getClassicalElo(),
+            user.getClassicalGames(),
             isFriend
         );
     }
