@@ -1,50 +1,63 @@
 package com.blikeng.chess.model.timecontrol;
 
-public record TimeControl(int initialSeconds, int incrementSeconds) {
-    public TimeControl(int initialSeconds, int incrementSeconds) {
-        this.initialSeconds = initialSeconds * 60;
-        this.incrementSeconds = incrementSeconds;
+public enum TimeControl {
+    BULLET_1_0(1, 0),
+    BULLET_1_1(1, 1),
+    BULLET_2_0(2, 0),
+
+    BLITZ_3_0(3, 0),
+    BLITZ_3_2(3, 2),
+    BLITZ_5_0(5, 0),
+    BLITZ_5_3(5, 3),
+
+    RAPID_10_0(10, 0),
+    RAPID_10_5(10, 5),
+    RAPID_15_0(15, 0),
+    RAPID_15_10(15, 10),
+    RAPID_30_0(30, 0),
+
+    CLASSICAL_60_0(60, 0),
+    CLASSICAL_90_30(90, 30),
+    CLASSICAL_120_0(120, 0);
+
+    private final int initialMinutes;
+    private final int increment;
+
+    TimeControl(int initialMinutes, int increment) {
+        this.initialMinutes = initialMinutes;
+        this.increment = increment;
     }
 
-    public static TimeControl fromName(String name) {
-        return switch (name) {
-            case "BULLET_1_0" -> BULLET_1_0;
-            case "BULLET_1_1" -> BULLET_1_1;
-            case "BULLET_2_0" -> BULLET_2_0;
-            case "BLITZ_3_0"  -> BLITZ_3_0;
-            case "BLITZ_3_2"  -> BLITZ_3_2;
-            case "BLITZ_5_0"  -> BLITZ_5_0;
-            case "RAPID_10_0" -> RAPID_10_0;
-            case "RAPID_10_5" -> RAPID_10_5;
-            case "RAPID_15_0" -> RAPID_15_0;
-            case "RAPID_15_10" -> RAPID_15_10;
-            case "RAPID_30_0" -> RAPID_30_0;
-            case "RAPID_60_0" -> RAPID_60_0;
-            default -> throw new IllegalArgumentException("Unknown time control: " + name);
-        };
+    public int initialSeconds() {
+        return initialMinutes * 60;
+    }
+
+    public int incrementSeconds() {
+        return increment;
+    }
+
+    public TcType type() {
+        if (name().startsWith("BULLET")) return TcType.BULLET;
+        if (name().startsWith("BLITZ"))  return TcType.BLITZ;
+        if (name().startsWith("CLASSICAL")) return TcType.CLASSICAL;
+        return TcType.RAPID;
     }
 
     public String label() {
-        return switch (initialSeconds / 60) {
-            case 1, 2 -> "Bullet " + (initialSeconds / 60) + "+" + incrementSeconds;
-            case 3, 5 -> "Blitz " + (initialSeconds / 60) + "+" + incrementSeconds;
-            case 10, 15, 30, 60 -> "Rapid " + (initialSeconds / 60) + "+" + incrementSeconds;
-            default -> (initialSeconds / 60) + "+" + incrementSeconds;
+        String category = switch (type()) {
+            case BULLET -> "Bullet";
+            case BLITZ  -> "Blitz";
+            case RAPID  -> "Rapid";
+            case CLASSICAL -> "Classical";
         };
+        return category + " " + initialMinutes + "+" + increment;
     }
 
-    public static final TimeControl BULLET_1_0 = new TimeControl(1, 0);
-    public static final TimeControl BULLET_1_1 = new TimeControl(1, 1);
-    public static final TimeControl BULLET_2_0 = new TimeControl(2, 0);
-
-    public static final TimeControl BLITZ_3_0 = new TimeControl(3, 0);
-    public static final TimeControl BLITZ_3_2 = new TimeControl(3, 2);
-    public static final TimeControl BLITZ_5_0 = new TimeControl(5, 0);
-
-    public static final TimeControl RAPID_10_0 = new TimeControl(10, 0);
-    public static final TimeControl RAPID_10_5 = new TimeControl(10, 5);
-    public static final TimeControl RAPID_15_0 = new TimeControl(15, 0);
-    public static final TimeControl RAPID_15_10 = new TimeControl(15, 10);
-    public static final TimeControl RAPID_30_0 = new TimeControl(30, 0);
-    public static final TimeControl RAPID_60_0 = new TimeControl(60, 0);
+    public static TimeControl fromName(String name) {
+        try {
+            return valueOf(name);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Unknown time control: " + name);
+        }
+    }
 }

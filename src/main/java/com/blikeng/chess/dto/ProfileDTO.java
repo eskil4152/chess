@@ -4,7 +4,14 @@ public record ProfileDTO (
         String username,
         String bio,
         String avatarUrl,
-        int elo,
+        int bulletElo,
+        int bulletGames,
+        int blitzElo,
+        int blitzGames,
+        int rapidElo,
+        int rapidGames,
+        int classicalElo,
+        int classicalGames,
         boolean isFriend
 ){
 }

@@ -1,7 +1,9 @@
 package com.blikeng.chess.entity;
 
+import com.blikeng.chess.model.timecontrol.TimeControl;
 import com.blikeng.chess.security.UserRole;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,6 +11,7 @@ import java.util.UUID;
 
 @Entity
 @Getter
+@Setter
 @Table(name = "users")
 public class UserEntity {
     public UserEntity(String username, String password) {
@@ -19,34 +22,51 @@ public class UserEntity {
     protected UserEntity() {}
 
     @Id
+    @Setter(AccessLevel.NONE)
     private final UUID id = UUID.randomUUID();
 
     @Column(nullable = false, unique = true)
+    @Setter(AccessLevel.NONE)
     private String username;
 
     @Column(nullable = false)
-    @Setter
     private String password;
 
-    @Setter
     private String bio;
 
     private String email;
 
-    @Column(name = "avatarurl")
-    @Setter
     private String avatarUrl;
 
-    @Setter
-    private int elo = 800;
+    private int bulletGames = 0;
+    private int bulletElo = 800;
+    @Column(name = "been_2400_bullet")
+    private boolean been2400Bullet = false;
 
-    @Setter
-    private boolean been2400 = false;
+    private int blitzGames = 0;
+    private int blitzElo = 800;
+    @Column(name = "been_2400_blitz")
+    private boolean been2400Blitz = false;
 
-    @Setter
+    private int rapidGames = 0;
+    private int rapidElo = 800;
+    @Column(name = "been_2400_rapid")
+    private boolean been2400Rapid = false;
+
+    private int classicalGames = 0;
+    private int classicalElo = 800;
+    @Column(name = "been_2400_classical")
+    private boolean been2400Classical = false;
+
     @Enumerated(EnumType.STRING)
     private UserRole role = UserRole.USER;
 
-    @Setter
-    private int games = 0;
+    public int getElo(TimeControl timeControl){
+        return switch (timeControl.type()) {
+            case BULLET -> bulletElo;
+            case BLITZ -> blitzElo;
+            case RAPID -> rapidElo;
+            case CLASSICAL -> classicalElo;
+        };
+    }
 }

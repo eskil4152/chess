@@ -10,6 +10,7 @@ import com.blikeng.chess.exception.types.InvalidPasswordException;
 import com.blikeng.chess.exception.types.InvalidUserException;
 import com.blikeng.chess.exception.types.UserNotFoundException;
 import com.blikeng.chess.model.GameStatus;
+import com.blikeng.chess.model.timecontrol.TimeControl;
 import com.blikeng.chess.repository.FriendRepository;
 import com.blikeng.chess.repository.UserRepository;
 import com.blikeng.chess.security.JwtPrincipal;
@@ -17,7 +18,6 @@ import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.PasswordService;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -53,21 +53,28 @@ public class UserService {
             user.getUsername(),
             user.getBio(),
             user.getAvatarUrl(),
-            user.getElo(),
+            user.getBulletElo(),
+            user.getBulletGames(),
+            user.getBlitzElo(),
+            user.getBlitzGames(),
+            user.getRapidElo(),
+            user.getRapidGames(),
+            user.getClassicalElo(),
+            user.getClassicalGames(),
             isFriend
         );
     }
 
-    public int[] updateUserElo(UUID whiteId, UUID blackId, GameStatus status){
+    public int[] updateUserElo(TimeControl timeControl, UUID whiteId, UUID blackId, GameStatus status){
         return switch (status) {
-            case WHITE_WIN -> updateElo(whiteId, blackId, true, false);
-            case BLACK_WIN -> updateElo(whiteId, blackId, false, false);
-            case DRAW -> updateElo(whiteId, blackId, false, true);
+            case WHITE_WIN -> updateElo(timeControl, whiteId, blackId, true, false);
+            case BLACK_WIN -> updateElo(timeControl, whiteId, blackId, false, false);
+            case DRAW -> updateElo(timeControl, whiteId, blackId, false, true);
             default -> new int[0];
         };
     }
 
-    private int[] updateElo(UUID whiteId, UUID blackId, boolean whiteWin, boolean draw){
+    private int[] updateElo(TimeControl timeControl, UUID whiteId, UUID blackId, boolean whiteWin, boolean draw){
         UserEntity white = userRepository.findById(whiteId).orElseThrow(UserNotFoundException::new);
         UserEntity black = userRepository.findById(blackId).orElseThrow(UserNotFoundException::new);
 
@@ -75,21 +82,17 @@ public class UserService {
         double whiteScore = whiteWin ? 1.0 : drawScore;
         double blackScore = 1.0 - whiteScore;
 
-        int whiteElo = calculateNewElo(white.getElo(), black.getElo(), whiteScore, getKFactor(white.getGames(), white.isBeen2400()));
-        int blackElo = calculateNewElo(black.getElo(), white.getElo(), blackScore, getKFactor(black.getGames(), black.isBeen2400()));
-
-        white.setGames(white.getGames() + 1);
-        if (whiteElo > 2399) white.setBeen2400(true);
-        white.setElo(whiteElo);
-
-        black.setGames(black.getGames() + 1);
-        if (blackElo > 2399) black.setBeen2400(true);
-        black.setElo(blackElo);
+        int[] elos = switch (timeControl.type()) {
+            case BULLET -> handleBulletElo(white, black, whiteScore, blackScore);
+            case BLITZ -> handleBlitzElo(white, black, whiteScore, blackScore);
+            case RAPID -> handleRapidElo(white, black, whiteScore, blackScore);
+            case CLASSICAL -> handleClassicalElo(white, black, whiteScore, blackScore);
+        };
 
         userRepository.save(white);
         userRepository.save(black);
 
-        return new int[]{whiteElo, blackElo};
+        return elos;
     }
 
     public void updateUser(ProfileEditDTO profileEditDTO){
@@ -136,5 +139,65 @@ public class UserService {
         if (been2400) return 10;
 
         return gamesPlayed >= 30 ? 20 : 40;
+    }
+
+    private int[] handleBulletElo(UserEntity white, UserEntity black, double whiteScore, double blackScore){
+        int whiteElo = calculateNewElo(white.getBulletElo(), black.getBulletElo(), whiteScore, getKFactor(white.getBulletGames(), white.isBeen2400Bullet()));
+        int blackElo = calculateNewElo(black.getBulletElo(), white.getBulletElo(), blackScore, getKFactor(black.getBulletGames(), black.isBeen2400Bullet()));
+
+        white.setBulletGames(white.getBulletGames() + 1);
+        if (whiteElo > 2399) white.setBeen2400Bullet(true);
+        white.setBulletElo(whiteElo);
+
+        black.setBulletGames(black.getBulletGames() + 1);
+        if (blackElo > 2399) black.setBeen2400Bullet(true);
+        black.setBulletElo(blackElo);
+
+        return new int[]{whiteElo, blackElo};
+    }
+
+    private int[] handleBlitzElo(UserEntity white, UserEntity black, double whiteScore, double blackScore){
+        int whiteElo = calculateNewElo(white.getBlitzElo(), black.getBlitzElo(), whiteScore, getKFactor(white.getBlitzGames(), white.isBeen2400Blitz()));
+        int blackElo = calculateNewElo(black.getBlitzElo(), white.getBlitzElo(), blackScore, getKFactor(black.getBlitzGames(), black.isBeen2400Blitz()));
+
+        white.setBlitzGames(white.getBlitzGames() + 1);
+        if (whiteElo > 2399) white.setBeen2400Blitz(true);
+        white.setBlitzElo(whiteElo);
+
+        black.setBlitzGames(black.getBlitzGames() + 1);
+        if (blackElo > 2399) black.setBeen2400Blitz(true);
+        black.setBlitzElo(blackElo);
+
+        return new int[]{whiteElo, blackElo};
+    }
+
+    private int[] handleRapidElo(UserEntity white, UserEntity black, double whiteScore, double blackScore){
+        int whiteElo = calculateNewElo(white.getRapidElo(), black.getRapidElo(), whiteScore, getKFactor(white.getRapidGames(), white.isBeen2400Rapid()));
+        int blackElo = calculateNewElo(black.getRapidElo(), white.getRapidElo(), blackScore, getKFactor(black.getRapidGames(), black.isBeen2400Rapid()));
+
+        white.setRapidGames(white.getRapidGames() + 1);
+        if (whiteElo > 2399) white.setBeen2400Rapid(true);
+        white.setRapidElo(whiteElo);
+
+        black.setRapidGames(black.getRapidGames() + 1);
+        if (blackElo > 2399) black.setBeen2400Rapid(true);
+        black.setRapidElo(blackElo);
+
+        return new int[]{whiteElo, blackElo};
+    }
+
+    private int[] handleClassicalElo(UserEntity white, UserEntity black, double whiteScore, double blackScore){
+        int whiteElo = calculateNewElo(white.getClassicalElo(), black.getClassicalElo(), whiteScore, getKFactor(white.getClassicalGames(), white.isBeen2400Classical()));
+        int blackElo = calculateNewElo(black.getClassicalElo(), white.getClassicalElo(), blackScore, getKFactor(black.getClassicalGames(), black.isBeen2400Classical()));
+
+        white.setClassicalGames(white.getClassicalGames() + 1);
+        if (whiteElo > 2399) white.setBeen2400Classical(true);
+        white.setClassicalElo(whiteElo);
+
+        black.setClassicalGames(black.getClassicalGames() + 1);
+        if (blackElo > 2399) black.setBeen2400Classical(true);
+        black.setClassicalElo(blackElo);
+
+        return new int[]{whiteElo, blackElo};
     }
 }

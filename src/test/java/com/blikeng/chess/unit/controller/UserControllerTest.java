@@ -53,12 +53,12 @@ class UserControllerTest {
     @Test
     void shouldGetUser() throws Exception {
         when(userService.getUser("someUser"))
-                .thenReturn(new ProfileDTO("someUser", "bio text", null, 850, false));
+                .thenReturn(new ProfileDTO("someUser", "bio text", null, 850, 0, 0, 0, 0, 0, 0, 0, false));
 
         mockMvc.perform(get("/api/user/someUser"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("someUser"))
-                .andExpect(jsonPath("$.elo").value(850));
+                .andExpect(jsonPath("$.bulletElo").value(850));
     }
 
     @Test

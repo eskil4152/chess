@@ -84,8 +84,8 @@ class MatchmakingServiceTest {
     @Test
     void queuePlayerShouldStartGameWhenMatchFound() {
         TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
-        user1.setElo(800);
-        user2.setElo(850);
+        user1.setBlitzElo(800);
+        user2.setBlitzElo(850);
 
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
         when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
@@ -102,8 +102,8 @@ class MatchmakingServiceTest {
     void queuePlayerShouldNotMatchWhenEloDiffTooLarge() {
         TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
 
-        user1.setElo(800);
-        user2.setElo(1100);
+        user1.setBlitzElo(800);
+        user2.setBlitzElo(1100);
 
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
         when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
@@ -121,9 +121,9 @@ class MatchmakingServiceTest {
         TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
 
         UserEntity user3 = new UserEntity("user3", "h");
-        user1.setElo(500);  // diff to user3(650) = 150
-        user2.setElo(750);  // diff to user3(650) = 100  ← closer, should be matched
-        user3.setElo(650);
+        user1.setBlitzElo(500);  // diff to user3(650) = 150
+        user2.setBlitzElo(750);  // diff to user3(650) = 100  ← closer, should be matched
+        user3.setBlitzElo(650);
 
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
         when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
@@ -174,8 +174,8 @@ class MatchmakingServiceTest {
     void dequeuePlayerShouldRemoveFromQueue() {
         TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
 
-        user1.setElo(800);
-        user2.setElo(810);
+        user1.setBlitzElo(800);
+        user2.setBlitzElo(810);
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
         when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
 
@@ -192,8 +192,8 @@ class MatchmakingServiceTest {
     void dequeuePlayerByHttpShouldRemoveFromQueue() {
         TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
 
-        user1.setElo(800);
-        user2.setElo(810);
+        user1.setBlitzElo(800);
+        user2.setBlitzElo(810);
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
         when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
 

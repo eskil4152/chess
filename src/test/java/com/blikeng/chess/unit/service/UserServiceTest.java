@@ -9,6 +9,7 @@ import com.blikeng.chess.exception.types.InvalidPasswordException;
 import com.blikeng.chess.exception.types.InvalidUserException;
 import com.blikeng.chess.exception.types.UserNotFoundException;
 import com.blikeng.chess.model.GameStatus;
+import com.blikeng.chess.model.timecontrol.TimeControl;
 import com.blikeng.chess.repository.FriendRepository;
 import com.blikeng.chess.repository.UserRepository;
 import com.blikeng.chess.security.JwtPrincipal;
@@ -129,13 +130,13 @@ class UserServiceTest {
     @Test
     void updateUserEloShouldThrowWhenUserNotFound() {
         when(userRepository.findById(any())).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> userService.updateUserElo(UUID.randomUUID(), UUID.randomUUID(), GameStatus.WHITE_WIN))
+        assertThatThrownBy(() -> userService.updateUserElo(TimeControl.BLITZ_5_0, UUID.randomUUID(), UUID.randomUUID(), GameStatus.WHITE_WIN))
                 .isInstanceOf(UserNotFoundException.class);
     }
 
     @Test
     void updateUserEloShouldDoNothingWhenOngoing() {
-        userService.updateUserElo(UUID.randomUUID(), UUID.randomUUID(), GameStatus.ONGOING);
+        userService.updateUserElo(TimeControl.BLITZ_5_0, UUID.randomUUID(), UUID.randomUUID(), GameStatus.ONGOING);
         verify(userRepository, never()).findById(any());
     }
 
@@ -145,18 +146,18 @@ class UserServiceTest {
         UserEntity black = new UserEntity("black", "h");
         UUID whiteId = white.getId();
         UUID blackId = black.getId();
-        white.setElo(800);
-        black.setElo(800);
+        white.setBlitzElo(800);
+        black.setBlitzElo(800);
 
         when(userRepository.findById(whiteId)).thenReturn(Optional.of(white));
         when(userRepository.findById(blackId)).thenReturn(Optional.of(black));
         when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        userService.updateUserElo(whiteId, blackId, GameStatus.WHITE_WIN);
+        userService.updateUserElo(TimeControl.BLITZ_5_0, whiteId, blackId, GameStatus.WHITE_WIN);
 
-        assertThat(white.getElo()).isNotEqualTo(800);
-        assertThat(black.getElo()).isNotEqualTo(800);
-        assertThat(white.getElo()).isGreaterThan(black.getElo());
+        assertThat(white.getBlitzElo()).isNotEqualTo(800);
+        assertThat(black.getBlitzElo()).isNotEqualTo(800);
+        assertThat(white.getBlitzElo()).isGreaterThan(black.getBlitzElo());
     }
 
     @Test
@@ -165,18 +166,18 @@ class UserServiceTest {
         UserEntity black = new UserEntity("black", "h");
         UUID whiteId = white.getId();
         UUID blackId = black.getId();
-        white.setElo(800);
-        black.setElo(800);
+        white.setBlitzElo(800);
+        black.setBlitzElo(800);
 
         when(userRepository.findById(blackId)).thenReturn(Optional.of(black));
         when(userRepository.findById(whiteId)).thenReturn(Optional.of(white));
         when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        userService.updateUserElo(whiteId, blackId, GameStatus.BLACK_WIN);
+        userService.updateUserElo(TimeControl.BLITZ_5_0, whiteId, blackId, GameStatus.BLACK_WIN);
 
-        assertThat(black.getElo()).isNotEqualTo(800);
-        assertThat(white.getElo()).isNotEqualTo(800);
-        assertThat(black.getElo()).isGreaterThan(white.getElo());
+        assertThat(black.getBlitzElo()).isNotEqualTo(800);
+        assertThat(white.getBlitzElo()).isNotEqualTo(800);
+        assertThat(black.getBlitzElo()).isGreaterThan(white.getBlitzElo());
     }
 
     @Test
@@ -185,8 +186,8 @@ class UserServiceTest {
         UserEntity black = new UserEntity("black", "h");
         UUID whiteId = white.getId();
         UUID blackId = black.getId();
-        white.setElo(800);
-        black.setElo(800);
+        white.setBlitzElo(800);
+        black.setBlitzElo(800);
 
         when(userRepository.findById(any())).thenAnswer(inv -> {
             UUID id = inv.getArgument(0);
@@ -195,9 +196,9 @@ class UserServiceTest {
         });
         when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        userService.updateUserElo(whiteId, blackId, GameStatus.DRAW);
+        userService.updateUserElo(TimeControl.BLITZ_5_0, whiteId, blackId, GameStatus.DRAW);
 
-        assertThat(white.getElo()).isEqualTo(black.getElo());
+        assertThat(white.getBlitzElo()).isEqualTo(black.getBlitzElo());
     }
 
     // --- been2400 ---
@@ -205,34 +206,34 @@ class UserServiceTest {
     void updateUserEloShouldSetBeen2400WhenWhiteCrosses2400() {
         UserEntity white = new UserEntity("white", "h");
         UserEntity black = new UserEntity("black", "h");
-        white.setElo(2399);
-        black.setElo(2399);
+        white.setBlitzElo(2399);
+        black.setBlitzElo(2399);
 
         when(userRepository.findById(white.getId())).thenReturn(Optional.of(white));
         when(userRepository.findById(black.getId())).thenReturn(Optional.of(black));
         when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        userService.updateUserElo(white.getId(), black.getId(), GameStatus.WHITE_WIN);
+        userService.updateUserElo(TimeControl.BLITZ_5_0, white.getId(), black.getId(), GameStatus.WHITE_WIN);
 
-        assertThat(white.isBeen2400()).isTrue();
-        assertThat(black.isBeen2400()).isFalse();
+        assertThat(white.isBeen2400Blitz()).isTrue();
+        assertThat(black.isBeen2400Blitz()).isFalse();
     }
 
     @Test
     void updateUserEloShouldSetBeen2400WhenBlackCrosses2400() {
         UserEntity white = new UserEntity("white", "h");
         UserEntity black = new UserEntity("black", "h");
-        white.setElo(2399);
-        black.setElo(2399);
+        white.setBlitzElo(2399);
+        black.setBlitzElo(2399);
 
         when(userRepository.findById(white.getId())).thenReturn(Optional.of(white));
         when(userRepository.findById(black.getId())).thenReturn(Optional.of(black));
         when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        userService.updateUserElo(white.getId(), black.getId(), GameStatus.BLACK_WIN);
+        userService.updateUserElo(TimeControl.BLITZ_5_0, white.getId(), black.getId(), GameStatus.BLACK_WIN);
 
-        assertThat(black.isBeen2400()).isTrue();
-        assertThat(white.isBeen2400()).isFalse();
+        assertThat(black.isBeen2400Blitz()).isTrue();
+        assertThat(white.isBeen2400Blitz()).isFalse();
     }
 
     // --- Update User ---
@@ -363,17 +364,17 @@ class UserServiceTest {
         // equal ELO → expected=0.5, K=10 win: delta = round(10*0.5) = 5
         UserEntity white = new UserEntity("white", "h");
         UserEntity black = new UserEntity("black", "h");
-        white.setElo(1000);
-        black.setElo(1000);
-        white.setBeen2400(true);
+        white.setBlitzElo(1000);
+        black.setBlitzElo(1000);
+        white.setBeen2400Blitz(true);
 
         when(userRepository.findById(white.getId())).thenReturn(Optional.of(white));
         when(userRepository.findById(black.getId())).thenReturn(Optional.of(black));
         when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        userService.updateUserElo(white.getId(), black.getId(), GameStatus.WHITE_WIN);
+        userService.updateUserElo(TimeControl.BLITZ_5_0, white.getId(), black.getId(), GameStatus.WHITE_WIN);
 
-        assertThat(white.getElo()).isEqualTo(1005);
+        assertThat(white.getBlitzElo()).isEqualTo(1005);
     }
 
     @Test
@@ -381,16 +382,16 @@ class UserServiceTest {
         // equal ELO → expected=0.5, K=20 win: delta = round(20*0.5) = 10
         UserEntity white = new UserEntity("white", "h");
         UserEntity black = new UserEntity("black", "h");
-        white.setElo(1000);
-        black.setElo(1000);
-        white.setGames(30);
+        white.setBlitzElo(1000);
+        black.setBlitzElo(1000);
+        white.setBlitzGames(30);
 
         when(userRepository.findById(white.getId())).thenReturn(Optional.of(white));
         when(userRepository.findById(black.getId())).thenReturn(Optional.of(black));
         when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        userService.updateUserElo(white.getId(), black.getId(), GameStatus.WHITE_WIN);
+        userService.updateUserElo(TimeControl.BLITZ_5_0, white.getId(), black.getId(), GameStatus.WHITE_WIN);
 
-        assertThat(white.getElo()).isEqualTo(1010);
+        assertThat(white.getBlitzElo()).isEqualTo(1010);
     }
 }
