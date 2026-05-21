@@ -6,10 +6,7 @@ import com.blikeng.chess.dto.GameStateDTO;
 import com.blikeng.chess.service.GameHistoryService;
 import com.blikeng.chess.service.GameService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -33,9 +30,10 @@ public class GameController {
 
     @GetMapping("/user/{username}")
     public ResponseEntity<List<GamePreviewDTO>> getUserGames(
-            @PathVariable String username
+        @PathVariable String username,
+        @RequestParam(defaultValue = "0") int page
     ){
-        return ResponseEntity.ok(gameHistoryService.getGameHistory(username));
+        return ResponseEntity.ok(gameHistoryService.getGameHistory(username, page));
     }
 
     @GetMapping("/{id}")

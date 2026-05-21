@@ -16,6 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.Instant;
 import java.util.List;
@@ -76,9 +78,10 @@ class GameHistoryServiceTest {
     // --- Get Game History ---
     @Test
     void getGameHistoryShouldReturnListOfPreviews() {
-        when(gameRepository.findAllByUsername("white")).thenReturn(List.of(gameEntity));
+        when(gameRepository.findByUsernameOrderedByTimestampDesc("white", PageRequest.of(0, 25)))
+                .thenReturn(new PageImpl<>(List.of(gameEntity)));
 
-        List<GamePreviewDTO> history = gameHistoryService.getGameHistory("white");
+        List<GamePreviewDTO> history = gameHistoryService.getGameHistory("white", 0);
 
         assertThat(history).hasSize(1);
         assertThat(history.get(0).whiteUsername()).isEqualTo("white");
@@ -87,20 +90,21 @@ class GameHistoryServiceTest {
 
     @Test
     void getGameHistoryShouldThrowOnNullUsername() {
-        assertThatThrownBy(() -> gameHistoryService.getGameHistory(null))
+        assertThatThrownBy(() -> gameHistoryService.getGameHistory(null, 0))
                 .isInstanceOf(UserNotFoundException.class);
     }
 
     @Test
     void getGameHistoryShouldThrowOnBlankUsername() {
-        assertThatThrownBy(() -> gameHistoryService.getGameHistory("  "))
+        assertThatThrownBy(() -> gameHistoryService.getGameHistory("  ", 0))
                 .isInstanceOf(UserNotFoundException.class);
     }
 
     @Test
     void getGameHistoryShouldTrimUsername() {
-        when(gameRepository.findAllByUsername("white")).thenReturn(List.of());
-        List<GamePreviewDTO> result = gameHistoryService.getGameHistory("  white  ");
+        when(gameRepository.findByUsernameOrderedByTimestampDesc("white", PageRequest.of(0, 25)))
+                .thenReturn(new PageImpl<>(List.of()));
+        List<GamePreviewDTO> result = gameHistoryService.getGameHistory("  white  ", 0);
         assertThat(result).isEmpty();
     }
 }
