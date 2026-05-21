@@ -47,7 +47,7 @@ class GameControllerTest {
     @Test
     void shouldGetGameHistory() throws Exception {
         UUID id = UUID.randomUUID();
-        when(gameHistoryService.getGameHistory("someUser"))
+        when(gameHistoryService.getGameHistory("someUser", 0))
                 .thenReturn(List.of(new GamePreviewDTO(id, "black", "someUser", GameStatus.WHITE_WIN)));
 
         mockMvc.perform(get("/api/games/user/someUser"))
