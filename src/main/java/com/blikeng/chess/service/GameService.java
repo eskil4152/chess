@@ -110,7 +110,9 @@ public class GameService {
     }
 
     @Transactional
-    public void beginBotGame(UserEntity player, BotDefinition bot) {
+    public synchronized void beginBotGame(UserEntity player, BotDefinition bot) {
+        if (isInGame(player.getId())) throw new ExistingGameException();
+
         boolean playerIsWhite = ThreadLocalRandom.current().nextBoolean();
 
         UUID whiteId = playerIsWhite ? player.getId() : bot.id();
