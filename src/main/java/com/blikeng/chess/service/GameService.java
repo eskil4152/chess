@@ -175,11 +175,15 @@ public class GameService {
 
                     game.setTurnStartTime(System.currentTimeMillis());
                     scheduleFlagCheck(game, !isWhite);
-                }
 
-                eventPublisher.publishEvent(new MoveMadeEvent(
+                    eventPublisher.publishEvent(new MoveMadeEvent(
                         game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move(), game.isWhiteTurn(), game.getTimeControl().incrementMs()
-                ));
+                    ));
+                } else {
+                    eventPublisher.publishEvent(new MoveMadeEvent(
+                        game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move(), game.isWhiteTurn(), 0
+                    ));
+                }
             } else if (gameStatus != null) {
                 game.addMove(moveDTO.move());
 

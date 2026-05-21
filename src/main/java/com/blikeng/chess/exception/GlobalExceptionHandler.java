@@ -2,6 +2,7 @@ package com.blikeng.chess.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -12,7 +13,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<String> handleException(ApiException ex) {
-        logger.warn("API exception: {} {}", ex.getStatus(), ex.getMessage());
+        if (ex.getStatus() == HttpStatus.NOT_FOUND) {
+            logger.info("API exception: {} {}", ex.getStatus(), ex.getMessage());
+        } else {
+            logger.warn("API exception: {} {}", ex.getStatus(), ex.getMessage());
+        }
 
         return ResponseEntity
                 .status(ex.getStatus())
