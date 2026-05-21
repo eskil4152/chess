@@ -3,9 +3,11 @@ package com.blikeng.chess.service;
 import com.blikeng.chess.dto.GameDTO;
 import com.blikeng.chess.dto.GamePreviewDTO;
 import com.blikeng.chess.exception.types.GameNotFoundException;
+import com.blikeng.chess.exception.types.InvalidParameterException;
 import com.blikeng.chess.exception.types.InvalidUUIDException;
 import com.blikeng.chess.exception.types.UserNotFoundException;
 import com.blikeng.chess.repository.GameRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -39,11 +41,13 @@ public class GameHistoryService {
                 .orElseThrow(GameNotFoundException::new);
     }
 
-    public List<GamePreviewDTO> getGameHistory(String username) {
+    public List<GamePreviewDTO> getGameHistory(String username, int page) {
+        if (page < 0) throw new InvalidParameterException();
+
         if (username == null || username.trim().isBlank()) throw new UserNotFoundException();
         username = username.trim();
 
-        return gameRepository.findAllByUsername(username)
+        return gameRepository.findByUsernameOrderedByTimestampDesc(username, PageRequest.of(page, 25))
                 .stream()
                 .map(game -> new GamePreviewDTO(
                         game.getId(),

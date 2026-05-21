@@ -1,6 +1,8 @@
 package com.blikeng.chess.repository;
 
 import com.blikeng.chess.entity.GameEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,6 +20,7 @@ public interface GameRepository extends JpaRepository<GameEntity, UUID> {
             g.black.username = :username
         or
             g.white.username = :username
+        order by g.createdAt desc
     """)
-    List<GameEntity> findAllByUsername(@Param("username") String username);
+    Page<GameEntity> findByUsernameOrderedByTimestampDesc(@Param("username") String username, Pageable pageable);
 }
