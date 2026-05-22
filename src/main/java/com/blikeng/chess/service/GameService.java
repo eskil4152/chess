@@ -25,8 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -179,11 +178,11 @@ public class GameService {
                     scheduleFlagCheck(game, !isWhite);
 
                     eventPublisher.publishEvent(new MoveMadeEvent(
-                        game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move(), game.isWhiteTurn(), game.getTimeControl().incrementMs()
+                        game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move(), game.isWhiteTurn(), game.getTimeControl().incrementMs(), game.getSpectators()
                     ));
                 } else {
                     eventPublisher.publishEvent(new MoveMadeEvent(
-                        game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move(), game.isWhiteTurn(), 0
+                        game.getId(), game.getWhiteId(), game.getBlackId(), moveDTO.move(), game.isWhiteTurn(), 0, game.getSpectators()
                     ));
                 }
             } else if (gameStatus != null) {
@@ -221,19 +220,30 @@ public class GameService {
                 .orElseThrow(GameNotFoundException::new);
     }
 
-    public GameStateDTO restoreGameState(String gameId) {
-        UUID id;
+    public GameStateDTO restoreGameState(String gameIdString) {
+        JwtPrincipal jwtPrincipal = JwtService.getCurrentUser();
+        if (jwtPrincipal == null) throw new InvalidUserException();
+
+        UUID userId = jwtPrincipal.userId();
+
+        UUID gameId;
         try {
-            id = UUID.fromString(gameId);
+            gameId = UUID.fromString(gameIdString);
         } catch (IllegalArgumentException _) {
             throw new InvalidUUIDException();
         }
 
-        return games.values().stream()
-                .filter(g -> g.getId().equals(id))
+        GameStateDTO gameStateDTO = games.values().stream()
+                .filter(g -> g.getId().equals(gameId))
                 .findFirst()
                 .map(this::buildGameStateDTO)
                 .orElseThrow(GameNotFoundException::new);
+
+        if (!gameStateDTO.whiteId().equals(userId) && !gameStateDTO.blackId().equals(userId)) {
+            games.get(gameId).getSpectators().add(userId);
+        }
+
+        return gameStateDTO;
     }
 
     private GameStateDTO buildGameStateDTO(Game game) {
@@ -257,8 +267,7 @@ public class GameService {
                 game.getWhiteElo(),
                 game.getBlackElo(),
                 whiteRemaining,
-                blackRemaining,
-                true
+                blackRemaining
         );
     }
 
@@ -317,13 +326,13 @@ public class GameService {
     private void handleBotGameEnd(Game game, GameStatus gameStatus) {
         if (!game.getMoves().isEmpty()) {
             eventPublisher.publishEvent(new MoveMadeEvent(
-                    game.getId(), game.getWhiteId(), game.getBlackId(), game.getMoves().getLast(), game.isWhiteTurn(), 0
+                    game.getId(), game.getWhiteId(), game.getBlackId(), game.getMoves().getLast(), game.isWhiteTurn(), 0, game.getSpectators()
             ));
         }
 
         eventPublisher.publishEvent(new MatchEndedEvent(
                 game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, game.getEndedBy(),
-                game.getWhiteElo(), game.getBlackElo()
+                game.getWhiteElo(), game.getBlackElo(), game.getSpectators()
         ));
         games.remove(game.getId());
 
@@ -342,13 +351,13 @@ public class GameService {
 
         if (!game.getMoves().isEmpty()) {
             eventPublisher.publishEvent(new MoveMadeEvent(
-                    game.getId(), game.getWhiteId(), game.getBlackId(), game.getMoves().getLast(), game.isWhiteTurn(), game.getTimeControl().initialMs()
+                    game.getId(), game.getWhiteId(), game.getBlackId(), game.getMoves().getLast(), game.isWhiteTurn(), game.getTimeControl().initialMs(), game.getSpectators()
             ));
         }
 
         int[] newElo = userService.updateUserElo(game.getTimeControl(), game.getWhiteId(), game.getBlackId(), gameStatus);
 
-        eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, game.getEndedBy(), newElo[0], newElo[1]));
+        eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, game.getEndedBy(), newElo[0], newElo[1], game.getSpectators()));
         games.remove(game.getId());
         flagTasks.remove(game.getId());
 

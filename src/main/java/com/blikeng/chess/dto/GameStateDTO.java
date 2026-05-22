@@ -18,8 +18,7 @@ public record GameStateDTO(
         int whiteElo,
         int blackElo,
         int whiteRemainingMs,
-        int blackRemainingMs,
-        boolean isActive
+        int blackRemainingMs
 ) {
     public GameStateDTO(
         UUID gameId,
@@ -33,9 +32,8 @@ public record GameStateDTO(
         int whiteElo,
         int blackElo,
         int whiteRemainingMs,
-        int blackRemainingMs,
-        boolean isActive
+        int blackRemainingMs
     ) {
-        this(WsMessageType.GAME_STATE, gameId, whiteId, whiteUsername, blackId, blackUsername, moves, whiteDrawOffer, blackDrawOffer, whiteElo, blackElo, whiteRemainingMs, blackRemainingMs, isActive);
+        this(WsMessageType.GAME_STATE, gameId, whiteId, whiteUsername, blackId, blackUsername, moves, whiteDrawOffer, blackDrawOffer, whiteElo, blackElo, whiteRemainingMs, blackRemainingMs);
     }
 }

@@ -16,6 +16,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -46,6 +47,10 @@ public class NotificationService {
         String payload = serialize(new WsMoveDTO(event.gameId().toString(), event.move(), event.increment(), event.whiteTurn()));
         sendToUser(event.whiteId(), payload);
         sendToUser(event.blackId(), payload);
+
+        for (UUID spectator : event.spectators()) {
+            sendToUser(spectator, payload);
+        }
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
@@ -53,6 +58,10 @@ public class NotificationService {
         String payload = serialize(new WsGameEndedDTO(event.gameId(), event.status(), event.endedBy(), event.whiteElo(), event.blackElo()));
         sendToUser(event.whiteId(), payload);
         sendToUser(event.blackId(), payload);
+
+        for (UUID spectator : event.spectators()) {
+            sendToUser(spectator, payload);
+        }
     }
 
     public void onChallenge(UUID challengerId, UUID challengedId, WsOutgoingChallengeDTO dto){
