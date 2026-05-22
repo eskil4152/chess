@@ -60,7 +60,7 @@ public class NotificationService {
         sendToUser(event.blackId(), payload);
 
         for (UUID spectator : event.spectators()) {
-            sendToUser(spectator, payload);
+        sendToUser(spectator, payload);
         }
     }
 

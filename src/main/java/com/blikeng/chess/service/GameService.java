@@ -34,7 +34,7 @@ public class GameService {
     private final GameRepository gameRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationService notificationService;
-    private final UserService userService;
+    private final EloService eloService;
 
     private final MoveExecutor moveExecutor = new MoveExecutor();
     private final Logger logger = LoggerFactory.getLogger(GameService.class);
@@ -48,11 +48,12 @@ public class GameService {
             GameRepository gameRepository,
             ApplicationEventPublisher eventPublisher,
             NotificationService notificationService,
-            UserService userService) {
+            EloService eloService
+    ){
         this.gameRepository = gameRepository;
         this.eventPublisher = eventPublisher;
         this.notificationService = notificationService;
-        this.userService = userService;
+        this.eloService = eloService;
     }
 
     @Transactional
@@ -201,12 +202,6 @@ public class GameService {
                 .anyMatch(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId));
     }
 
-    public Optional<Game> getActiveGame(UUID userId) {
-        return games.values().stream()
-                .filter(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId))
-                .findFirst();
-    }
-
     public GameStateDTO restoreGameState() {
         JwtPrincipal jwtPrincipal = JwtService.getCurrentUser();
         if (jwtPrincipal == null) throw new InvalidUserException();
@@ -323,6 +318,12 @@ public class GameService {
         }
     }
 
+    public Optional<Game> getActiveGame(UUID userId) {
+        return games.values().stream()
+            .filter(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId))
+            .findFirst();
+    }
+
     private void handleBotGameEnd(Game game, GameStatus gameStatus) {
         if (!game.getMoves().isEmpty()) {
             eventPublisher.publishEvent(new MoveMadeEvent(
@@ -355,7 +356,7 @@ public class GameService {
             ));
         }
 
-        int[] newElo = userService.updateUserElo(game.getTimeControl(), game.getWhiteId(), game.getBlackId(), gameStatus);
+        int[] newElo = eloService.updateUserElo(game.getTimeControl(), game.getWhiteId(), game.getBlackId(), gameStatus);
 
         eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, game.getEndedBy(), newElo[0], newElo[1], game.getSpectators()));
         games.remove(game.getId());
