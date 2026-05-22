@@ -214,37 +214,52 @@ public class GameService {
 
         UUID userId = jwtPrincipal.userId();
 
-        GameStateDTO gameNullable = games.values().stream()
+        return games.values().stream()
                 .filter(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId))
                 .findFirst()
-                .map(game -> {
-                    long elapsed = System.currentTimeMillis() - game.getTurnStartTime();
-                    int whiteRemaining = game.isWhiteTurn()
-                            ? Math.max(0, game.getWhiteRemainingMs() - (int) elapsed)
-                            : game.getWhiteRemainingMs();
-                    int blackRemaining = game.isWhiteTurn()
-                            ? game.getBlackRemainingMs()
-                            : Math.max(0, game.getBlackRemainingMs() - (int) elapsed);
+                .map(this::buildGameStateDTO)
+                .orElseThrow(GameNotFoundException::new);
+    }
 
-                    return new GameStateDTO(
-                        game.getId(),
-                        game.getWhiteId(),
-                        game.getWhiteUsername(),
-                        game.getBlackId(),
-                        game.getBlackUsername(),
-                        game.getMoves(),
-                        game.isWhiteDraw(),
-                        game.isBlackDraw(),
-                        game.getWhiteElo(),
-                        game.getBlackElo(),
-                        whiteRemaining,
-                        blackRemaining
-                    );
-                })
-                .orElse(null);
+    public GameStateDTO restoreGameState(String gameId) {
+        UUID id;
+        try {
+            id = UUID.fromString(gameId);
+        } catch (IllegalArgumentException _) {
+            throw new InvalidUUIDException();
+        }
 
-        if (gameNullable == null) throw new GameNotFoundException();
-        else return gameNullable;
+        return games.values().stream()
+                .filter(g -> g.getId().equals(id))
+                .findFirst()
+                .map(this::buildGameStateDTO)
+                .orElseThrow(GameNotFoundException::new);
+    }
+
+    private GameStateDTO buildGameStateDTO(Game game) {
+        long elapsed = System.currentTimeMillis() - game.getTurnStartTime();
+        int whiteRemaining = game.isWhiteTurn()
+                ? Math.max(0, game.getWhiteRemainingMs() - (int) elapsed)
+                : game.getWhiteRemainingMs();
+        int blackRemaining = game.isWhiteTurn()
+                ? game.getBlackRemainingMs()
+                : Math.max(0, game.getBlackRemainingMs() - (int) elapsed);
+
+        return new GameStateDTO(
+                game.getId(),
+                game.getWhiteId(),
+                game.getWhiteUsername(),
+                game.getBlackId(),
+                game.getBlackUsername(),
+                game.getMoves(),
+                game.isWhiteDraw(),
+                game.isBlackDraw(),
+                game.getWhiteElo(),
+                game.getBlackElo(),
+                whiteRemaining,
+                blackRemaining,
+                true
+        );
     }
 
     @Transactional

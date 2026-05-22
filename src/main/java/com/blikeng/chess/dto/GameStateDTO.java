@@ -18,9 +18,24 @@ public record GameStateDTO(
         int whiteElo,
         int blackElo,
         int whiteRemainingMs,
-        int blackRemainingMs
+        int blackRemainingMs,
+        boolean isActive
 ) {
-    public GameStateDTO(UUID gameId, UUID whiteId, String whiteUsername, UUID blackId, String blackUsername, List<String> moves, boolean whiteDrawOffer, boolean blackDrawOffer, int whiteElo, int blackElo, int whiteRemainingMs, int blackRemainingMs) {
-        this(WsMessageType.GAME_STATE, gameId, whiteId, whiteUsername, blackId, blackUsername, moves, whiteDrawOffer, blackDrawOffer, whiteElo, blackElo, whiteRemainingMs, blackRemainingMs);
+    public GameStateDTO(
+        UUID gameId,
+        UUID whiteId,
+        String whiteUsername,
+        UUID blackId,
+        String blackUsername,
+        List<String> moves,
+        boolean whiteDrawOffer,
+        boolean blackDrawOffer,
+        int whiteElo,
+        int blackElo,
+        int whiteRemainingMs,
+        int blackRemainingMs,
+        boolean isActive
+    ) {
+        this(WsMessageType.GAME_STATE, gameId, whiteId, whiteUsername, blackId, blackUsername, moves, whiteDrawOffer, blackDrawOffer, whiteElo, blackElo, whiteRemainingMs, blackRemainingMs, isActive);
     }
 }
