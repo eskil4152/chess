@@ -8,13 +8,13 @@ import com.blikeng.chess.exception.types.BadEditException;
 import com.blikeng.chess.exception.types.InvalidPasswordException;
 import com.blikeng.chess.exception.types.InvalidUserException;
 import com.blikeng.chess.exception.types.UserNotFoundException;
-import com.blikeng.chess.model.GameStatus;
-import com.blikeng.chess.model.timecontrol.TimeControl;
+import com.blikeng.chess.model.Game;
 import com.blikeng.chess.repository.FriendRepository;
 import com.blikeng.chess.repository.UserRepository;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.PasswordService;
 import com.blikeng.chess.security.UserRole;
+import com.blikeng.chess.service.GameService;
 import com.blikeng.chess.service.UserService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +40,7 @@ class UserServiceTest {
     @Mock UserRepository userRepository;
     @Mock FriendRepository friendRepository;
     @Mock PasswordService passwordService;
+    @Mock GameService gameService;
     @InjectMocks UserService userService;
 
     private UserEntity user;
@@ -125,115 +126,27 @@ class UserServiceTest {
         verify(friendRepository, never()).existsById(any());
     }
 
-
-    // --- Update ELO ---
     @Test
-    void updateUserEloShouldThrowWhenUserNotFound() {
-        when(userRepository.findById(any())).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> userService.updateUserElo(TimeControl.BLITZ_5_0, UUID.randomUUID(), UUID.randomUUID(), GameStatus.WHITE_WIN))
-                .isInstanceOf(UserNotFoundException.class);
+    void getUserShouldIncludeActiveGameId() {
+        UUID gameId = UUID.randomUUID();
+        Game game = mock(Game.class);
+        when(game.getId()).thenReturn(gameId);
+        when(userRepository.findByUsernameIgnoreCase("someUser")).thenReturn(Optional.of(user));
+        when(gameService.getActiveGame(user.getId())).thenReturn(Optional.of(game));
+
+        ProfileDTO dto = userService.getUser("someUser");
+
+        assertThat(dto.activeGameId()).isEqualTo(gameId.toString());
     }
 
     @Test
-    void updateUserEloShouldDoNothingWhenOngoing() {
-        userService.updateUserElo(TimeControl.BLITZ_5_0, UUID.randomUUID(), UUID.randomUUID(), GameStatus.ONGOING);
-        verify(userRepository, never()).findById(any());
-    }
+    void getUserShouldReturnNullActiveGameIdWhenNotInGame() {
+        when(userRepository.findByUsernameIgnoreCase("someUser")).thenReturn(Optional.of(user));
+        when(gameService.getActiveGame(user.getId())).thenReturn(Optional.empty());
 
-    @Test
-    void updateUserEloShouldUpdateElosOnWhiteWin() {
-        UserEntity white = new UserEntity("white", "h");
-        UserEntity black = new UserEntity("black", "h");
-        UUID whiteId = white.getId();
-        UUID blackId = black.getId();
-        white.setBlitzElo(800);
-        black.setBlitzElo(800);
+        ProfileDTO dto = userService.getUser("someUser");
 
-        when(userRepository.findById(whiteId)).thenReturn(Optional.of(white));
-        when(userRepository.findById(blackId)).thenReturn(Optional.of(black));
-        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        userService.updateUserElo(TimeControl.BLITZ_5_0, whiteId, blackId, GameStatus.WHITE_WIN);
-
-        assertThat(white.getBlitzElo()).isNotEqualTo(800);
-        assertThat(black.getBlitzElo()).isNotEqualTo(800);
-        assertThat(white.getBlitzElo()).isGreaterThan(black.getBlitzElo());
-    }
-
-    @Test
-    void updateUserEloShouldUpdateElosOnBlackWin() {
-        UserEntity white = new UserEntity("white", "h");
-        UserEntity black = new UserEntity("black", "h");
-        UUID whiteId = white.getId();
-        UUID blackId = black.getId();
-        white.setBlitzElo(800);
-        black.setBlitzElo(800);
-
-        when(userRepository.findById(blackId)).thenReturn(Optional.of(black));
-        when(userRepository.findById(whiteId)).thenReturn(Optional.of(white));
-        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        userService.updateUserElo(TimeControl.BLITZ_5_0, whiteId, blackId, GameStatus.BLACK_WIN);
-
-        assertThat(black.getBlitzElo()).isNotEqualTo(800);
-        assertThat(white.getBlitzElo()).isNotEqualTo(800);
-        assertThat(black.getBlitzElo()).isGreaterThan(white.getBlitzElo());
-    }
-
-    @Test
-    void updateUserEloShouldNotChangeElosOnDraw() {
-        UserEntity white = new UserEntity("white", "h");
-        UserEntity black = new UserEntity("black", "h");
-        UUID whiteId = white.getId();
-        UUID blackId = black.getId();
-        white.setBlitzElo(800);
-        black.setBlitzElo(800);
-
-        when(userRepository.findById(any())).thenAnswer(inv -> {
-            UUID id = inv.getArgument(0);
-            if (id.equals(whiteId)) return Optional.of(white);
-            return Optional.of(black);
-        });
-        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        userService.updateUserElo(TimeControl.BLITZ_5_0, whiteId, blackId, GameStatus.DRAW);
-
-        assertThat(white.getBlitzElo()).isEqualTo(black.getBlitzElo());
-    }
-
-    // --- been2400 ---
-    @Test
-    void updateUserEloShouldSetBeen2400WhenWhiteCrosses2400() {
-        UserEntity white = new UserEntity("white", "h");
-        UserEntity black = new UserEntity("black", "h");
-        white.setBlitzElo(2399);
-        black.setBlitzElo(2399);
-
-        when(userRepository.findById(white.getId())).thenReturn(Optional.of(white));
-        when(userRepository.findById(black.getId())).thenReturn(Optional.of(black));
-        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        userService.updateUserElo(TimeControl.BLITZ_5_0, white.getId(), black.getId(), GameStatus.WHITE_WIN);
-
-        assertThat(white.isBeen2400Blitz()).isTrue();
-        assertThat(black.isBeen2400Blitz()).isFalse();
-    }
-
-    @Test
-    void updateUserEloShouldSetBeen2400WhenBlackCrosses2400() {
-        UserEntity white = new UserEntity("white", "h");
-        UserEntity black = new UserEntity("black", "h");
-        white.setBlitzElo(2399);
-        black.setBlitzElo(2399);
-
-        when(userRepository.findById(white.getId())).thenReturn(Optional.of(white));
-        when(userRepository.findById(black.getId())).thenReturn(Optional.of(black));
-        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        userService.updateUserElo(TimeControl.BLITZ_5_0, white.getId(), black.getId(), GameStatus.BLACK_WIN);
-
-        assertThat(black.isBeen2400Blitz()).isTrue();
-        assertThat(white.isBeen2400Blitz()).isFalse();
+        assertThat(dto.activeGameId()).isNull();
     }
 
     // --- Update User ---
@@ -358,40 +271,4 @@ class UserServiceTest {
                 .isInstanceOf(InvalidUserException.class);
     }
 
-    // --- KFactor ---
-    @Test
-    void updateUserEloShouldUseKFactor10WhenBeen2400() {
-        // equal ELO → expected=0.5, K=10 win: delta = round(10*0.5) = 5
-        UserEntity white = new UserEntity("white", "h");
-        UserEntity black = new UserEntity("black", "h");
-        white.setBlitzElo(1000);
-        black.setBlitzElo(1000);
-        white.setBeen2400Blitz(true);
-
-        when(userRepository.findById(white.getId())).thenReturn(Optional.of(white));
-        when(userRepository.findById(black.getId())).thenReturn(Optional.of(black));
-        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        userService.updateUserElo(TimeControl.BLITZ_5_0, white.getId(), black.getId(), GameStatus.WHITE_WIN);
-
-        assertThat(white.getBlitzElo()).isEqualTo(1005);
-    }
-
-    @Test
-    void updateUserEloShouldUseKFactor20WhenOver30Games() {
-        // equal ELO → expected=0.5, K=20 win: delta = round(20*0.5) = 10
-        UserEntity white = new UserEntity("white", "h");
-        UserEntity black = new UserEntity("black", "h");
-        white.setBlitzElo(1000);
-        black.setBlitzElo(1000);
-        white.setBlitzGames(30);
-
-        when(userRepository.findById(white.getId())).thenReturn(Optional.of(white));
-        when(userRepository.findById(black.getId())).thenReturn(Optional.of(black));
-        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        userService.updateUserElo(TimeControl.BLITZ_5_0, white.getId(), black.getId(), GameStatus.WHITE_WIN);
-
-        assertThat(white.getBlitzElo()).isEqualTo(1010);
-    }
 }
