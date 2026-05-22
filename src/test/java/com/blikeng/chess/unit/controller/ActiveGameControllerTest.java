@@ -1,15 +1,11 @@
 package com.blikeng.chess.unit.controller;
 
 import com.blikeng.chess.config.SecurityConfig;
-import com.blikeng.chess.controller.GameController;
-import com.blikeng.chess.dto.GameDTO;
-import com.blikeng.chess.dto.GamePreviewDTO;
+import com.blikeng.chess.controller.ActiveGameController;
 import com.blikeng.chess.dto.GameStateDTO;
 import com.blikeng.chess.exception.types.GameNotFoundException;
-import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.ratelimit.RateLimitingService;
-import com.blikeng.chess.service.GameHistoryService;
 import com.blikeng.chess.service.GameService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,50 +25,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(GameController.class)
+@WebMvcTest(ActiveGameController.class)
 @Import(SecurityConfig.class)
 @WithMockUser
-class GameControllerTest {
+class ActiveGameControllerTest {
     @Autowired MockMvc mockMvc;
     @MockitoBean GameService gameService;
-    @MockitoBean GameHistoryService gameHistoryService;
     @MockitoBean JwtService jwtService;
     @MockitoBean RateLimitingService rateLimitingService;
 
     @BeforeEach
     void setup() {
         when(rateLimitingService.tryConsume(any(), any(), any())).thenReturn(true);
-    }
-
-    @Test
-    void shouldGetGameHistory() throws Exception {
-        UUID id = UUID.randomUUID();
-        when(gameHistoryService.getGameHistory("someUser", 0))
-                .thenReturn(List.of(new GamePreviewDTO(id, "black", "someUser", GameStatus.WHITE_WIN)));
-
-        mockMvc.perform(get("/api/games/user/someUser"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].whiteUsername").value("someUser"));
-    }
-
-    @Test
-    void shouldGetGame() throws Exception {
-        UUID id = UUID.randomUUID();
-        when(gameHistoryService.getGame(id.toString()))
-                .thenReturn(new GameDTO(id, "black", "white", GameStatus.DRAW, ""));
-
-        mockMvc.perform(get("/api/games/{id}", id))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("DRAW"));
-    }
-
-    @Test
-    void shouldFailToFindGame() throws Exception {
-        String id = UUID.randomUUID().toString();
-        when(gameHistoryService.getGame(id)).thenThrow(new GameNotFoundException());
-
-        mockMvc.perform(get("/api/games/{id}", id))
-                .andExpect(status().isNotFound());
     }
 
     @Test

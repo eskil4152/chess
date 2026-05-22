@@ -4,10 +4,7 @@ import com.blikeng.chess.model.timecontrol.TimeControl;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Getter
@@ -143,6 +140,8 @@ public class Game {
 
     @Setter
     private long turnStartTime;
+
+    private final Set<UUID> spectators = new HashSet<>();
 
     public void switchTurn() {
         isWhiteTurn = !isWhiteTurn;

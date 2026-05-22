@@ -12,6 +12,7 @@ public record ProfileDTO (
         int rapidGames,
         int classicalElo,
         int classicalGames,
-        boolean isFriend
+        boolean isFriend,
+        String activeGameId
 ){
 }

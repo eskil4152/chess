@@ -9,6 +9,7 @@ import com.blikeng.chess.model.Position;
 import com.blikeng.chess.model.piece.*;
 import com.blikeng.chess.notifications.events.MatchStartedEvent;
 import com.blikeng.chess.notifications.events.MoveMadeEvent;
+import java.util.Set;
 import com.blikeng.chess.service.GameService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -113,7 +114,7 @@ class BotServiceTest {
 
     @Test
     void onMoveMadeShouldScheduleMoveWhenWhiteTurnAndWhiteIsBot() {
-        MoveMadeEvent event = new MoveMadeEvent(UUID.randomUUID(), BOT_ID, PLAYER_ID, "e7e5", true, 0);
+        MoveMadeEvent event = new MoveMadeEvent(UUID.randomUUID(), BOT_ID, PLAYER_ID, "e7e5", true, 0, Set.of());
 
         botService.onMoveMade(event);
 
@@ -122,7 +123,7 @@ class BotServiceTest {
 
     @Test
     void onMoveMadeShouldScheduleMoveWhenBlackTurnAndBlackIsBot() {
-        MoveMadeEvent event = new MoveMadeEvent(UUID.randomUUID(), PLAYER_ID, BOT_ID, "e2e4", false, 0);
+        MoveMadeEvent event = new MoveMadeEvent(UUID.randomUUID(), PLAYER_ID, BOT_ID, "e2e4", false, 0, Set.of());
 
         botService.onMoveMade(event);
 
@@ -131,7 +132,7 @@ class BotServiceTest {
 
     @Test
     void onMoveMadeShouldNotScheduleMoveWhenNextPlayerIsHuman() {
-        MoveMadeEvent event = new MoveMadeEvent(UUID.randomUUID(), PLAYER_ID, UUID.randomUUID(), "e2e4", true, 0);
+        MoveMadeEvent event = new MoveMadeEvent(UUID.randomUUID(), PLAYER_ID, UUID.randomUUID(), "e2e4", true, 0, Set.of());
 
         botService.onMoveMade(event);
 

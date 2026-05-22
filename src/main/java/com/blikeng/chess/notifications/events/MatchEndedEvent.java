@@ -3,6 +3,7 @@ package com.blikeng.chess.notifications.events;
 import com.blikeng.chess.model.EndedBy;
 import com.blikeng.chess.model.GameStatus;
 
+import java.util.Set;
 import java.util.UUID;
 
 public record MatchEndedEvent(
@@ -12,6 +13,7 @@ public record MatchEndedEvent(
         GameStatus status,
         EndedBy endedBy,
         int whiteElo,
-        int blackElo
+        int blackElo,
+        Set<UUID> spectators
 ) {
 }

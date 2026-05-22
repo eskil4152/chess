@@ -83,7 +83,7 @@ class NotificationServiceTest {
         when(presenceService.getSessions(whiteId)).thenReturn(Set.of(ws));
         when(presenceService.getSessions(blackId)).thenReturn(Set.of(bs));
 
-        notificationService.onMoveMade(new MoveMadeEvent(gameId, whiteId, blackId, "e2e4", true, 0));
+        notificationService.onMoveMade(new MoveMadeEvent(gameId, whiteId, blackId, "e2e4", true, 0, Set.of()));
 
         verify(ws).sendMessage(any(TextMessage.class));
         verify(bs).sendMessage(any(TextMessage.class));
@@ -96,7 +96,7 @@ class NotificationServiceTest {
         when(presenceService.getSessions(whiteId)).thenReturn(Set.of(ws));
         when(presenceService.getSessions(blackId)).thenReturn(Set.of(bs));
 
-        notificationService.onMatchEnded(new MatchEndedEvent(gameId, whiteId, blackId, GameStatus.WHITE_WIN, EndedBy.CHECKMATE, 100, 100));
+        notificationService.onMatchEnded(new MatchEndedEvent(gameId, whiteId, blackId, GameStatus.WHITE_WIN, EndedBy.CHECKMATE, 100, 100, Set.of()));
 
         verify(ws).sendMessage(any(TextMessage.class));
         verify(bs).sendMessage(any(TextMessage.class));

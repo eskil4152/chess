@@ -1,5 +1,6 @@
 package com.blikeng.chess.notifications.events;
 
+import java.util.Set;
 import java.util.UUID;
 
 public record MoveMadeEvent(
@@ -8,6 +9,7 @@ public record MoveMadeEvent(
         UUID blackId,
         String move,
         boolean whiteTurn,
-        int increment
+        int increment,
+        Set<UUID> spectators
 ) {
 }
