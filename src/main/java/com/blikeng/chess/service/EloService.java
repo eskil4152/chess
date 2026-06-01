@@ -51,6 +51,9 @@ public class EloService {
         int whiteElo = calculateNewElo(white.getBulletElo(), black.getBulletElo(), whiteScore, getKFactor(white.getBulletGames(), white.isBeen2400Bullet()));
         int blackElo = calculateNewElo(black.getBulletElo(), white.getBulletElo(), blackScore, getKFactor(black.getBulletGames(), black.isBeen2400Bullet()));
 
+        if (whiteScore == 1) white.setBulletWins(white.getBulletWins() + 1);
+        if (blackScore == 1) black.setBulletWins(black.getBulletWins() + 1);
+
         white.setBulletGames(white.getBulletGames() + 1);
         if (whiteElo > 2399) white.setBeen2400Bullet(true);
         white.setBulletElo(whiteElo);
@@ -65,6 +68,9 @@ public class EloService {
     private int[] handleBlitzElo(UserEntity white, UserEntity black, double whiteScore, double blackScore){
         int whiteElo = calculateNewElo(white.getBlitzElo(), black.getBlitzElo(), whiteScore, getKFactor(white.getBlitzGames(), white.isBeen2400Blitz()));
         int blackElo = calculateNewElo(black.getBlitzElo(), white.getBlitzElo(), blackScore, getKFactor(black.getBlitzGames(), black.isBeen2400Blitz()));
+
+        if (whiteScore == 1) white.setBlitzWins(white.getBlitzWins() + 1);
+        if (blackScore == 1) black.setBlitzWins(black.getBlitzWins() + 1);
 
         white.setBlitzGames(white.getBlitzGames() + 1);
         if (whiteElo > 2399) white.setBeen2400Blitz(true);
@@ -81,6 +87,9 @@ public class EloService {
         int whiteElo = calculateNewElo(white.getRapidElo(), black.getRapidElo(), whiteScore, getKFactor(white.getRapidGames(), white.isBeen2400Rapid()));
         int blackElo = calculateNewElo(black.getRapidElo(), white.getRapidElo(), blackScore, getKFactor(black.getRapidGames(), black.isBeen2400Rapid()));
 
+        if (whiteScore == 1) white.setRapidWins(white.getRapidWins() + 1);
+        if (blackScore == 1) black.setRapidWins(black.getRapidWins() + 1);
+
         white.setRapidGames(white.getRapidGames() + 1);
         if (whiteElo > 2399) white.setBeen2400Rapid(true);
         white.setRapidElo(whiteElo);
@@ -95,6 +104,9 @@ public class EloService {
     private int[] handleClassicalElo(UserEntity white, UserEntity black, double whiteScore, double blackScore){
         int whiteElo = calculateNewElo(white.getClassicalElo(), black.getClassicalElo(), whiteScore, getKFactor(white.getClassicalGames(), white.isBeen2400Classical()));
         int blackElo = calculateNewElo(black.getClassicalElo(), white.getClassicalElo(), blackScore, getKFactor(black.getClassicalGames(), black.isBeen2400Classical()));
+
+        if (whiteScore == 1) white.setClassicalWins(white.getClassicalWins() + 1);
+        if (blackScore == 1) black.setClassicalWins(black.getClassicalWins() + 1);
 
         white.setClassicalGames(white.getClassicalGames() + 1);
         if (whiteElo > 2399) white.setBeen2400Classical(true);
