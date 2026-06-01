@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 
+// TODO: Replace with a proper blacklist. Maybe redis with configured persistence
+
 @Component
 public class Blacklist {
     private final Cache<String, String> blacklist =
@@ -19,6 +21,7 @@ public class Blacklist {
     }
 
     public boolean contains(String token) {
+        if (token == null) return false;
         return blacklist.getIfPresent(token) != null;
     }
 }
