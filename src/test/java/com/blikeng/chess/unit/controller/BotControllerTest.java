@@ -7,6 +7,7 @@ import com.blikeng.chess.config.SecurityConfig;
 import com.blikeng.chess.controller.BotController;
 import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.types.ExistingGameException;
+import com.blikeng.chess.security.Blacklist;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.UserRole;
@@ -47,6 +48,7 @@ class BotControllerTest {
     @MockitoBean AuthService authService;
     @MockitoBean JwtService jwtService;
     @MockitoBean RateLimitingService rateLimitingService;
+    @MockitoBean Blacklist blacklist;
 
     private UUID userId;
 

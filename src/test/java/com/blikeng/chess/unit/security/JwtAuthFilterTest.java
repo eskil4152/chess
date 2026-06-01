@@ -1,9 +1,6 @@
 package com.blikeng.chess.unit.security;
 
-import com.blikeng.chess.security.JwtAuthFilter;
-import com.blikeng.chess.security.JwtPrincipal;
-import com.blikeng.chess.security.JwtService;
-import com.blikeng.chess.security.UserRole;
+import com.blikeng.chess.security.*;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
@@ -28,6 +25,7 @@ import static org.mockito.Mockito.*;
 class JwtAuthFilterTest {
 
     @Mock JwtService jwtService;
+    @Mock Blacklist blacklist;
     @InjectMocks JwtAuthFilter jwtAuthFilter;
 
     private MockHttpServletRequest request;

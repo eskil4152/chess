@@ -9,6 +9,7 @@ import com.blikeng.chess.exception.types.BadEditException;
 import com.blikeng.chess.exception.types.InvalidPasswordException;
 import com.blikeng.chess.exception.types.InvalidUserException;
 import com.blikeng.chess.exception.types.UserNotFoundException;
+import com.blikeng.chess.security.Blacklist;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.ratelimit.RateLimitingService;
 import com.blikeng.chess.service.UserService;
@@ -42,6 +43,7 @@ class UserControllerTest {
     @MockitoBean UserService userService;
     @MockitoBean JwtService jwtService;
     @MockitoBean RateLimitingService rateLimitingService;
+    @MockitoBean Blacklist blacklist;
 
     ObjectMapper objectMapper = new ObjectMapper();
 

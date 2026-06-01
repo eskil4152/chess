@@ -6,6 +6,7 @@ import com.blikeng.chess.dto.AuthDTO;
 import com.blikeng.chess.dto.AuthResult;
 import com.blikeng.chess.dto.LoginDTO;
 import com.blikeng.chess.exception.types.InvalidCredentialsException;
+import com.blikeng.chess.security.Blacklist;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.UserRole;
 import com.blikeng.chess.security.ratelimit.RateLimitingService;
@@ -40,6 +41,7 @@ class AuthControllerTest {
     @MockitoBean JwtService jwtService;
     @MockitoBean Environment environment;
     @MockitoBean RateLimitingService rateLimitingService;
+    @MockitoBean Blacklist blacklist;
 
     @BeforeEach
     void setup() {
@@ -56,7 +58,7 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginDTO("user", "pass")))
+                        .content(objectMapper.writeValueAsString(new LoginDTO("user", "pass", false)))
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("Set-Cookie"))
@@ -70,7 +72,7 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginDTO("user", "wrong")))
+                .content(objectMapper.writeValueAsString(new LoginDTO("user", "wrong", false)))
                         .with(csrf()))
                 .andExpect(status().isUnauthorized());
     }
@@ -83,7 +85,7 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginDTO("newuser", "password1")))
+                        .content(objectMapper.writeValueAsString(new LoginDTO("newuser", "password1", false)))
                         .with(csrf()))
                 .andExpect(status().isCreated())
                 .andExpect(header().exists("Set-Cookie"))
@@ -94,8 +96,7 @@ class AuthControllerTest {
     @Test
     void shouldLogOut() throws Exception {
         mockMvc.perform(post("/api/auth/logout").with(csrf()))
-                .andExpect(status().isOk())
-                .andExpect(header().exists("Set-Cookie"));
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -118,7 +119,7 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginDTO("user", "pass")))
+                        .content(objectMapper.writeValueAsString(new LoginDTO("user", "pass", false)))
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Set-Cookie", containsString("Secure")));

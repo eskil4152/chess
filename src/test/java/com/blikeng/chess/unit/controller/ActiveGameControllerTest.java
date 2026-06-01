@@ -4,6 +4,7 @@ import com.blikeng.chess.config.SecurityConfig;
 import com.blikeng.chess.controller.ActiveGameController;
 import com.blikeng.chess.dto.GameStateDTO;
 import com.blikeng.chess.exception.types.GameNotFoundException;
+import com.blikeng.chess.security.Blacklist;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.ratelimit.RateLimitingService;
 import com.blikeng.chess.service.GameService;
@@ -33,6 +34,7 @@ class ActiveGameControllerTest {
     @MockitoBean GameService gameService;
     @MockitoBean JwtService jwtService;
     @MockitoBean RateLimitingService rateLimitingService;
+    @MockitoBean Blacklist blacklist;
 
     @BeforeEach
     void setup() {
