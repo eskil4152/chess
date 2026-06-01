@@ -26,8 +26,8 @@ public class LeaderboardService {
                 .map(user -> new LeaderboardPlayerDTO(
                     user.getId(),
                     user.getUsername(),
-                    user.getBlitzGames(),
-                    0,
+                    user.getBulletGames(),
+                    user.getBulletWins(),
                     user.getBulletElo()
                 )).toList();
 
@@ -37,7 +37,7 @@ public class LeaderboardService {
                     user.getId(),
                     user.getUsername(),
                     user.getBlitzGames(),
-                    0,
+                    user.getBlitzWins(),
                     user.getBlitzElo()
                 )).toList();
 
@@ -47,7 +47,7 @@ public class LeaderboardService {
                     user.getId(),
                     user.getUsername(),
                     user.getRapidGames(),
-                    0,
+                    user.getRapidWins(),
                     user.getRapidElo()
                 )).toList();
 
@@ -57,7 +57,7 @@ public class LeaderboardService {
                     user.getId(),
                     user.getUsername(),
                     user.getClassicalGames(),
-                    0,
+                    user.getClassicalWins(),
                     user.getClassicalElo()
                 )).toList();
 

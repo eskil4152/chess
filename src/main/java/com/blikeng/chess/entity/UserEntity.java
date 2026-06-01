@@ -39,21 +39,25 @@ public class UserEntity {
     private String avatarUrl;
 
     private int bulletGames = 0;
+    private int bulletWins = 0;
     private int bulletElo = 800;
     @Column(name = "been_2400_bullet")
     private boolean been2400Bullet = false;
 
     private int blitzGames = 0;
+    private int blitzWins = 0;
     private int blitzElo = 800;
     @Column(name = "been_2400_blitz")
     private boolean been2400Blitz = false;
 
     private int rapidGames = 0;
+    private int rapidWins = 0;
     private int rapidElo = 800;
     @Column(name = "been_2400_rapid")
     private boolean been2400Rapid = false;
 
     private int classicalGames = 0;
+    private int classicalWins = 0;
     private int classicalElo = 800;
     @Column(name = "been_2400_classical")
     private boolean been2400Classical = false;
