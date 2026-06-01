@@ -18,11 +18,13 @@ import java.util.List;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
+    private final Blacklist blacklist;
 
     private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
 
-    public JwtAuthFilter(JwtService jwtService) {
+    public JwtAuthFilter(JwtService jwtService, Blacklist blacklist) {
         this.jwtService = jwtService;
+        this.blacklist = blacklist;
     }
 
     @Override
@@ -42,9 +44,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
         }
 
-        if (token != null && !token.isBlank()
-                && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (token != null &&
+            !token.isBlank() &&
+            SecurityContextHolder.getContext().getAuthentication() == null
+        ) {
             JwtPrincipal jwtPrincipal = jwtService.validateToken(token);
+
+            if (blacklist.contains(token)){
+                chain.doFilter(request, response);
+
+                return;
+            }
 
             if (jwtPrincipal != null) {
                 UsernamePasswordAuthenticationToken auth =

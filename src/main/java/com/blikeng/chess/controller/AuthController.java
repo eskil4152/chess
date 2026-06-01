@@ -3,6 +3,7 @@ package com.blikeng.chess.controller;
 import com.blikeng.chess.dto.AuthDTO;
 import com.blikeng.chess.dto.AuthResult;
 import com.blikeng.chess.dto.LoginDTO;
+import com.blikeng.chess.security.Blacklist;
 import com.blikeng.chess.service.AuthService;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
@@ -15,16 +16,19 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthService authService;
     private final Environment environment;
+    private final Blacklist blacklist;
 
     public AuthController(
             AuthService authService,
-            Environment environment
+            Environment environment,
+            Blacklist blacklist
     ) {
         this.authService = authService;
         this.environment = environment;
+        this.blacklist = blacklist;
     }
 
-    private static final Long MAX_AGE = (long) 24 * 60 * 60;
+    private static final Long MAX_AGE = 30 * 24 * 60 * 60L;
 
     @PostMapping("/login")
     public ResponseEntity<AuthDTO> login(@RequestBody LoginDTO loginDTO) {
@@ -51,7 +55,13 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout() {
+    public ResponseEntity<String> logout(
+        @CookieValue(value = "AUTH", required = false) String token
+    ) {
+       if (token == null) return ResponseEntity.ok().body("User already logged out");
+
+       blacklist.add(token);
+
         ResponseCookie cookie = makeCookie("", 0L);
 
         return ResponseEntity
