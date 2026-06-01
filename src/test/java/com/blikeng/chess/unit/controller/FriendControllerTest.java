@@ -7,6 +7,7 @@ import com.blikeng.chess.dto.UsernameDTO;
 import com.blikeng.chess.exception.types.AlreadyFriendsException;
 import com.blikeng.chess.exception.types.NotAllowedException;
 import com.blikeng.chess.exception.types.NotFoundException;
+import com.blikeng.chess.security.Blacklist;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.ratelimit.RateLimitingService;
 import com.blikeng.chess.service.FriendService;
@@ -42,6 +43,7 @@ class FriendControllerTest {
     @MockitoBean FriendService friendService;
     @MockitoBean JwtService jwtService;
     @MockitoBean RateLimitingService rateLimitingService;
+    @MockitoBean Blacklist blacklist;
 
     ObjectMapper objectMapper = new ObjectMapper();
 

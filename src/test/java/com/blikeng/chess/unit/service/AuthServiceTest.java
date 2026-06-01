@@ -59,7 +59,7 @@ class AuthServiceTest {
         when(passwordService.checkPassword("pass", "hashed")).thenReturn(true);
         when(jwtService.generateToken(user)).thenReturn("jwt");
 
-        AuthResult result = authService.login(new LoginDTO("testuser", "pass"));
+        AuthResult result = authService.login(new LoginDTO("testuser", "pass", false));
         assertThat(result.token()).isEqualTo("jwt");
         assertThat(result.user().username()).isEqualTo("testuser");
     }
@@ -67,7 +67,7 @@ class AuthServiceTest {
     @Test
     void loginShouldThrowWhenUserNotFound() {
         when(authRepository.findByUsernameIgnoreCase("unknown")).thenReturn(Optional.empty());
-        LoginDTO dto = new LoginDTO("unknown", "pass");
+        LoginDTO dto = new LoginDTO("unknown", "pass", false);
         assertThatThrownBy(() -> authService.login(dto))
                 .isInstanceOf(InvalidCredentialsException.class);
     }
@@ -76,7 +76,7 @@ class AuthServiceTest {
     void loginShouldThrowOnWrongPassword() {
         when(authRepository.findByUsernameIgnoreCase("testuser")).thenReturn(Optional.of(user));
         when(passwordService.checkPassword("wrong", "hashed")).thenReturn(false);
-        LoginDTO dto = new LoginDTO("testuser", "wrong");
+        LoginDTO dto = new LoginDTO("testuser", "wrong", false);
         assertThatThrownBy(() -> authService.login(dto))
                 .isInstanceOf(InvalidCredentialsException.class);
     }
@@ -90,14 +90,14 @@ class AuthServiceTest {
         when(authRepository.save(any())).thenReturn(user);
         when(jwtService.generateToken(user)).thenReturn("jwt");
 
-        AuthResult result = authService.register(new LoginDTO("newuser", "password1"));
+        AuthResult result = authService.register(new LoginDTO("newuser", "password1", false));
         assertThat(result.token()).isEqualTo("jwt");
         assertThat(result.user().username()).isEqualTo("testuser");
     }
 
     @Test
     void registerShouldThrowWhenUsernameTooShort() {
-        LoginDTO dto = new LoginDTO("ab", "password1");
+        LoginDTO dto = new LoginDTO("ab", "password1", false);
         assertThatThrownBy(() -> authService.register(dto))
                 .isInstanceOf(InvalidUsernameException.class);
     }
@@ -105,14 +105,14 @@ class AuthServiceTest {
     @Test
     void registerShouldThrowWhenUsernameTooLong() {
         String longName = "a".repeat(33);
-        LoginDTO dto = new LoginDTO(longName, "password1");
+        LoginDTO dto = new LoginDTO(longName, "password1", false);
         assertThatThrownBy(() -> authService.register(dto))
                 .isInstanceOf(InvalidUsernameException.class);
     }
 
     @Test
     void registerShouldThrowWhenPasswordTooShort() {
-        LoginDTO dto = new LoginDTO("validname", "short");
+        LoginDTO dto = new LoginDTO("validname", "short", false);
         assertThatThrownBy(() -> authService.register(dto))
                 .isInstanceOf(InvalidPasswordException.class);
     }
@@ -120,7 +120,7 @@ class AuthServiceTest {
     @Test
     void registerShouldThrowWhenPasswordTooLong() {
         String longPass = "a".repeat(129);
-        LoginDTO dto = new LoginDTO("validname", longPass);
+        LoginDTO dto = new LoginDTO("validname", longPass, false);
         assertThatThrownBy(() -> authService.register(dto))
                 .isInstanceOf(InvalidPasswordException.class);
     }
@@ -131,7 +131,7 @@ class AuthServiceTest {
         when(passwordService.hashPassword("password1")).thenReturn("hashed");
         when(authRepository.save(any())).thenReturn(user);
         when(jwtService.generateToken(user)).thenReturn("jwt");
-        assertThat(authService.register(new LoginDTO("abc", "password1")).token()).isEqualTo("jwt");
+        assertThat(authService.register(new LoginDTO("abc", "password1", false)).token()).isEqualTo("jwt");
     }
 
     @Test
@@ -141,7 +141,7 @@ class AuthServiceTest {
         when(passwordService.hashPassword("password1")).thenReturn("hashed");
         when(authRepository.save(any())).thenReturn(user);
         when(jwtService.generateToken(user)).thenReturn("jwt");
-        assertThat(authService.register(new LoginDTO(maxName, "password1")).token()).isEqualTo("jwt");
+        assertThat(authService.register(new LoginDTO(maxName, "password1", false)).token()).isEqualTo("jwt");
     }
 
     @Test
@@ -150,7 +150,7 @@ class AuthServiceTest {
         when(passwordService.hashPassword("exactly8")).thenReturn("hashed");
         when(authRepository.save(any())).thenReturn(user);
         when(jwtService.generateToken(user)).thenReturn("jwt");
-        assertThat(authService.register(new LoginDTO("validname", "exactly8")).token()).isEqualTo("jwt");
+        assertThat(authService.register(new LoginDTO("validname", "exactly8", false)).token()).isEqualTo("jwt");
     }
 
     @Test
@@ -160,13 +160,13 @@ class AuthServiceTest {
         when(passwordService.hashPassword(maxPass)).thenReturn("hashed");
         when(authRepository.save(any())).thenReturn(user);
         when(jwtService.generateToken(user)).thenReturn("jwt");
-        assertThat(authService.register(new LoginDTO("validname", maxPass)).token()).isEqualTo("jwt");
+        assertThat(authService.register(new LoginDTO("validname", maxPass, false)).token()).isEqualTo("jwt");
     }
 
     @Test
     void registerShouldThrowWhenUsernameTaken() {
         when(authRepository.existsByUsernameIgnoreCase("taken")).thenReturn(true);
-        LoginDTO dto = new LoginDTO("taken", "password1");
+        LoginDTO dto = new LoginDTO("taken", "password1", false);
         assertThatThrownBy(() -> authService.register(dto))
                 .isInstanceOf(UsernameTakenException.class);
     }

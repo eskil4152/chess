@@ -6,6 +6,7 @@ import com.blikeng.chess.dto.GameDTO;
 import com.blikeng.chess.dto.GamePreviewDTO;
 import com.blikeng.chess.exception.types.GameNotFoundException;
 import com.blikeng.chess.model.GameStatus;
+import com.blikeng.chess.security.Blacklist;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.ratelimit.RateLimitingService;
 import com.blikeng.chess.service.GameHistoryService;
@@ -35,6 +36,7 @@ class GameHistoryControllerTest {
     @MockitoBean GameHistoryService gameHistoryService;
     @MockitoBean JwtService jwtService;
     @MockitoBean RateLimitingService rateLimitingService;
+    @MockitoBean Blacklist blacklist;
 
     @BeforeEach
     void setup() {

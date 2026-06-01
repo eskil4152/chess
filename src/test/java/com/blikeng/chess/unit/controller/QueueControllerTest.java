@@ -4,6 +4,7 @@ import com.blikeng.chess.config.SecurityConfig;
 import com.blikeng.chess.controller.QueueController;
 import com.blikeng.chess.dto.TimeControlDTO;
 import com.blikeng.chess.exception.types.ExistingGameException;
+import com.blikeng.chess.security.Blacklist;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.ratelimit.RateLimitingService;
 import com.blikeng.chess.service.MatchmakingService;
@@ -33,6 +34,7 @@ class QueueControllerTest {
     @MockitoBean MatchmakingService matchmakingService;
     @MockitoBean JwtService jwtService;
     @MockitoBean RateLimitingService rateLimitingService;
+    @MockitoBean Blacklist blacklist;
 
     @BeforeEach
     void setup() {
