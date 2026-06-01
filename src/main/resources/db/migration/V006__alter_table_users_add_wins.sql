@@ -1,0 +1,11 @@
+ALTER TABLE users
+    ADD COLUMN bullet_wins INT NOT NULL DEFAULT 0;
+
+ALTER TABLE users
+    ADD COLUMN blitz_wins INT NOT NULL DEFAULT 0;
+
+ALTER TABLE users
+    ADD COLUMN rapid_wins INT NOT NULL DEFAULT 0;
+
+ALTER TABLE users
+    ADD COLUMN classical_wins INT NOT NULL DEFAULT 0;
