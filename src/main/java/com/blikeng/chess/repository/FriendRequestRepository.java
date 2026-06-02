@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface FriendRequestRepository extends JpaRepository<FriendRequestEntity, UUID> {
+    boolean existsByFromUserAndToUser(UUID fromUser, UUID toUser);
 }

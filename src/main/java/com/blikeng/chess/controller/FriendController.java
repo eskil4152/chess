@@ -30,7 +30,7 @@ public class FriendController {
     public ResponseEntity<Void> addFriend(
         @RequestBody UsernameDTO usernameDTO
     ){
-        friendService.addFriend(usernameDTO);
+        friendService.sendFriendRequest(usernameDTO);
         return ResponseEntity.ok().build();
     }
 
