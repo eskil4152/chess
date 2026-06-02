@@ -1,7 +1,9 @@
 package com.blikeng.chess.service;
 
 import java.util.List;
+import java.util.UUID;
 
+import com.blikeng.chess.dto.*;
 import com.blikeng.chess.entity.FriendRequestEntity;
 import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.types.*;
@@ -11,8 +13,6 @@ import com.blikeng.chess.repository.UserRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-import com.blikeng.chess.dto.FriendDTO;
-import com.blikeng.chess.dto.UsernameDTO;
 import com.blikeng.chess.entity.FriendEntity;
 import com.blikeng.chess.entity.FriendId;
 import com.blikeng.chess.repository.FriendRepository;
@@ -69,17 +69,63 @@ public class FriendService {
             throw new AlreadyFriendsException();
         }
 
-        if (friendRequestRepository.existsByFromUserAndToUser(user.getId(), friend.getId())) {
+        if (friendRequestRepository.existsByFromUser_IdAndToUser(user.getId(), friend.getId())) {
             throw new RequestExistsException();
         }
 
-        if (friendRequestRepository.existsByFromUserAndToUser(friend.getId(), user.getId())) {
-            // Accept friend request and return
+        if (friendRequestRepository.existsByFromUser_IdAndToUser(friend.getId(), user.getId())) {
+            FriendId friendId = FriendId.generate(user.getId(), friend.getId());
+
+            friendRepository.save(new FriendEntity(friendId, user, friend));
+            friendRequestRepository.deleteByFromUser_IdAndToUser(friend.getId(), user.getId());
+
+            return;
         }
 
-        FriendRequestEntity friendRequest = friendRequestRepository.save(new FriendRequestEntity(user.getId(), friend.getId()));
+        FriendRequestEntity friendRequest = friendRequestRepository.save(new FriendRequestEntity(user, friend.getId()));
 
         eventPublisher.publishEvent(new FriendRequestEvent(friendRequest.getId(), user, friend));
+    }
+
+    @Transactional
+    public void respondToFriendRequest(FriendRequestResponseDTO friendRequestResponseDTO){
+        JwtPrincipal principal = JwtService.getCurrentUser();
+        if (principal == null || principal.userId() == null) throw new InvalidUserException();
+
+        UUID requestId;
+
+        try {
+            requestId = UUID.fromString(friendRequestResponseDTO.id());
+        } catch (IllegalArgumentException _) {
+            throw new InvalidUUIDException();
+        }
+
+        FriendRequestEntity friendRequest = friendRequestRepository.findById(requestId).orElseThrow(NotFoundException::new);
+
+        UserEntity receiver = userRepository.findById(friendRequest.getToUser()).orElseThrow(InvalidUserException::new);
+        if (!receiver.getId().equals(principal.userId())) throw new NotFoundException();
+
+        UserEntity sender = friendRequest.getFromUser();
+
+        if (friendRequestResponseDTO.accepted()) {
+            FriendId friendId = FriendId.generate(sender.getId(), receiver.getId());
+
+            friendRepository.save(new FriendEntity(friendId, sender, receiver));
+        }
+
+        friendRequestRepository.deleteById(requestId);
+    }
+
+    public FriendRequestsDTO getFriendRequests() {
+        JwtPrincipal principal = JwtService.getCurrentUser();
+        if (principal == null || principal.userId() == null) throw new InvalidUserException();
+
+        List<FriendPreview> previews = friendRequestRepository.findAllByToUser(principal.userId())
+            .stream()
+            .map(req -> new FriendPreview(req.getFromUser().getUsername(), req.getFromUser().getAvatarUrl()))
+            .toList();
+
+        return new FriendRequestsDTO(previews);
     }
 
     public void removeFriend(UsernameDTO usernameDTO){

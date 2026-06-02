@@ -1,7 +1,6 @@
 package com.blikeng.chess.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 
 import java.util.UUID;
@@ -11,7 +10,7 @@ import java.util.UUID;
 public class FriendRequestEntity {
     protected FriendRequestEntity() {}
 
-    public FriendRequestEntity(UUID fromUser, UUID toUser) {
+    public FriendRequestEntity(UserEntity fromUser, UUID toUser) {
         this.fromUser = fromUser;
         this.toUser = toUser;
     }
@@ -19,6 +18,9 @@ public class FriendRequestEntity {
     @Id
     UUID id = UUID.randomUUID();
 
-    UUID fromUser;
+    @ManyToOne
+    @JoinColumn(name = "from_user")
+    UserEntity fromUser;
+
     UUID toUser;
 }
