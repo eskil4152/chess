@@ -22,10 +22,12 @@ import com.blikeng.chess.security.JwtService;
 public class FriendService {
     private final FriendRepository friendRepository;
     private final UserRepository userRepository;
+    private final PresenceService presenceService;
 
-    public FriendService(FriendRepository friendRepository, UserRepository userRepository) {
+    public FriendService(FriendRepository friendRepository, UserRepository userRepository, PresenceService presenceService) {
         this.friendRepository = friendRepository;
         this.userRepository = userRepository;
+        this.presenceService = presenceService;
     }
 
     public List<FriendDTO> getFriends() {
@@ -38,10 +40,11 @@ public class FriendService {
                 .map(friendship -> friendship.getUserA().getId().equals(principal.userId())
                     ? friendship.getUserB() : friendship.getUserA())
                 .map(friend -> new FriendDTO(
-                        friend.getId(),
-                        friend.getUsername(),
-                        friend.getBio(),
-                        friend.getAvatarUrl()
+                    friend.getId(),
+                    friend.getUsername(),
+                    friend.getBio(),
+                    friend.getAvatarUrl(),
+                    !presenceService.hasNoSessions(friend.getId())
                 )).toList();
     }
 
