@@ -50,10 +50,11 @@ public class GameHistoryService {
         return gameRepository.findByUsernameOrderedByTimestampDesc(username, PageRequest.of(page, 25))
                 .stream()
                 .map(game -> new GamePreviewDTO(
-                        game.getId(),
-                        game.getBlack().getUsername(),
-                        game.getWhite().getUsername(),
-                        game.getStatus()
+                    game.getId(),
+                    game.getBlack().getUsername(),
+                    game.getWhite().getUsername(),
+                    game.getStatus(),
+                    game.getTimeControl()
                 ))
                 .toList();
     }

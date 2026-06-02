@@ -72,10 +72,11 @@ public class GameService {
         Instant startTime = Instant.now();
 
         GameEntity gameEntity = gameRepository.save(new GameEntity(
-                whitePlayer,
-                blackPlayer,
-                GameStatus.ONGOING,
-                startTime
+            whitePlayer,
+            blackPlayer,
+            GameStatus.ONGOING,
+            startTime,
+            timeControl.name()
         ));
 
         Game game = new Game(
