@@ -8,6 +8,7 @@ public record GamePreviewDTO(
     UUID gameId,
     String blackUsername,
     String whiteUsername,
-    GameStatus status
+    GameStatus status,
+    String timeControl
 ) {
 }

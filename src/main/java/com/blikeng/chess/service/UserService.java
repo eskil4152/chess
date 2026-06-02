@@ -55,14 +55,27 @@ public class UserService {
             user.getUsername(),
             user.getBio(),
             user.getAvatarUrl(),
+
             user.getBulletElo(),
             user.getBulletGames(),
+            user.getBulletWins(),
+            user.getWinPercentage("bullet"),
+
             user.getBlitzElo(),
             user.getBlitzGames(),
+            user.getBlitzWins(),
+            user.getWinPercentage("blitz"),
+
             user.getRapidElo(),
             user.getRapidGames(),
+            user.getRapidWins(),
+            user.getWinPercentage("rapid"),
+
             user.getClassicalElo(),
             user.getClassicalGames(),
+            user.getClassicalWins(),
+            user.getWinPercentage("classical"),
+
             isFriend,
             gameId
         );

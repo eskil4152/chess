@@ -17,12 +17,14 @@ public class GameEntity {
             UserEntity white,
             UserEntity black,
             GameStatus status,
-            Instant createdAt
+            Instant createdAt,
+            String timeControl
     ){
         this.white = white;
         this.black = black;
         this.status = status;
         this.createdAt = createdAt;
+        this.timeControl = timeControl;
     }
 
     @Id
@@ -44,4 +46,6 @@ public class GameEntity {
 
     @Setter
     private String moves = "";
+
+    private String timeControl;
 }

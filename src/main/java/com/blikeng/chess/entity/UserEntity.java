@@ -73,4 +73,16 @@ public class UserEntity {
             case CLASSICAL -> classicalElo;
         };
     }
+
+    public double getWinPercentage(String timeControl){
+        double winPercentage = 100 * switch (timeControl) {
+            case "bullet" -> bulletWins / (double) bulletGames;
+            case "blitz" -> blitzWins / (double) blitzGames;
+            case "rapid" -> rapidWins / (double) rapidGames;
+            case "classical" -> classicalWins / (double) classicalGames;
+            default -> 0;
+        };
+
+        return Double.isNaN(winPercentage) ? 0 : winPercentage;
+    }
 }

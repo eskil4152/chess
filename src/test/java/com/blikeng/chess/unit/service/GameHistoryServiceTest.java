@@ -42,7 +42,7 @@ class GameHistoryServiceTest {
     void setup() {
         white = new UserEntity("white", "h");
         black = new UserEntity("black", "h");
-        gameEntity = new GameEntity(white, black, GameStatus.WHITE_WIN, Instant.now());
+        gameEntity = new GameEntity(white, black, GameStatus.WHITE_WIN, Instant.now(), "blitz");
     }
 
     // --- Get game ---
