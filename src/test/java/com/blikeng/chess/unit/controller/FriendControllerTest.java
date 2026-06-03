@@ -138,7 +138,7 @@ class FriendControllerTest {
 
         mockMvc.perform(get("/api/friends/requests"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.friendPreviews[0].username").value("bob"));
+                .andExpect(jsonPath("$.friendRequests[0].username").value("bob"));
     }
 
     @Test
@@ -147,7 +147,7 @@ class FriendControllerTest {
 
         mockMvc.perform(get("/api/friends/requests"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.friendPreviews").isEmpty());
+                .andExpect(jsonPath("$.friendRequests").isEmpty());
     }
 
     @Test
