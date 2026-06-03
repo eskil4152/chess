@@ -3,7 +3,7 @@ package com.blikeng.chess.unit.controller;
 import com.blikeng.chess.config.SecurityConfig;
 import com.blikeng.chess.controller.FriendController;
 import com.blikeng.chess.dto.FriendDTO;
-import com.blikeng.chess.dto.FriendPreview;
+import com.blikeng.chess.dto.FriendRequest;
 import com.blikeng.chess.dto.FriendRequestResponseDTO;
 import com.blikeng.chess.dto.FriendRequestsDTO;
 import com.blikeng.chess.dto.UsernameDTO;
@@ -134,7 +134,7 @@ class FriendControllerTest {
     @Test
     void shouldGetFriendRequests() throws Exception {
         when(friendService.getFriendRequests())
-                .thenReturn(new FriendRequestsDTO(List.of(new FriendPreview("bob", null))));
+                .thenReturn(new FriendRequestsDTO(List.of(new FriendRequest(UUID.randomUUID(), "bob", null))));
 
         mockMvc.perform(get("/api/friends/requests"))
                 .andExpect(status().isOk())
