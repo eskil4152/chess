@@ -313,8 +313,8 @@ class FriendServiceTest {
 
         FriendRequestsDTO result = friendService.getFriendRequests();
 
-        assertThat(result.friendPreviews()).hasSize(1);
-        assertThat(result.friendPreviews().getFirst().username()).isEqualTo("alice");
+        assertThat(result.friendRequests()).hasSize(1);
+        assertThat(result.friendRequests().getFirst().username()).isEqualTo("alice");
     }
 
     @Test
@@ -322,7 +322,7 @@ class FriendServiceTest {
         setupSecurityContext();
         when(friendRequestRepository.findAllByToUser(currentUser.getId())).thenReturn(List.of());
 
-        assertThat(friendService.getFriendRequests().friendPreviews()).isEmpty();
+        assertThat(friendService.getFriendRequests().friendRequests()).isEmpty();
     }
 
     // --- Remove Friend ---

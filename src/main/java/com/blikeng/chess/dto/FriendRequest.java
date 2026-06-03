@@ -1,6 +1,9 @@
 package com.blikeng.chess.dto;
 
-public record FriendPreview(
+import java.util.UUID;
+
+public record FriendRequest(
+    UUID requestId,
     String username,
     String avatarUrl
 ) {

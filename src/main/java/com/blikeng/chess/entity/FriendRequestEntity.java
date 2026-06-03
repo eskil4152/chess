@@ -6,6 +6,7 @@ import lombok.Getter;
 import java.util.UUID;
 
 @Entity
+@Table(name = "friend_requests")
 @Getter
 public class FriendRequestEntity {
     protected FriendRequestEntity() {}

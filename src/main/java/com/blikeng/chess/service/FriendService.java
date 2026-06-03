@@ -120,9 +120,13 @@ public class FriendService {
         JwtPrincipal principal = JwtService.getCurrentUser();
         if (principal == null || principal.userId() == null) throw new InvalidUserException();
 
-        List<FriendPreview> previews = friendRequestRepository.findAllByToUser(principal.userId())
+        List<FriendRequest> previews = friendRequestRepository.findAllByToUser(principal.userId())
             .stream()
-            .map(req -> new FriendPreview(req.getFromUser().getUsername(), req.getFromUser().getAvatarUrl()))
+            .map(req -> new FriendRequest(
+                req.getId(),
+                req.getFromUser().getUsername(),
+                req.getFromUser().getAvatarUrl()
+            ))
             .toList();
 
         return new FriendRequestsDTO(previews);
