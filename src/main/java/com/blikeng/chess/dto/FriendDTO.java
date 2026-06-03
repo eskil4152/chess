@@ -6,7 +6,8 @@ public record FriendDTO(
     UUID userId,
     String username,
     String bio,
-    String avatarUrl
+    String avatarUrl,
+    boolean isOnline
 ) {
 
 }

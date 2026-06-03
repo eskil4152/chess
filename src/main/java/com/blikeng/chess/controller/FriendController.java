@@ -1,5 +1,7 @@
 package com.blikeng.chess.controller;
 
+import com.blikeng.chess.dto.FriendRequestResponseDTO;
+import com.blikeng.chess.dto.FriendRequestsDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,8 +32,21 @@ public class FriendController {
     public ResponseEntity<Void> addFriend(
         @RequestBody UsernameDTO usernameDTO
     ){
-        friendService.addFriend(usernameDTO);
+        friendService.sendFriendRequest(usernameDTO);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/respond")
+    public ResponseEntity<Void> respondToFriendRequest(
+        @RequestBody FriendRequestResponseDTO friendRequestResponseDTO
+    ){
+        friendService.respondToFriendRequest(friendRequestResponseDTO);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/requests")
+    public ResponseEntity<FriendRequestsDTO> getFriendRequests() {
+        return ResponseEntity.ok(friendService.getFriendRequests());
     }
 
     @DeleteMapping("/remove")

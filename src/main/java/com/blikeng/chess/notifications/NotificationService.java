@@ -64,6 +64,16 @@ public class NotificationService {
         }
     }
 
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onFriendRequest(FriendRequestEvent event) {
+        String payload = serialize(new WsFriendRequestDTO(
+            event.id(),
+            event.fromUser().getUsername()
+        ));
+
+        sendToUser(event.toUser().getId(), payload);
+    }
+
     public void onChallenge(UUID challengerId, UUID challengedId, WsOutgoingChallengeDTO dto){
         sendToUser(challengedId, serialize(dto));
         sendToUser(challengerId, serialize(dto));

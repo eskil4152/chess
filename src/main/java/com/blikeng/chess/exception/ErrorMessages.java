@@ -27,4 +27,6 @@ public final class ErrorMessages {
     public static final String INVALID_CHALLENGE = "Invalid challenge";
     public static final String ALREADY_IN_GAME = "User is already in a game";
     public static final String ALREADY_CHALLENGED = "You have already challenged this player";
+
+    public static final String REQUEST_EXISTS = "Request already exists";
 }
