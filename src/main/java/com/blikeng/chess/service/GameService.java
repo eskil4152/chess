@@ -76,7 +76,8 @@ public class GameService {
             blackPlayer,
             GameStatus.ONGOING,
             startTime,
-            timeControl.name()
+            timeControl.name(),
+            null
         ));
 
         Game game = new Game(
@@ -348,6 +349,7 @@ public class GameService {
         gameRepository.findById(game.getId()).ifPresent(entity -> {
             entity.setMoves(moves);
             entity.setStatus(gameStatus);
+            entity.setEndedBy(game.getEndedBy());
             gameRepository.save(entity);
         });
 
