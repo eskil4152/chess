@@ -3,6 +3,7 @@ package com.blikeng.chess.unit.controller;
 import com.blikeng.chess.config.SecurityConfig;
 import com.blikeng.chess.controller.UserController;
 import com.blikeng.chess.dto.PasswordDTO;
+import com.blikeng.chess.dto.PlayerStatsDTO;
 import com.blikeng.chess.dto.ProfileDTO;
 import com.blikeng.chess.dto.ProfileEditDTO;
 import com.blikeng.chess.exception.types.BadEditException;
@@ -216,5 +217,26 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(new PasswordDTO("old", "newPass123")))
                         .with(csrf()))
                 .andExpect(status().isUnauthorized());
+    }
+
+    // Stats
+    @Test
+    void shouldGetStats() throws Exception {
+        when(userService.getPlayerStats("someUser", "rapid"))
+            .thenReturn(new PlayerStatsDTO(
+                800,
+                0, 0, 0, 0,
+                0, 0, 0,
+                0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0,
+                0, 0, 0
+            ));
+
+        mockMvc.perform(get("/api/user/someUser/stats/rapid"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.elo").value(800))
+            .andExpect(jsonPath("$.gamesPlayed").value(0))
+            .andExpect(jsonPath("$.gamesWon").value(0));
     }
 }
