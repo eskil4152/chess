@@ -1,0 +1,11 @@
+ALTER TABLE users
+    ADD COLUMN bullet_losses INT NOT NULL DEFAULT 0;
+
+ALTER TABLE users
+    ADD COLUMN blitz_losses INT NOT NULL DEFAULT 0;
+
+ALTER TABLE users
+    ADD COLUMN rapid_losses INT NOT NULL DEFAULT 0;
+
+ALTER TABLE users
+    ADD COLUMN classical_losses INT NOT NULL DEFAULT 0;
