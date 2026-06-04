@@ -43,8 +43,8 @@ public class MatchmakingService {
 
             var best = queue.entrySet().stream()
                     .filter(e -> e.getValue().timeControl.equals(requestedTc))
-                    .min(Comparator.comparingInt(e -> Math.abs(e.getValue().user.getElo(requestedTc) - user.getElo(requestedTc))))
-                    .filter(e -> Math.abs(e.getValue().user.getElo(requestedTc) - user.getElo(requestedTc)) <= 200)
+                    .min(Comparator.comparingInt(e -> Math.abs(e.getValue().user.getElo(requestedTc.type()) - user.getElo(requestedTc.type()))))
+                    .filter(e -> Math.abs(e.getValue().user.getElo(requestedTc.type()) - user.getElo(requestedTc.type())) <= 200)
                     .orElse(null);
 
             if (best == null) {

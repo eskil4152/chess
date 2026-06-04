@@ -76,7 +76,8 @@ public class GameService {
             blackPlayer,
             GameStatus.ONGOING,
             startTime,
-            timeControl.name()
+            timeControl.name(),
+            null
         ));
 
         Game game = new Game(
@@ -85,8 +86,8 @@ public class GameService {
             whitePlayer.getUsername(),
             blackPlayer.getId(),
             blackPlayer.getUsername(),
-            gameEntity.getWhite().getElo(timeControl),
-            gameEntity.getBlack().getElo(timeControl),
+            gameEntity.getWhite().getElo(timeControl.type()),
+            gameEntity.getBlack().getElo(timeControl.type()),
             timeControl,
             timeControl.initialMs(),
             timeControl.initialMs(),
@@ -103,8 +104,8 @@ public class GameService {
             whitePlayer.getUsername(),
             blackPlayer.getId(),
             blackPlayer.getUsername(),
-            gameEntity.getWhite().getElo(timeControl),
-            gameEntity.getBlack().getElo(timeControl)
+            gameEntity.getWhite().getElo(timeControl.type()),
+            gameEntity.getBlack().getElo(timeControl.type())
         ));
 
         logger.info("Game started: {}. White: {}. Black: {}", game.getId(), whitePlayer.getUsername(), blackPlayer.getUsername());
@@ -325,6 +326,10 @@ public class GameService {
             .findFirst();
     }
 
+    public List<GameEntity> getAllGames(String username, String timeControl) {
+        return gameRepository.findFinishedByUsernameAndTcType(username, timeControl);
+    }
+
     private void handleBotGameEnd(Game game, GameStatus gameStatus) {
         if (!game.getMoves().isEmpty()) {
             eventPublisher.publishEvent(new MoveMadeEvent(
@@ -348,6 +353,7 @@ public class GameService {
         gameRepository.findById(game.getId()).ifPresent(entity -> {
             entity.setMoves(moves);
             entity.setStatus(gameStatus);
+            entity.setEndedBy(game.getEndedBy());
             gameRepository.save(entity);
         });
 

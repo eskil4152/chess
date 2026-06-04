@@ -1,6 +1,6 @@
 package com.blikeng.chess.entity;
 
-import com.blikeng.chess.model.timecontrol.TimeControl;
+import com.blikeng.chess.model.timecontrol.TcType;
 import com.blikeng.chess.security.UserRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -40,24 +40,28 @@ public class UserEntity {
 
     private int bulletGames = 0;
     private int bulletWins = 0;
+    private int bulletLosses = 0;
     private int bulletElo = 800;
     @Column(name = "been_2400_bullet")
     private boolean been2400Bullet = false;
 
     private int blitzGames = 0;
     private int blitzWins = 0;
+    private int blitzLosses = 0;
     private int blitzElo = 800;
     @Column(name = "been_2400_blitz")
     private boolean been2400Blitz = false;
 
     private int rapidGames = 0;
     private int rapidWins = 0;
+    private int rapidLosses = 0;
     private int rapidElo = 800;
     @Column(name = "been_2400_rapid")
     private boolean been2400Rapid = false;
 
     private int classicalGames = 0;
     private int classicalWins = 0;
+    private int classicalLosses = 0;
     private int classicalElo = 800;
     @Column(name = "been_2400_classical")
     private boolean been2400Classical = false;
@@ -65,12 +69,39 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     private UserRole role = UserRole.USER;
 
-    public int getElo(TimeControl timeControl){
-        return switch (timeControl.type()) {
+    public int getElo(TcType type) {
+        return switch (type) {
             case BULLET -> bulletElo;
             case BLITZ -> blitzElo;
             case RAPID -> rapidElo;
             case CLASSICAL -> classicalElo;
+        };
+    }
+
+    public int getWins(TcType type) {
+        return switch (type) {
+            case BULLET -> bulletWins;
+            case BLITZ -> blitzWins;
+            case RAPID -> rapidWins;
+            case CLASSICAL -> classicalWins;
+        };
+    }
+
+    public int getLosses(TcType type) {
+        return switch (type) {
+            case BULLET -> bulletLosses;
+            case BLITZ -> blitzLosses;
+            case RAPID -> rapidLosses;
+            case CLASSICAL -> classicalLosses;
+        };
+    }
+
+    public int getGames(TcType type) {
+        return switch (type) {
+            case BULLET -> bulletGames;
+            case BLITZ -> blitzGames;
+            case RAPID -> rapidGames;
+            case CLASSICAL -> classicalGames;
         };
     }
 

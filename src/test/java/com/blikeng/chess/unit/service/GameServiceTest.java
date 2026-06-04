@@ -68,7 +68,7 @@ class GameServiceTest {
     void setup() {
         white = new UserEntity("white", "h");
         black = new UserEntity("black", "h");
-        savedEntity = new GameEntity(white, black, GameStatus.ONGOING, Instant.now(), "blitz");
+        savedEntity = new GameEntity(white, black, GameStatus.ONGOING, Instant.now(), "blitz", null);
     }
 
     @AfterEach

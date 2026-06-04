@@ -1,5 +1,6 @@
 package com.blikeng.chess.entity;
 
+import com.blikeng.chess.model.EndedBy;
 import com.blikeng.chess.model.GameStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -18,13 +19,15 @@ public class GameEntity {
             UserEntity black,
             GameStatus status,
             Instant createdAt,
-            String timeControl
+            String timeControl,
+            EndedBy endedBy
     ){
         this.white = white;
         this.black = black;
         this.status = status;
         this.createdAt = createdAt;
         this.timeControl = timeControl;
+        this.endedBy = endedBy;
     }
 
     @Id
@@ -48,4 +51,8 @@ public class GameEntity {
     private String moves = "";
 
     private String timeControl;
+
+    @Enumerated(EnumType.STRING)
+    @Setter
+    private EndedBy endedBy;
 }
