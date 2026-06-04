@@ -1,20 +1,26 @@
 package com.blikeng.chess.service;
 
 import com.blikeng.chess.dto.PasswordDTO;
+import com.blikeng.chess.dto.PlayerStatsDTO;
 import com.blikeng.chess.dto.ProfileDTO;
 import com.blikeng.chess.dto.ProfileEditDTO;
 import com.blikeng.chess.entity.FriendId;
+import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.types.BadEditException;
 import com.blikeng.chess.exception.types.InvalidPasswordException;
 import com.blikeng.chess.exception.types.InvalidUserException;
 import com.blikeng.chess.exception.types.UserNotFoundException;
+import com.blikeng.chess.model.GameStatus;
+import com.blikeng.chess.model.timecontrol.TcType;
 import com.blikeng.chess.repository.FriendRepository;
 import com.blikeng.chess.repository.UserRepository;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.PasswordService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class UserService {
@@ -114,5 +120,72 @@ public class UserService {
 
         user.setPassword(passwordService.hashPassword(passwordDTO.newPassword()));
         userRepository.save(user);
+    }
+
+    public PlayerStatsDTO getPlayerStats(String username, String timeControl){
+        UserEntity user = userRepository.findByUsernameIgnoreCase(username).orElseThrow(UserNotFoundException::new);
+        TcType type = TcType.valueOf(timeControl.toUpperCase());
+
+        int gamesPlayed = user.getGames(type);
+        int wins = user.getWins(type);
+        int losses = user.getLosses(type);
+        int draws = gamesPlayed - wins - losses;
+
+        List<GameEntity> games = gameService.getAllGames(username, timeControl);
+
+        int winsByCheckmate = 0, winsByFlagging = 0, winsByResignation = 0;
+        int lossesByCheckmate = 0, lossesByFlagging = 0, lossesByResignation = 0;
+        int drawsByStalemate = 0, drawsByAgreement = 0, drawsByRepetition = 0, drawsBy50MoveRule = 0, drawsByInsufficientMaterial = 0;
+        int gamesAsBlack = 0, winsAsBlack = 0, lossesAsBlack = 0;
+        int gamesAsWhite = 0, winsAsWhite = 0, lossesAsWhite = 0;
+
+        for (GameEntity game : games) {
+            boolean isWhite = game.getWhite().getId().equals(user.getId());
+            boolean won = isWhite ? game.getStatus() == GameStatus.WHITE_WIN : game.getStatus() == GameStatus.BLACK_WIN;
+            boolean lost = isWhite ? game.getStatus() == GameStatus.BLACK_WIN : game.getStatus() == GameStatus.WHITE_WIN;
+
+            if (isWhite) {
+                gamesAsWhite++;
+                if (won) winsAsWhite++;
+                if (lost) lossesAsWhite++;
+            } else {
+                gamesAsBlack++;
+                if (won) winsAsBlack++;
+                if (lost) lossesAsBlack++;
+            }
+
+            if (game.getEndedBy() == null) continue;
+
+            if (won) switch (game.getEndedBy()) {
+                case CHECKMATE -> winsByCheckmate++;
+                case TIMEOUT -> winsByFlagging++;
+                case RESIGNATION -> winsByResignation++;
+                default -> {}
+            }
+            else if (lost) switch (game.getEndedBy()) {
+                case CHECKMATE -> lossesByCheckmate++;
+                case TIMEOUT -> lossesByFlagging++;
+                case RESIGNATION -> lossesByResignation++;
+                default -> {}
+            }
+            else switch (game.getEndedBy()) {
+                case STALEMATE -> drawsByStalemate++;
+                case AGREEMENT -> drawsByAgreement++;
+                case REPETITION -> drawsByRepetition++;
+                case FIFTY_MOVE_RULE -> drawsBy50MoveRule++;
+                case INSUFFICIENT_MATERIAL -> drawsByInsufficientMaterial++;
+                default -> {}
+            }
+        }
+
+        return new PlayerStatsDTO(
+            user.getElo(type),
+            wins, losses, draws, gamesPlayed,
+            winsByCheckmate, winsByFlagging, winsByResignation,
+            lossesByCheckmate, lossesByFlagging, lossesByResignation,
+            drawsByStalemate, drawsByAgreement, drawsByRepetition, drawsBy50MoveRule, drawsByInsufficientMaterial,
+            gamesAsBlack, winsAsBlack, lossesAsBlack,
+            gamesAsWhite, winsAsWhite, lossesAsWhite
+        );
     }
 }

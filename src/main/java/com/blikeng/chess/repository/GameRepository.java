@@ -23,4 +23,16 @@ public interface GameRepository extends JpaRepository<GameEntity, UUID> {
         order by g.createdAt desc
     """)
     Page<GameEntity> findByUsernameOrderedByTimestampDesc(@Param("username") String username, Pageable pageable);
+
+    @Query("""
+        SELECT game
+        FROM GameEntity game
+        WHERE
+            (game.black.username = :username OR game.white.username = :username)
+        AND
+            game.timeControl LIKE CONCAT(:tcType, '%')
+        AND
+            game.status <> 'ONGOING'
+    """)
+    List<GameEntity> findFinishedByUsernameAndTcType(@Param("username") String username, @Param("tcType") String tcType);
 }

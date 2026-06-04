@@ -86,8 +86,8 @@ public class GameService {
             whitePlayer.getUsername(),
             blackPlayer.getId(),
             blackPlayer.getUsername(),
-            gameEntity.getWhite().getElo(timeControl),
-            gameEntity.getBlack().getElo(timeControl),
+            gameEntity.getWhite().getElo(timeControl.type()),
+            gameEntity.getBlack().getElo(timeControl.type()),
             timeControl,
             timeControl.initialMs(),
             timeControl.initialMs(),
@@ -104,8 +104,8 @@ public class GameService {
             whitePlayer.getUsername(),
             blackPlayer.getId(),
             blackPlayer.getUsername(),
-            gameEntity.getWhite().getElo(timeControl),
-            gameEntity.getBlack().getElo(timeControl)
+            gameEntity.getWhite().getElo(timeControl.type()),
+            gameEntity.getBlack().getElo(timeControl.type())
         ));
 
         logger.info("Game started: {}. White: {}. Black: {}", game.getId(), whitePlayer.getUsername(), blackPlayer.getUsername());
@@ -324,6 +324,10 @@ public class GameService {
         return games.values().stream()
             .filter(g -> g.getWhiteId().equals(userId) || g.getBlackId().equals(userId))
             .findFirst();
+    }
+
+    public List<GameEntity> getAllGames(String username, String timeControl) {
+        return gameRepository.findFinishedByUsernameAndTcType(username, timeControl);
     }
 
     private void handleBotGameEnd(Game game, GameStatus gameStatus) {

@@ -1,6 +1,7 @@
 package com.blikeng.chess.controller;
 
 import com.blikeng.chess.dto.PasswordDTO;
+import com.blikeng.chess.dto.PlayerStatsDTO;
 import com.blikeng.chess.dto.ProfileDTO;
 import com.blikeng.chess.dto.ProfileEditDTO;
 import com.blikeng.chess.service.UserService;
@@ -21,6 +22,14 @@ public class UserController {
             @PathVariable String username
     ) {
         return ResponseEntity.ok(userService.getUser(username));
+    }
+
+    @GetMapping("/{username}/stats/{time-control}")
+    public ResponseEntity<PlayerStatsDTO> getUserStats(
+        @PathVariable String username,
+        @PathVariable("time-control") String timeControl
+    ) {
+        return ResponseEntity.ok(userService.getPlayerStats(username, timeControl));
     }
 
     @PatchMapping("/edit")

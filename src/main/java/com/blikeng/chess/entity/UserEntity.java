@@ -1,6 +1,6 @@
 package com.blikeng.chess.entity;
 
-import com.blikeng.chess.model.timecontrol.TimeControl;
+import com.blikeng.chess.model.timecontrol.TcType;
 import com.blikeng.chess.security.UserRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -69,12 +69,39 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     private UserRole role = UserRole.USER;
 
-    public int getElo(TimeControl timeControl){
-        return switch (timeControl.type()) {
+    public int getElo(TcType type) {
+        return switch (type) {
             case BULLET -> bulletElo;
             case BLITZ -> blitzElo;
             case RAPID -> rapidElo;
             case CLASSICAL -> classicalElo;
+        };
+    }
+
+    public int getWins(TcType type) {
+        return switch (type) {
+            case BULLET -> bulletWins;
+            case BLITZ -> blitzWins;
+            case RAPID -> rapidWins;
+            case CLASSICAL -> classicalWins;
+        };
+    }
+
+    public int getLosses(TcType type) {
+        return switch (type) {
+            case BULLET -> bulletLosses;
+            case BLITZ -> blitzLosses;
+            case RAPID -> rapidLosses;
+            case CLASSICAL -> classicalLosses;
+        };
+    }
+
+    public int getGames(TcType type) {
+        return switch (type) {
+            case BULLET -> bulletGames;
+            case BLITZ -> blitzGames;
+            case RAPID -> rapidGames;
+            case CLASSICAL -> classicalGames;
         };
     }
 
