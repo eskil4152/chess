@@ -8,6 +8,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Endpoints for finished games (base path {@code /api/games}).
+ *
+ * <p>{@code GET /user/{username}} returns a page of a user's past games;
+ * {@code GET /{id}} returns a single game by id.
+ */
 @RestController
 @RequestMapping("/api/games")
 public class GameHistoryController {

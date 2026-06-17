@@ -16,6 +16,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+/**
+ * Endpoints for playing against bots (base path {@code /api/bot}).
+ *
+ * <p>{@code POST /{difficulty}} starts a game between the current user and a bot of the
+ * given {@link BotDifficulty}.
+ */
 @Controller
 @RequestMapping("/api/bot")
 public class BotController {

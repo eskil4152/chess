@@ -7,6 +7,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Leaderboard endpoints (base path {@code /api/leaderboard}).
+ *
+ * <p>{@code GET /bullet}, {@code /blitz}, {@code /rapid}, and {@code /classical} each
+ * return a page of the top players for that time control.
+ */
 @RestController
 @RequestMapping("/api/leaderboard")
 public class LeaderboardController {

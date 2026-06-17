@@ -8,6 +8,14 @@ import com.blikeng.chess.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * User profile endpoints (base path {@code /api/user}).
+ *
+ * <p>{@code GET /{username}} returns a profile and
+ * {@code GET /{username}/stats/{time-control}} returns that user's stats for a time
+ * control. {@code PATCH /edit} updates the current user's profile and
+ * {@code PATCH /edit-password} changes their password.
+ */
 @RestController
 @RequestMapping("/api/user")
 public class UserController {

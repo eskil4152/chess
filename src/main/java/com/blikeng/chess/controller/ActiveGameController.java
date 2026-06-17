@@ -5,6 +5,11 @@ import com.blikeng.chess.service.GameService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Controller for retrieving active games.
+ *
+ * <p>{@code GET /{id}} retrieves a specific game if active. {@code GET} only works if the user has an active game.
+ */
 @RestController
 @RequestMapping("/api/games/active")
 public class ActiveGameController {
