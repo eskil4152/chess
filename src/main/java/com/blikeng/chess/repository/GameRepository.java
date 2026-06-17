@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.UUID;
 
+/** Persisted game (history) queries. */
 @Repository
 public interface GameRepository extends JpaRepository<GameEntity, UUID> {
     @Query("""
@@ -24,6 +25,7 @@ public interface GameRepository extends JpaRepository<GameEntity, UUID> {
     """)
     Page<GameEntity> findByUsernameOrderedByTimestampDesc(@Param("username") String username, Pageable pageable);
 
+    /** Finished games for a user in a time-control category; matches by enum-name prefix (e.g. "RAPID" → "RAPID_10_0"). */
     @Query("""
         SELECT game
         FROM GameEntity game

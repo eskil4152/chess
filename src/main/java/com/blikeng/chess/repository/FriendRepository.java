@@ -10,8 +10,10 @@ import org.springframework.data.repository.query.Param;
 import com.blikeng.chess.entity.FriendEntity;
 import com.blikeng.chess.entity.FriendId;
 
+/** Friendship persistence. */
 public interface FriendRepository extends JpaRepository<FriendEntity, FriendId>{
 
+    /** Loads a user's friendships, eager-fetching both users to avoid N+1 queries. */
     @Query("""
         SELECT f
         FROM FriendEntity f
@@ -19,5 +21,5 @@ public interface FriendRepository extends JpaRepository<FriendEntity, FriendId>{
         JOIN FETCH f.userB
         WHERE f.userA.id = :userId OR f.userB.id = :userId
     """)
-    public List<FriendEntity> findFriendsForUser(@Param("userId") UUID userId);
+    List<FriendEntity> findFriendsForUser(@Param("userId") UUID userId);
 }
