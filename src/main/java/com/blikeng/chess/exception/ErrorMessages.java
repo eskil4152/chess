@@ -1,5 +1,8 @@
 package com.blikeng.chess.exception;
 
+/**
+ * Central catalogue of user-facing error messages used by {@link ApiException} subclasses.
+ */
 public final class ErrorMessages {
     private ErrorMessages() {}
 
