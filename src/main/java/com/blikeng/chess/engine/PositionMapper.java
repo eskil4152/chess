@@ -4,6 +4,13 @@ import com.blikeng.chess.model.Move;
 import com.blikeng.chess.model.Position;
 import com.blikeng.chess.model.piece.PieceType;
 
+/**
+ * Converts between board coordinates and string notation.
+ *
+ * <p>A {@link Position} uses {@code row = rank - 1} and {@code col = file} (both 0-7, so
+ * {@code a1} is row 0, col 0). Handles algebraic squares (e.g. {@code "e4"}) and UCI
+ * moves (e.g. {@code "e7e8q"}).
+ */
 public class PositionMapper {
     private PositionMapper() {}
 

@@ -15,6 +15,12 @@ import com.blikeng.chess.model.piece.Color;
 import com.blikeng.chess.model.piece.Piece;
 import com.blikeng.chess.model.piece.PieceType;
 
+/**
+ * Converts a move to Standard Algebraic Notation (SAN), e.g. {@code Nf3}, {@code exd5}, {@code O-O}.
+ *
+ * <p>Needs the full game position (not just the move) to resolve disambiguation and the
+ * check/checkmate suffixes, which it works out via move generation.
+ */
 public class SanConverter {
     private SanConverter() {}
 
