@@ -21,6 +21,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+/**
+ * Handles bot actions.
+ *
+ * <p>{@link #BOTS} holds manually defined bots of different levels, each with a fixed
+ * UUID for easy identification.
+ *
+ * <p>Bot moves run on a fixed pool of 4 threads, so up to 4 bot moves can be computed
+ * at once; if more than 4 bots need to move, the extra moves queue and wait for a free
+ * thread instead of being canceled. Each move waits 400ms first (cosmetic, so moves
+ * aren't instant), then asks the engine for a move using that bot's {@code depth} and
+ * {@code noise} (see {@link BotDifficulty}).
+ */
 @Service
 public class BotService {
     private final GameService gameService;
