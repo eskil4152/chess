@@ -44,7 +44,7 @@ public class AuthService {
             throw new InvalidCredentialsException();
         }
 
-        String token = jwtService.generateToken(user.get());
+        String token = jwtService.generateToken(user.get(), loginDTO.rememberMe());
         AuthDTO authDTO = new AuthDTO(
                 user.get().getId(), user.get().getUsername(), user.get().getRole()
         );
@@ -63,7 +63,7 @@ public class AuthService {
 
         UserEntity user = authRepository.save(new UserEntity(trimmedUsername, passwordService.hashPassword(trimmedPassword)));
 
-        String token = jwtService.generateToken(user);
+        String token = jwtService.generateToken(user, loginDTO.rememberMe());
         AuthDTO authDTO = new AuthDTO(
                 user.getId(), user.getUsername(), user.getRole()
         );

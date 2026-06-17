@@ -29,6 +29,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
@@ -57,7 +59,7 @@ class AuthServiceTest {
     void loginShouldReturnTokenOnSuccess() {
         when(authRepository.findByUsernameIgnoreCase("testuser")).thenReturn(Optional.of(user));
         when(passwordService.checkPassword("pass", "hashed")).thenReturn(true);
-        when(jwtService.generateToken(user)).thenReturn("jwt");
+        when(jwtService.generateToken(eq(user), anyBoolean())).thenReturn("jwt");
 
         AuthResult result = authService.login(new LoginDTO("testuser", "pass", false));
         assertThat(result.token()).isEqualTo("jwt");
@@ -88,7 +90,7 @@ class AuthServiceTest {
         when(authRepository.existsByUsernameIgnoreCase("newuser")).thenReturn(false);
         when(passwordService.hashPassword("password1")).thenReturn("hashed");
         when(authRepository.save(any())).thenReturn(user);
-        when(jwtService.generateToken(user)).thenReturn("jwt");
+        when(jwtService.generateToken(eq(user), anyBoolean())).thenReturn("jwt");
 
         AuthResult result = authService.register(new LoginDTO("newuser", "password1", false));
         assertThat(result.token()).isEqualTo("jwt");
@@ -130,7 +132,7 @@ class AuthServiceTest {
         when(authRepository.existsByUsernameIgnoreCase("abc")).thenReturn(false);
         when(passwordService.hashPassword("password1")).thenReturn("hashed");
         when(authRepository.save(any())).thenReturn(user);
-        when(jwtService.generateToken(user)).thenReturn("jwt");
+        when(jwtService.generateToken(eq(user), anyBoolean())).thenReturn("jwt");
         assertThat(authService.register(new LoginDTO("abc", "password1", false)).token()).isEqualTo("jwt");
     }
 
@@ -140,7 +142,7 @@ class AuthServiceTest {
         when(authRepository.existsByUsernameIgnoreCase(maxName)).thenReturn(false);
         when(passwordService.hashPassword("password1")).thenReturn("hashed");
         when(authRepository.save(any())).thenReturn(user);
-        when(jwtService.generateToken(user)).thenReturn("jwt");
+        when(jwtService.generateToken(eq(user), anyBoolean())).thenReturn("jwt");
         assertThat(authService.register(new LoginDTO(maxName, "password1", false)).token()).isEqualTo("jwt");
     }
 
@@ -149,7 +151,7 @@ class AuthServiceTest {
         when(authRepository.existsByUsernameIgnoreCase("validname")).thenReturn(false);
         when(passwordService.hashPassword("exactly8")).thenReturn("hashed");
         when(authRepository.save(any())).thenReturn(user);
-        when(jwtService.generateToken(user)).thenReturn("jwt");
+        when(jwtService.generateToken(eq(user), anyBoolean())).thenReturn("jwt");
         assertThat(authService.register(new LoginDTO("validname", "exactly8", false)).token()).isEqualTo("jwt");
     }
 
@@ -159,7 +161,7 @@ class AuthServiceTest {
         when(authRepository.existsByUsernameIgnoreCase("validname")).thenReturn(false);
         when(passwordService.hashPassword(maxPass)).thenReturn("hashed");
         when(authRepository.save(any())).thenReturn(user);
-        when(jwtService.generateToken(user)).thenReturn("jwt");
+        when(jwtService.generateToken(eq(user), anyBoolean())).thenReturn("jwt");
         assertThat(authService.register(new LoginDTO("validname", maxPass, false)).token()).isEqualTo("jwt");
     }
 

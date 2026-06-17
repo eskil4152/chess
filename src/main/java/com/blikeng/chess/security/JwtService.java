@@ -15,8 +15,21 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.UUID;
 
+/**
+ * Issues and validates the HS512-signed JWTs used for authentication.
+ *
+ * <p>Token lifetime follows the login's remember-me choice: 1 day normally, 30 days when
+ * remembered, so it stays in sync with the auth cookie's max-age.
+ *
+ * <p>The signing secret comes from {@code app.jwt.secret} and must be at least 64 bytes.
+ * {@link #validateToken} returns the {@link JwtPrincipal} or {@code null} if invalid;
+ * {@link #getCurrentUser} reads the principal from the current SecurityContext.
+ */
 @Service
 public class JwtService {
+
+    private static final long DEFAULT_VALIDITY_MS = 24L * 60 * 60 * 1000;
+    private static final long REMEMBER_ME_VALIDITY_MS = 30L * 24 * 60 * 60 * 1000;
 
     private static final Logger logger = LoggerFactory.getLogger(JwtService.class);
 
@@ -34,14 +47,15 @@ public class JwtService {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateToken(UserEntity user) {
+    public String generateToken(UserEntity user, boolean rememberMe) {
+        long validityMs = rememberMe ? REMEMBER_ME_VALIDITY_MS : DEFAULT_VALIDITY_MS;
         return Jwts
                 .builder()
                 .subject(user.getId().toString())
                 .claim("username", user.getUsername())
                 .claim("role", user.getRole())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000))
+                .expiration(new Date(System.currentTimeMillis() + validityMs))
                 .signWith(key(), Jwts.SIG.HS512)
                 .compact();
     }

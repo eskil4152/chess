@@ -13,6 +13,12 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 
 import java.util.Map;
 
+/**
+ * Authenticates the WebSocket handshake: reads the {@code AUTH} cookie, validates the JWT
+ * via {@link JwtService}, and on success stashes {@code userId}/{@code username} in the
+ * session attributes. Rejects the handshake (returns false) if the cookie is missing or
+ * the token is invalid.
+ */
 @Component
 public class AuthHandshakeInterceptor implements HandshakeInterceptor {
     private final Logger logger = LoggerFactory.getLogger(AuthHandshakeInterceptor.class);

@@ -15,6 +15,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Per-request filter that authenticates via the {@code AUTH} cookie: validates the JWT
+ * (rejecting blacklisted tokens) and, if valid, sets the {@link JwtPrincipal} on the Spring
+ * SecurityContext. Always continues the filter chain. Unauthenticated requests are left
+ * for {@code SecurityConfig}'s authorization rules to reject.
+ */
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtService jwtService;

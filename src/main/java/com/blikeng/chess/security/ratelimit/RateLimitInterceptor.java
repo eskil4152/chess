@@ -10,6 +10,13 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.time.Duration;
 
+/**
+ * Per-IP rate limiter for {@code /api/**} (registered in {@code RateLimitConfig}).
+ *
+ * <p>Buckets are keyed by client IP and path category: login, register, and everything
+ * else - each with its own per-minute token limit (configured under {@code rate-limit.*} in {@code application.yaml}).
+ * Requests over the limit get HTTP 429. All clients behind one IP share a bucket.
+ */
 @Component
 public class RateLimitInterceptor implements HandlerInterceptor {
     @Value("${rate-limit.login.max-tokens}") private Long maxLoginTokens;
