@@ -7,6 +7,17 @@ import lombok.Setter;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Mutable in-memory state of a single game in progress.
+ *
+ * <p>Tracks the players, {@link Board}, side to move, the move list (UCI strings), king
+ * positions, en passant target, halfmove clock and position history (for the fifty-move
+ * and threefold-repetition rules), draw offers, clocks, and spectators. Each game owns a
+ * {@link ReentrantLock} ({@link #lockGame}) to serialize concurrent actions on it.
+ *
+ * <p>Three constructors: a full timed game, a bot game (no time control), and a deep-copy
+ * constructor the engine uses to simulate moves without mutating the live game.
+ */
 @Getter
 public class Game {
     public Game(

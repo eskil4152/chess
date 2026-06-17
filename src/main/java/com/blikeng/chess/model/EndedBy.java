@@ -1,5 +1,6 @@
 package com.blikeng.chess.model;
 
+/** Reason a game ended. */
 public enum EndedBy {
     TIMEOUT, RESIGNATION, AGREEMENT, CHECKMATE, STALEMATE, REPETITION, INSUFFICIENT_MATERIAL, FIFTY_MOVE_RULE
 }

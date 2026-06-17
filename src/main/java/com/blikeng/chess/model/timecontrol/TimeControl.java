@@ -1,5 +1,12 @@
 package com.blikeng.chess.model.timecontrol;
 
+/**
+ * Concrete time controls as {@code NAME(initialMinutes, incrementSeconds)}.
+ *
+ * <p>{@link #initialMs}/{@link #incrementMs} give the values in milliseconds, {@link #type}
+ * maps to the broad {@link TcType} category, and {@link #label} is a display string like
+ * {@code "Rapid 10+0"}.
+ */
 public enum TimeControl {
     BULLET_1_0(1, 0),
     BULLET_1_1(1, 1),

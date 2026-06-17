@@ -2,6 +2,17 @@ package com.blikeng.chess.model.piece;
 
 import lombok.Getter;
 
+/**
+ * Abstract base for the six chess pieces.
+ *
+ * <p>Holds the piece's {@link Color} and a {@code moved} flag (used for castling rights,
+ * the pawn's two-square first move, and en passant). Each concrete subtype ({@link Pawn},
+ * {@link Knight}, {@link Bishop}, {@link Rook}, {@link Queen}, {@link King}) only declares
+ * its {@link PieceType}. Movement rules live in
+ * {@link com.blikeng.chess.engine.MoveGenerator}, not on the piece.
+ *
+ * <p>{@link #copy} returns a deep copy that preserves the {@code moved} flag.
+ */
 public abstract class Piece {
     @Getter
     protected Color color;
