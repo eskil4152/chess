@@ -33,7 +33,7 @@ public class GameService {
     private final GameRepository gameRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationService notificationService;
-    private final EloService eloService;
+    private final StatsService statsService;
 
     private final MoveExecutor moveExecutor = new MoveExecutor();
     private final Logger logger = LoggerFactory.getLogger(GameService.class);
@@ -47,12 +47,12 @@ public class GameService {
             GameRepository gameRepository,
             ApplicationEventPublisher eventPublisher,
             NotificationService notificationService,
-            EloService eloService
+            StatsService statsService
     ){
         this.gameRepository = gameRepository;
         this.eventPublisher = eventPublisher;
         this.notificationService = notificationService;
-        this.eloService = eloService;
+        this.statsService = statsService;
     }
 
     @Transactional
@@ -362,7 +362,7 @@ public class GameService {
             ));
         }
 
-        int[] newElo = eloService.updateUserElo(game.getTimeControl(), game.getWhiteId(), game.getBlackId(), gameStatus);
+        int[] newElo = statsService.updateUserStatsAndReturnNewElos(game.getTimeControl(), game.getWhiteId(), game.getBlackId(), gameStatus);
 
         eventPublisher.publishEvent(new MatchEndedEvent(game.getId(), game.getWhiteId(), game.getBlackId(), gameStatus, game.getEndedBy(), newElo[0], newElo[1], game.getSpectators()));
         games.remove(game.getId());

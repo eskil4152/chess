@@ -5,7 +5,7 @@ import com.blikeng.chess.exception.types.UserNotFoundException;
 import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.model.timecontrol.TimeControl;
 import com.blikeng.chess.repository.UserRepository;
-import com.blikeng.chess.service.EloService;
+import com.blikeng.chess.service.StatsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,10 +20,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class EloServiceTest {
+class StatsServiceTest {
 
     @Mock UserRepository userRepository;
-    @InjectMocks EloService eloService;
+    @InjectMocks StatsService statsService;
 
     private UserEntity white;
     private UserEntity black;
@@ -37,7 +37,7 @@ class EloServiceTest {
     }
 
     private int[] play(TimeControl tc, GameStatus status) {
-        return eloService.updateUserElo(tc, white.getId(), black.getId(), status);
+        return statsService.updateUserStatsAndReturnNewElos(tc, white.getId(), black.getId(), status);
     }
 
     @Test

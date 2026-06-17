@@ -9,24 +9,32 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+/**
+ * Updates both players' record (win/loss/game counts and the "reached 2400" flag) and
+ * recomputes their Elo for a finished game, persisting both users.
+ *
+ * <p>{@link #updateUserStatsAndReturnNewElos} returns the two new ratings
+ * ({@code [whiteElo, blackElo]}), or an empty array if the game was neither decisive nor
+ * a draw.
+ */
 @Service
-public class EloService {
+public class StatsService {
     private final UserRepository userRepository;
 
-    public EloService(UserRepository userRepository) {
+    public StatsService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    public int[] updateUserElo(TimeControl timeControl, UUID whiteId, UUID blackId, GameStatus status){
+    public int[] updateUserStatsAndReturnNewElos(TimeControl timeControl, UUID whiteId, UUID blackId, GameStatus status){
         return switch (status) {
-            case WHITE_WIN -> updateElo(timeControl, whiteId, blackId, true, false);
-            case BLACK_WIN -> updateElo(timeControl, whiteId, blackId, false, false);
-            case DRAW -> updateElo(timeControl, whiteId, blackId, false, true);
+            case WHITE_WIN -> updateStatsAndReturnNewElos(timeControl, whiteId, blackId, true, false);
+            case BLACK_WIN -> updateStatsAndReturnNewElos(timeControl, whiteId, blackId, false, false);
+            case DRAW -> updateStatsAndReturnNewElos(timeControl, whiteId, blackId, false, true);
             default -> new int[0];
         };
     }
 
-    private int[] updateElo(TimeControl timeControl, UUID whiteId, UUID blackId, boolean whiteWin, boolean draw){
+    private int[] updateStatsAndReturnNewElos(TimeControl timeControl, UUID whiteId, UUID blackId, boolean whiteWin, boolean draw){
         UserEntity white = userRepository.findById(whiteId).orElseThrow(UserNotFoundException::new);
         UserEntity black = userRepository.findById(blackId).orElseThrow(UserNotFoundException::new);
 
@@ -34,20 +42,20 @@ public class EloService {
         double whiteScore = whiteWin ? 1.0 : drawScore;
         double blackScore = 1.0 - whiteScore;
 
-        int[] elos = switch (timeControl.type()) {
-            case BULLET -> handleBulletElo(white, black, whiteScore, blackScore);
-            case BLITZ -> handleBlitzElo(white, black, whiteScore, blackScore);
-            case RAPID -> handleRapidElo(white, black, whiteScore, blackScore);
-            case CLASSICAL -> handleClassicalElo(white, black, whiteScore, blackScore);
+        int[] newElos = switch (timeControl.type()) {
+            case BULLET -> handleBulletStats(white, black, whiteScore, blackScore);
+            case BLITZ -> handleBlitzStats(white, black, whiteScore, blackScore);
+            case RAPID -> handleRapidStats(white, black, whiteScore, blackScore);
+            case CLASSICAL -> handleClassicalStats(white, black, whiteScore, blackScore);
         };
 
         userRepository.save(white);
         userRepository.save(black);
 
-        return elos;
+        return newElos;
     }
 
-    private int[] handleBulletElo(UserEntity white, UserEntity black, double whiteScore, double blackScore){
+    private int[] handleBulletStats(UserEntity white, UserEntity black, double whiteScore, double blackScore){
         int whiteElo = calculateNewElo(white.getBulletElo(), black.getBulletElo(), whiteScore, getKFactor(white.getBulletGames(), white.isBeen2400Bullet()));
         int blackElo = calculateNewElo(black.getBulletElo(), white.getBulletElo(), blackScore, getKFactor(black.getBulletGames(), black.isBeen2400Bullet()));
 
@@ -72,7 +80,7 @@ public class EloService {
         return new int[]{whiteElo, blackElo};
     }
 
-    private int[] handleBlitzElo(UserEntity white, UserEntity black, double whiteScore, double blackScore){
+    private int[] handleBlitzStats(UserEntity white, UserEntity black, double whiteScore, double blackScore){
         int whiteElo = calculateNewElo(white.getBlitzElo(), black.getBlitzElo(), whiteScore, getKFactor(white.getBlitzGames(), white.isBeen2400Blitz()));
         int blackElo = calculateNewElo(black.getBlitzElo(), white.getBlitzElo(), blackScore, getKFactor(black.getBlitzGames(), black.isBeen2400Blitz()));
 
@@ -97,7 +105,7 @@ public class EloService {
         return new int[]{whiteElo, blackElo};
     }
 
-    private int[] handleRapidElo(UserEntity white, UserEntity black, double whiteScore, double blackScore){
+    private int[] handleRapidStats(UserEntity white, UserEntity black, double whiteScore, double blackScore){
         int whiteElo = calculateNewElo(white.getRapidElo(), black.getRapidElo(), whiteScore, getKFactor(white.getRapidGames(), white.isBeen2400Rapid()));
         int blackElo = calculateNewElo(black.getRapidElo(), white.getRapidElo(), blackScore, getKFactor(black.getRapidGames(), black.isBeen2400Rapid()));
 
@@ -122,7 +130,7 @@ public class EloService {
         return new int[]{whiteElo, blackElo};
     }
 
-    private int[] handleClassicalElo(UserEntity white, UserEntity black, double whiteScore, double blackScore){
+    private int[] handleClassicalStats(UserEntity white, UserEntity black, double whiteScore, double blackScore){
         int whiteElo = calculateNewElo(white.getClassicalElo(), black.getClassicalElo(), whiteScore, getKFactor(white.getClassicalGames(), white.isBeen2400Classical()));
         int blackElo = calculateNewElo(black.getClassicalElo(), white.getClassicalElo(), blackScore, getKFactor(black.getClassicalGames(), black.isBeen2400Classical()));
 
