@@ -20,6 +20,18 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.util.UUID;
 
+/**
+ * Server endpoint for the {@code /ws} WebSocket: handles inbound client messages and the
+ * connection lifecycle. Outbound pushes are sent separately via {@link NotificationService}.
+ *
+ * <p>Each text message is dispatched by its {@code "type"} field (MOVE, RESIGN, OFFER_DRAW,
+ * CHALLENGE, CHALLENGE_RESPONSE, CANCEL_CHALLENGE) to the relevant service; unknown types
+ * are ignored. An {@link ApiException} is returned to the client as an error frame with its
+ * status; any other error becomes a generic 500 frame.
+ *
+ * <p>On connect/disconnect the session is registered/removed in {@link PresenceService};
+ * when a user's last session closes, they are removed from matchmaking.
+ */
 @Component
 public class WebSocketHandler extends TextWebSocketHandler {
     private final GameService gameService;
