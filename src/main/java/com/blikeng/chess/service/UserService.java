@@ -22,6 +22,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * User profile operations: fetch a profile, edit profile fields, change password, and read
+ * per-time-control stats.
+ */
 @Service
 public class UserService {
     private final UserRepository userRepository;

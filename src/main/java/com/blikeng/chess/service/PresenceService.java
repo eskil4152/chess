@@ -8,6 +8,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Tracks which {@link WebSocketSession}s belong to each online user (a user may have
+ * several). Thread-safe; used to fan out notifications and to detect when a user goes
+ * fully offline.
+ */
 @Service
 public class PresenceService {
     private final ConcurrentHashMap<UUID, Set<WebSocketSession>> userSessions = new ConcurrentHashMap<>();

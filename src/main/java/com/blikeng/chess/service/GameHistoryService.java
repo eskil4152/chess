@@ -13,6 +13,10 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Read access to finished games: a single game by id, or a user's games as paged previews
+ * (newest first).
+ */
 @Service
 public class GameHistoryService {
     private final GameRepository gameRepository;

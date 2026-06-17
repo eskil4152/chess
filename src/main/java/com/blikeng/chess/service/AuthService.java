@@ -16,6 +16,12 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Authentication: login and registration (issuing JWTs) plus current-user lookup.
+ *
+ * <p>Registration trims and length-checks the username (3-32) and password (8-128) before
+ * hashing via {@link PasswordService}.
+ */
 @Service
 public class AuthService {
     private final AuthRepository authRepository;

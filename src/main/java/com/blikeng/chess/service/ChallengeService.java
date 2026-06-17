@@ -19,6 +19,12 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Direct player-to-player challenges: create, accept/decline, and cancel, with results
+ * pushed via {@link NotificationService}.
+ *
+ * <p>Pending challenges are held in memory and expired by a scheduled sweep (every 60s).
+ */
 @Service
 public class ChallengeService {
     private final UserRepository userRepository;

@@ -13,6 +13,14 @@ import java.util.Comparator;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Elo-based matchmaking queue (one entry per user).
+ *
+ * <p>A queuing player is paired with the closest-rated waiting player on the same
+ * {@link TimeControl} within ±200 Elo; if none qualifies they wait in the queue. Queue
+ * mutations are synchronized so two players can't be matched into separate games at once.
+ * Leaving the queue is also a synchronized action to avoid a match with a player who has dequeued.
+ */
 @Service
 public class MatchmakingService {
     private final AuthService authService;

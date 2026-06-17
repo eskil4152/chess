@@ -22,6 +22,14 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Central WebSocket push: serializes DTOs to JSON and sends them to a user's session(s)
+ * via {@link PresenceService}.
+ *
+ * <p>Listens for domain events (match started/move/ended, friend request) and also exposes
+ * direct methods for challenges and draw offers. Per-session sends are lock-guarded, and a
+ * scheduled ping (every 20s) keeps connections alive and reaps dead sessions.
+ */
 @Service
 public class NotificationService {
     private final PresenceService presenceService;
