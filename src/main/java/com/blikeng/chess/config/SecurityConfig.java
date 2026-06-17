@@ -17,6 +17,18 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+/**
+ * Configures HTTP security: CORS, public vs. authenticated endpoints, and JWT auth.
+ *
+ * <p>CORS is limited to {@code http://localhost:3000} (development UI) and
+ * {@code https://chess.blikeng.com} (production UI).
+ *
+ * <p>Public endpoints: {@code /api/auth/**} (register, login, authenticate),
+ * {@code /actuator/**}, and error dispatches. Every other request must be authenticated.
+ *
+ * <p>Registers {@link JwtAuthFilter} ahead of {@link UsernamePasswordAuthenticationFilter};
+ * unauthorized requests get a 401 "Invalid token".
+ */
 @Configuration
 public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
