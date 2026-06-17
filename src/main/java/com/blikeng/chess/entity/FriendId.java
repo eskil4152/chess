@@ -8,6 +8,13 @@ import com.blikeng.chess.exception.types.FriendYourselfException;
 import jakarta.persistence.Embeddable;
 import lombok.Getter;
 
+/**
+ * Composite primary key for {@link FriendEntity}: the pair of user ids.
+ *
+ * <p>{@link #generate} stores the ids in a canonical order (smaller UUID first), so a
+ * friendship between A and B yields the same key in either direction — preventing
+ * duplicate rows for {@code (A,B)} and {@code (B,A)}. Self-friendship is rejected.
+ */
 @Embeddable
 @Getter
 public class FriendId implements Serializable {

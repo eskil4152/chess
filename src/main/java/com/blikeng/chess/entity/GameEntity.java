@@ -9,11 +9,18 @@ import lombok.Setter;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * A persisted, finished game (table {@code games}).
+ *
+ * <p>The move list is stored as a single {@code moves} string (PGN); {@code status} and
+ * {@code endedBy} are persisted as enum names.
+ */
 @Entity
 @Getter
 @Table(name = "games")
 public class GameEntity {
     protected GameEntity() {}
+
     public GameEntity(
             UserEntity white,
             UserEntity black,

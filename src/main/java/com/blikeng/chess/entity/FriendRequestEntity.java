@@ -5,6 +5,10 @@ import lombok.Getter;
 
 import java.util.UUID;
 
+/**
+ * A pending friend request (table {@code friend_requests}) from {@code fromUser} to the
+ * user identified by {@code toUser}.
+ */
 @Entity
 @Table(name = "friend_requests")
 @Getter
