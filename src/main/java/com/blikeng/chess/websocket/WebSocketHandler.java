@@ -2,7 +2,7 @@ package com.blikeng.chess.websocket;
 
 import com.blikeng.chess.dto.websocket.*;
 import com.blikeng.chess.exception.ApiException;
-import com.blikeng.chess.notifications.NotificationService;
+import com.blikeng.chess.service.NotificationService;
 import com.blikeng.chess.service.ChallengeService;
 import com.blikeng.chess.service.GameService;
 import com.blikeng.chess.service.MatchmakingService;

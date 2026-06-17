@@ -7,7 +7,6 @@ import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.types.*;
 import com.blikeng.chess.model.Challenge;
 import com.blikeng.chess.model.timecontrol.TimeControl;
-import com.blikeng.chess.notifications.NotificationService;
 import com.blikeng.chess.dto.websocket.WsOutgoingChallengeCancelledDTO;
 import com.blikeng.chess.dto.websocket.WsOutgoingChallengeDTO;
 import com.blikeng.chess.dto.websocket.WsOutgoingChallengeResponseDTO;

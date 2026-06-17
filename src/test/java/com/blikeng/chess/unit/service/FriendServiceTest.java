@@ -10,7 +10,7 @@ import com.blikeng.chess.entity.FriendRequestEntity;
 import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.types.*;
 import com.blikeng.chess.repository.FriendRepository;
-import com.blikeng.chess.notifications.events.FriendRequestEvent;
+import com.blikeng.chess.events.FriendRequestEvent;
 import com.blikeng.chess.repository.FriendRequestRepository;
 import com.blikeng.chess.repository.UserRepository;
 import com.blikeng.chess.security.JwtPrincipal;

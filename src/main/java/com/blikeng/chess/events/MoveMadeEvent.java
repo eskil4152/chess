@@ -1,4 +1,4 @@
-package com.blikeng.chess.notifications.events;
+package com.blikeng.chess.events;
 
 import java.util.Set;
 import java.util.UUID;

@@ -5,7 +5,7 @@ import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.types.*;
 import com.blikeng.chess.model.Challenge;
 import com.blikeng.chess.model.timecontrol.TimeControl;
-import com.blikeng.chess.notifications.NotificationService;
+import com.blikeng.chess.service.NotificationService;
 import com.blikeng.chess.repository.UserRepository;
 import com.blikeng.chess.service.ChallengeService;
 import com.blikeng.chess.service.GameService;
