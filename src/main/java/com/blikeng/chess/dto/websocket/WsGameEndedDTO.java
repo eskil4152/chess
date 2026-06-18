@@ -5,6 +5,7 @@ import com.blikeng.chess.model.GameStatus;
 
 import java.util.UUID;
 
+/** Outbound GAME_ENDED message: result, reason, and final Elos. */
 public record WsGameEndedDTO(
         WsMessageType type,
         UUID gameId,

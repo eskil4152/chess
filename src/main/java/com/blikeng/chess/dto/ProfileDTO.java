@@ -1,5 +1,6 @@
 package com.blikeng.chess.dto;
 
+/** A user's public profile: bio/avatar, per-time-control stats, friend flag, and active game id. */
 public record ProfileDTO (
         String username,
         String bio,

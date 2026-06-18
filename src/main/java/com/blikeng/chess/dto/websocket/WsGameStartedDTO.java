@@ -2,6 +2,7 @@ package com.blikeng.chess.dto.websocket;
 
 import java.util.UUID;
 
+/** Outbound GAME_STARTED message: both players' details for a new game. */
 public record WsGameStartedDTO(
         WsMessageType type,
         UUID gameId,

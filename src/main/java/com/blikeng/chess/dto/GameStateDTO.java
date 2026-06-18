@@ -5,6 +5,7 @@ import com.blikeng.chess.dto.websocket.WsMessageType;
 import java.util.List;
 import java.util.UUID;
 
+/** Full state of an active game pushed to clients, including per-side remaining time (WS GAME_STATE). */
 public record GameStateDTO(
         WsMessageType type,
         UUID gameId,
