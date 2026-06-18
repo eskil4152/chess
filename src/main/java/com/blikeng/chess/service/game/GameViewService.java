@@ -10,6 +10,13 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+/**
+ * Read model for active games: builds the {@link GameStateDTO} a client needs to render a
+ * game, computing each side's remaining time from the current turn's elapsed clock.
+ *
+ * <p>{@link #restoreGameState()} returns the caller's own game; the {@code String} overload
+ * returns a game by id and registers a non-participant caller as a spectator.
+ */
 @Service
 public class GameViewService {
     private final ActiveGameStore activeGameStore;

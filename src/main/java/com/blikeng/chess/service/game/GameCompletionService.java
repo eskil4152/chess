@@ -12,6 +12,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+/**
+ * Ends a game and cleans up after it. {@link #endGame} records the result — persisting the
+ * finished game and updating Elo/stats for human games (skipped for bot games) — publishes
+ * the final move and {@code MatchEndedEvent}, then removes the game from
+ * {@link ActiveGameStore} and cancels its clock.
+ */
 @Service
 public class GameCompletionService {
     private final Logger logger = LoggerFactory.getLogger(GameCompletionService.class);

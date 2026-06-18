@@ -15,6 +15,15 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Core handling of an in-progress game's actions: making moves, resigning, and draw
+ * offers/agreement.
+ *
+ * <p>Each action locks the {@link Game} for its duration. Lookups go through
+ * {@link ActiveGameStore}, clocks through {@link GameClockService}, and ending a game is
+ * delegated to {@link GameCompletionService}. Game creation and state queries live in
+ * {@link GameCreationService} and {@link GameViewService}.
+ */
 @Service
 public class GameService {
     private final ApplicationEventPublisher eventPublisher;

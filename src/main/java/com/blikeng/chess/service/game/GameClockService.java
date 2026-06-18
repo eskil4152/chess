@@ -10,6 +10,14 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 
+/**
+ * Per-game chess clocks and flag (timeout) detection.
+ *
+ * <p>{@link #handleTime} deducts elapsed time on a move and reports whether that side
+ * flagged. {@link #scheduleFlagCheck} arms a timer that ends the game (via the supplied
+ * callback) if the active player's time runs out; {@link #cancel} clears a game's pending
+ * timer.
+ */
 @Service
 public class GameClockService {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);

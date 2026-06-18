@@ -19,6 +19,11 @@ import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * Starts new games: human matches ({@link #beginGame} — persisted, random colours, clock
+ * started) and bot games ({@link #beginBotGame} — not persisted, no clock). Both register
+ * the game in {@link ActiveGameStore} and publish a {@code MatchStartedEvent}.
+ */
 @Service
 public class GameCreationService {
     private final Logger logger = LoggerFactory.getLogger(GameCreationService.class);
