@@ -1,7 +1,8 @@
-package com.blikeng.chess.service;
+package com.blikeng.chess.service.game;
 
 import com.blikeng.chess.dto.GameDTO;
 import com.blikeng.chess.dto.GamePreviewDTO;
+import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.exception.types.GameNotFoundException;
 import com.blikeng.chess.exception.types.InvalidParameterException;
 import com.blikeng.chess.exception.types.InvalidUUIDException;
@@ -61,5 +62,9 @@ public class GameHistoryService {
                     game.getTimeControl()
                 ))
                 .toList();
+    }
+
+    public List<GameEntity> getAllGames(String username, String timeControl) {
+        return gameRepository.findFinishedByUsernameAndTcType(username, timeControl);
     }
 }

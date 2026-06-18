@@ -18,7 +18,8 @@ import com.blikeng.chess.repository.UserRepository;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.PasswordService;
 import com.blikeng.chess.security.UserRole;
-import com.blikeng.chess.service.GameService;
+import com.blikeng.chess.service.game.GameHistoryService;
+import com.blikeng.chess.service.game.ActiveGameStore;
 import com.blikeng.chess.service.UserService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,7 +47,8 @@ class UserServiceTest {
     @Mock UserRepository userRepository;
     @Mock FriendRepository friendRepository;
     @Mock PasswordService passwordService;
-    @Mock GameService gameService;
+    @Mock ActiveGameStore activeGameStore;
+    @Mock GameHistoryService gameHistoryService;
     @InjectMocks UserService userService;
 
     private UserEntity user;
@@ -62,7 +64,7 @@ class UserServiceTest {
         user.setRapidLosses(losses);
         user.setRapidElo(1200);
         when(userRepository.findByUsernameIgnoreCase("someUser")).thenReturn(Optional.of(user));
-        when(gameService.getAllGames("someUser", "RAPID")).thenReturn(List.of());
+        when(gameHistoryService.getAllGames("someUser", "RAPID")).thenReturn(List.of());
     }
 
     @BeforeEach
@@ -152,7 +154,7 @@ class UserServiceTest {
         Game game = mock(Game.class);
         when(game.getId()).thenReturn(gameId);
         when(userRepository.findByUsernameIgnoreCase("someUser")).thenReturn(Optional.of(user));
-        when(gameService.getActiveGame(user.getId())).thenReturn(Optional.of(game));
+        when(activeGameStore.findByUser(user.getId())).thenReturn(Optional.of(game));
 
         ProfileDTO dto = userService.getUser("someUser");
 
@@ -162,7 +164,7 @@ class UserServiceTest {
     @Test
     void getUserShouldReturnNullActiveGameIdWhenNotInGame() {
         when(userRepository.findByUsernameIgnoreCase("someUser")).thenReturn(Optional.of(user));
-        when(gameService.getActiveGame(user.getId())).thenReturn(Optional.empty());
+        when(activeGameStore.findByUser(user.getId())).thenReturn(Optional.empty());
 
         ProfileDTO dto = userService.getUser("someUser");
 
@@ -303,7 +305,7 @@ class UserServiceTest {
     void getPlayerStatsShouldBeCaseInsensitiveForTimeControl() {
         user.setRapidElo(1200);
         when(userRepository.findByUsernameIgnoreCase("someUser")).thenReturn(Optional.of(user));
-        when(gameService.getAllGames("someUser", "rapid")).thenReturn(List.of());
+        when(gameHistoryService.getAllGames("someUser", "rapid")).thenReturn(List.of());
         assertThat(userService.getPlayerStats("someUser", "rapid").elo()).isEqualTo(1200);
     }
 
@@ -326,7 +328,7 @@ class UserServiceTest {
     @Test
     void getPlayerStatsShouldCountWinsByTerminationType() {
         stubStats(3, 3, 0);
-        when(gameService.getAllGames("someUser", "RAPID")).thenReturn(List.of(
+        when(gameHistoryService.getAllGames("someUser", "RAPID")).thenReturn(List.of(
                 game(user, opponent, GameStatus.WHITE_WIN, EndedBy.CHECKMATE),
                 game(user, opponent, GameStatus.WHITE_WIN, EndedBy.TIMEOUT),
                 game(user, opponent, GameStatus.WHITE_WIN, EndedBy.RESIGNATION)
@@ -340,7 +342,7 @@ class UserServiceTest {
     @Test
     void getPlayerStatsShouldCountLossesByTerminationType() {
         stubStats(3, 0, 3);
-        when(gameService.getAllGames("someUser", "RAPID")).thenReturn(List.of(
+        when(gameHistoryService.getAllGames("someUser", "RAPID")).thenReturn(List.of(
                 game(opponent, user, GameStatus.WHITE_WIN, EndedBy.CHECKMATE),
                 game(opponent, user, GameStatus.WHITE_WIN, EndedBy.TIMEOUT),
                 game(opponent, user, GameStatus.WHITE_WIN, EndedBy.RESIGNATION)
@@ -354,7 +356,7 @@ class UserServiceTest {
     @Test
     void getPlayerStatsShouldCountDrawsByTerminationType() {
         stubStats(5, 0, 0);
-        when(gameService.getAllGames("someUser", "RAPID")).thenReturn(List.of(
+        when(gameHistoryService.getAllGames("someUser", "RAPID")).thenReturn(List.of(
                 game(user, opponent, GameStatus.DRAW, EndedBy.STALEMATE),
                 game(user, opponent, GameStatus.DRAW, EndedBy.AGREEMENT),
                 game(user, opponent, GameStatus.DRAW, EndedBy.REPETITION),
@@ -372,7 +374,7 @@ class UserServiceTest {
     @Test
     void getPlayerStatsShouldCountColorStats() {
         stubStats(4, 3, 1);
-        when(gameService.getAllGames("someUser", "RAPID")).thenReturn(List.of(
+        when(gameHistoryService.getAllGames("someUser", "RAPID")).thenReturn(List.of(
                 game(user, opponent, GameStatus.WHITE_WIN, EndedBy.CHECKMATE),
                 game(user, opponent, GameStatus.BLACK_WIN, EndedBy.CHECKMATE),
                 game(opponent, user, GameStatus.BLACK_WIN, EndedBy.CHECKMATE),
@@ -390,7 +392,7 @@ class UserServiceTest {
     @Test
     void getPlayerStatsShouldHandleNullEndedBy() {
         stubStats(1, 1, 0);
-        when(gameService.getAllGames("someUser", "RAPID")).thenReturn(List.of(
+        when(gameHistoryService.getAllGames("someUser", "RAPID")).thenReturn(List.of(
                 game(user, opponent, GameStatus.WHITE_WIN, null)
         ));
         PlayerStatsDTO dto = userService.getPlayerStats("someUser", "RAPID");

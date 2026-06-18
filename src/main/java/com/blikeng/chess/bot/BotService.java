@@ -7,7 +7,8 @@ import com.blikeng.chess.engine.analysis.Evaluator.MoveEval;
 import com.blikeng.chess.model.piece.PieceType;
 import com.blikeng.chess.events.MatchStartedEvent;
 import com.blikeng.chess.events.MoveMadeEvent;
-import com.blikeng.chess.service.GameService;
+import com.blikeng.chess.service.game.ActiveGameStore;
+import com.blikeng.chess.service.game.GameService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
 @Service
 public class BotService {
     private final GameService gameService;
+    private final ActiveGameStore activeGameStore;
     private final Logger logger = LoggerFactory.getLogger(BotService.class);
     private final ExecutorService executor = Executors.newFixedThreadPool(4);
 
@@ -49,8 +51,9 @@ public class BotService {
             .map(BotDefinition::id)
             .collect(Collectors.toUnmodifiableSet());
 
-    public BotService(GameService gameService) {
+    public BotService(GameService gameService, ActiveGameStore activeGameStore) {
         this.gameService = gameService;
+        this.activeGameStore = activeGameStore;
     }
 
     public BotDefinition getBot(BotDifficulty difficulty) {
@@ -85,7 +88,7 @@ public class BotService {
         executor.submit(() -> {
             try {
                 Thread.sleep(400);
-                gameService.getActiveGame(botId).ifPresent(game -> {
+                activeGameStore.findByUser(botId).ifPresent(game -> {
                     MoveEval eval = Evaluator.getBestMove(game, bot.difficulty().depth, bot.difficulty().noise);
                     if (eval.move() == null) return;
 

@@ -8,7 +8,8 @@ import com.blikeng.chess.model.timecontrol.TimeControl;
 import com.blikeng.chess.service.NotificationService;
 import com.blikeng.chess.repository.UserRepository;
 import com.blikeng.chess.service.ChallengeService;
-import com.blikeng.chess.service.GameService;
+import com.blikeng.chess.service.game.ActiveGameStore;
+import com.blikeng.chess.service.game.GameCreationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +33,8 @@ import static org.mockito.Mockito.*;
 class ChallengeServiceTest {
 
     @Mock UserRepository userRepository;
-    @Mock GameService gameService;
+    @Mock ActiveGameStore activeGameStore;
+    @Mock GameCreationService gameCreationService;
     @Mock NotificationService notificationService;
     @InjectMocks ChallengeService challengeService;
 
@@ -69,7 +71,7 @@ class ChallengeServiceTest {
     @Test
     void handleChallengeShouldThrowWhenReceiverIsInGame() {
         when(userRepository.findById(challenged.getId())).thenReturn(Optional.of(challenged));
-        when(gameService.isInGame(challenged.getId())).thenReturn(true);
+        when(activeGameStore.isInGame(challenged.getId())).thenReturn(true);
 
         assertThatThrownBy(() ->
             challengeService.handleChallenge(challenger.getId(), new WsChallengeDTO(challenged.getId(), "BLITZ_5_0"))
@@ -94,7 +96,7 @@ class ChallengeServiceTest {
 
         challengeService.handleChallenge(challenger.getId(), new WsChallengeDTO(challenged.getId(), "BLITZ_3_0"));
 
-        verify(gameService).beginGame(challenged, challenger, existing.timeControl());
+        verify(gameCreationService).beginGame(challenged, challenger, existing.timeControl());
         assertThat(map()).isEmpty();
         verify(notificationService, never()).onChallenge(any(), any(), any());
     }
@@ -109,7 +111,7 @@ class ChallengeServiceTest {
 
         challengeService.handleChallengeResponse(challenged.getId(), new WsChallengeResponseDTO(WsMessageType.CHALLENGE_RESPONSE, challenge.id(), true));
 
-        verify(gameService).beginGame(challenger, challenged, TimeControl.BLITZ_5_0);
+        verify(gameCreationService).beginGame(challenger, challenged, TimeControl.BLITZ_5_0);
         assertThat(map()).isEmpty();
     }
 

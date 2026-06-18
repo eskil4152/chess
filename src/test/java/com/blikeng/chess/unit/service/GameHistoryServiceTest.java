@@ -9,7 +9,7 @@ import com.blikeng.chess.exception.types.InvalidUUIDException;
 import com.blikeng.chess.exception.types.UserNotFoundException;
 import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.repository.GameRepository;
-import com.blikeng.chess.service.GameHistoryService;
+import com.blikeng.chess.service.game.GameHistoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

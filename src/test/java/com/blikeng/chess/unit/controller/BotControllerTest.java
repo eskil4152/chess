@@ -13,7 +13,8 @@ import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.UserRole;
 import com.blikeng.chess.security.ratelimit.RateLimitingService;
 import com.blikeng.chess.service.AuthService;
-import com.blikeng.chess.service.GameService;
+import com.blikeng.chess.service.game.ActiveGameStore;
+import com.blikeng.chess.service.game.GameCreationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +45,8 @@ class BotControllerTest {
 
     @Autowired MockMvc mockMvc;
     @MockitoBean BotService botService;
-    @MockitoBean GameService gameService;
+    @MockitoBean ActiveGameStore activeGameStore;
+    @MockitoBean GameCreationService gameCreationService;
     @MockitoBean AuthService authService;
     @MockitoBean JwtService jwtService;
     @MockitoBean RateLimitingService rateLimitingService;
@@ -71,12 +73,12 @@ class BotControllerTest {
         mockMvc.perform(post("/api/bot/easy").with(jwtAuth()).with(csrf()))
                 .andExpect(status().isOk());
 
-        verify(gameService).beginBotGame(any(), any());
+        verify(gameCreationService).beginBotGame(any(), any());
     }
 
     @Test
     void shouldReturn409WhenAlreadyInGame() throws Exception {
-        when(gameService.isInGame(any())).thenReturn(true);
+        when(activeGameStore.isInGame(any())).thenReturn(true);
 
         mockMvc.perform(post("/api/bot/easy").with(jwtAuth()).with(csrf()))
                 .andExpect(status().isConflict());
@@ -90,7 +92,7 @@ class BotControllerTest {
 
     @Test
     void shouldReturn409WhenUserThrowsExistingGame() throws Exception {
-        when(gameService.isInGame(any())).thenThrow(new ExistingGameException());
+        when(activeGameStore.isInGame(any())).thenThrow(new ExistingGameException());
 
         mockMvc.perform(post("/api/bot/easy").with(jwtAuth()).with(csrf()))
                 .andExpect(status().isConflict());

@@ -7,6 +7,8 @@ import com.blikeng.chess.exception.types.InvalidUserException;
 import com.blikeng.chess.model.timecontrol.TimeControl;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
+import com.blikeng.chess.service.game.ActiveGameStore;
+import com.blikeng.chess.service.game.GameCreationService;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -24,11 +26,13 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class MatchmakingService {
     private final AuthService authService;
-    private final GameService gameService;
+    private final ActiveGameStore activeGameStore;
+    private final GameCreationService gameCreationService;
 
-    public MatchmakingService(AuthService authService, GameService gameService) {
+    public MatchmakingService(AuthService authService, ActiveGameStore activeGameStore, GameCreationService gameCreationService) {
         this.authService = authService;
-        this.gameService = gameService;
+        this.activeGameStore = activeGameStore;
+        this.gameCreationService = gameCreationService;
     }
 
     private final ConcurrentHashMap<UUID, QueueEntry> queue = new ConcurrentHashMap<>();
@@ -44,7 +48,7 @@ public class MatchmakingService {
         UserEntity matched;
 
         synchronized (queue) {
-            if (gameService.isInGame(userId)) throw new ExistingGameException();
+            if (activeGameStore.isInGame(userId)) throw new ExistingGameException();
             if (queue.containsKey(userId)) return;
 
             TimeControl requestedTc = timeControlDTO.resolved();
@@ -63,7 +67,7 @@ public class MatchmakingService {
             queue.remove(best.getKey());
             matched = best.getValue().user();
 
-            gameService.beginGame(matched, user, requestedTc);
+            gameCreationService.beginGame(matched, user, requestedTc);
         }
     }
 

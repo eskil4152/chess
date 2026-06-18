@@ -1,7 +1,7 @@
 package com.blikeng.chess.controller;
 
 import com.blikeng.chess.dto.GameStateDTO;
-import com.blikeng.chess.service.GameService;
+import com.blikeng.chess.service.game.GameViewService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,19 +13,19 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/games/active")
 public class ActiveGameController {
-    private final GameService gameService;
+    private final GameViewService gameViewService;
 
-    public ActiveGameController(GameService gameService) {
-        this.gameService = gameService;
+    public ActiveGameController(GameViewService gameViewService) {
+        this.gameViewService = gameViewService;
     }
 
     @GetMapping
     public ResponseEntity<GameStateDTO> getActiveGame() {
-        return ResponseEntity.ok(gameService.restoreGameState());
+        return ResponseEntity.ok(gameViewService.restoreGameState());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<GameStateDTO> spectateGame(@PathVariable String id) {
-        return ResponseEntity.ok(gameService.restoreGameState(id));
+        return ResponseEntity.ok(gameViewService.restoreGameState(id));
     }
 }
