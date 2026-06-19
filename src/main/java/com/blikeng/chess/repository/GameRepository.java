@@ -33,7 +33,7 @@ public interface GameRepository extends JpaRepository<GameEntity, UUID> {
      * aggregate stats, avoiding full entity loads and the heavy moves column.
      */
     @Query("""
-        SELECT new GameStatRow(game.white.id, game.status, game.endedBy)
+        SELECT new com.blikeng.chess.dto.GameStatRow(game.white.id, game.status, game.endedBy)
         FROM GameEntity game
         WHERE
             (game.white.id = :userId OR game.black.id = :userId)

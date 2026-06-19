@@ -1,6 +1,7 @@
 package com.blikeng.chess.bot;
 
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
+import com.blikeng.chess.dto.websocket.WsResignDTO;
 import com.blikeng.chess.engine.PositionMapper;
 import com.blikeng.chess.engine.analysis.Evaluator;
 import com.blikeng.chess.engine.analysis.Evaluator.MoveEval;
@@ -36,6 +37,8 @@ import java.util.stream.Collectors;
  */
 @Service
 public class BotService {
+    private final int MAX_BOT_MOVE_ATTEMPTS = 3;
+
     private final GameService gameService;
     private final ActiveGameStore activeGameStore;
     private final Logger logger = LoggerFactory.getLogger(BotService.class);
@@ -67,7 +70,7 @@ public class BotService {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onMatchStarted(MatchStartedEvent event) {
         if (isBot(event.whiteId())) {
-            scheduleBotMove(event.gameId(), event.whiteId());
+            scheduleBotMove(event.gameId(), event.whiteId(), 1);
         }
     }
 
@@ -75,36 +78,46 @@ public class BotService {
     public void onMoveMade(MoveMadeEvent event) {
         UUID nextPlayer = event.whiteTurn() ? event.whiteId() : event.blackId();
         if (isBot(nextPlayer)) {
-            scheduleBotMove(event.gameId(), nextPlayer);
+            scheduleBotMove(event.gameId(), nextPlayer, 1);
         }
     }
 
-    private void scheduleBotMove(UUID gameId, UUID botId) {
+    private void scheduleBotMove(UUID gameId, UUID botId, int attempt) {
         BotDefinition bot = BOTS.values().stream()
                 .filter(b -> b.id().equals(botId))
                 .findFirst()
                 .orElseThrow();
 
         executor.submit(() -> {
-            try {
-                Thread.sleep(400);
-                activeGameStore.findByUser(botId).ifPresent(game -> {
-                    MoveEval eval = Evaluator.getBestMove(game, bot.difficulty().depth, bot.difficulty().noise);
-                    if (eval.move() == null) return;
+                try {
+                    Thread.sleep(400);
+                    activeGameStore.findByUser(botId).ifPresent(game -> {
+                        MoveEval eval = Evaluator.getBestMove(game, bot.difficulty().depth, bot.difficulty().noise);
+                        if (eval.move() == null) return;
 
-                    String uci = PositionMapper.toString(eval.move().from())
-                               + PositionMapper.toString(eval.move().to());
-                    if (eval.promoPiece() != null) {
-                        uci += Character.toLowerCase(PieceType.toChar(eval.promoPiece()));
+                        String uci = PositionMapper.toString(eval.move().from())
+                            + PositionMapper.toString(eval.move().to());
+                        if (eval.promoPiece() != null) {
+                            uci += Character.toLowerCase(PieceType.toChar(eval.promoPiece()));
+                        }
+
+                        gameService.makeMove(botId, new WsMoveDTO(gameId.toString(), uci, 0, game.isWhiteTurn()));
+                    });
+                } catch (InterruptedException _) {
+                    Thread.currentThread().interrupt();
+                } catch (Exception e) {
+                    logger.warn("Bot move failed for game {} (attempt {}): {}", gameId, attempt, e.getMessage());
+                    if (attempt < MAX_BOT_MOVE_ATTEMPTS) {
+                        scheduleBotMove(gameId, botId, attempt + 1);
+                    } else {
+                        logger.error("Bot giving up on game {}", gameId);
+                        forfeitBot(botId, gameId);
                     }
-
-                    gameService.makeMove(botId, new WsMoveDTO(gameId.toString(), uci, 0, game.isWhiteTurn()));
-                });
-            } catch (InterruptedException _) {
-                Thread.currentThread().interrupt();
-            } catch (Exception e) {
-                logger.warn("Bot move failed for game {}: {}", gameId, e.getMessage());
-            }
+                }
         });
+    }
+
+    private void forfeitBot(UUID botId, UUID gameId){
+        gameService.resignGame(botId, new WsResignDTO(gameId.toString()));
     }
 }

@@ -18,7 +18,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-USERS="${USERS:-500}"
+USERS="${USERS:-1000}"
 BASE_URL="${BASE_URL:-http://localhost:8081}"
 SESSIONS_FILE="results/sessions.json"
 TS="$(date +%Y%m%d-%H%M%S)"
