@@ -159,31 +159,31 @@ class NotificationServiceTest {
         WebSocketSession session = openSession();
         when(presenceService.getAllSessions()).thenReturn(List.of(session));
 
-        notificationService.pingAllSessions();
+        notificationService.pingLocalSessions();
 
         verify(session).sendMessage(any(PingMessage.class));
     }
 
     @Test
-    void pingAllSessionsShouldRemoveClosedSessions() {
+    void pingLocalSessionsShouldRemoveClosedSessions() {
         WebSocketSession session = closedSession();
         UUID userId = UUID.randomUUID();
         when(session.getAttributes()).thenReturn(Map.of("userId", userId));
         when(presenceService.getAllSessions()).thenReturn(List.of(session));
 
-        notificationService.pingAllSessions();
+        notificationService.pingLocalSessions();
 
         verify(presenceService).removeSession(userId, session);
     }
 
     @Test
-    void pingAllSessionsShouldContinueAfterIoException() throws IOException {
+    void pingLocalSessionsShouldContinueAfterIoException() throws IOException {
         WebSocketSession failing = openSession();
         WebSocketSession healthy = openSession();
         doThrow(new IOException("ping failed")).when(failing).sendMessage(any(PingMessage.class));
         when(presenceService.getAllSessions()).thenReturn(List.of(failing, healthy));
 
-        assertThatCode(() -> notificationService.pingAllSessions()).doesNotThrowAnyException();
+        assertThatCode(() -> notificationService.pingLocalSessions()).doesNotThrowAnyException();
 
         verify(healthy).sendMessage(any(PingMessage.class));
     }
