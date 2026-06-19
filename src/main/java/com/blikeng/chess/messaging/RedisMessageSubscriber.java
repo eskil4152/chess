@@ -8,6 +8,7 @@ import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Component
@@ -27,8 +28,9 @@ public class RedisMessageSubscriber implements MessageListener {
 
     @Override
     public void onMessage(Message message, byte @Nullable [] pattern) {
-        String payload = message.getBody().toString();
-        String channel = message.getChannel().toString();
+        String payload = new String(message.getBody(), StandardCharsets.UTF_8);
+        String channel = new String(message.getChannel(), StandardCharsets.UTF_8);
+
         UUID userId;
 
         try {
@@ -37,6 +39,6 @@ public class RedisMessageSubscriber implements MessageListener {
             return;
         }
 
-        // broadcaster.sendToUser(userId, payload);
+        broadcaster.sendToUser(userId, payload);
     }
 }
