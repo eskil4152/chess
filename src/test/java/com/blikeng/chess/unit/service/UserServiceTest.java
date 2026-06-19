@@ -3,8 +3,8 @@ package com.blikeng.chess.unit.service;
 import com.blikeng.chess.dto.PasswordDTO;
 import com.blikeng.chess.dto.PlayerStatsDTO;
 import com.blikeng.chess.dto.ProfileDTO;
+import com.blikeng.chess.dto.GameStatRow;
 import com.blikeng.chess.dto.ProfileEditDTO;
-import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.types.BadEditException;
 import com.blikeng.chess.exception.types.InvalidPasswordException;
@@ -31,7 +31,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,8 +53,8 @@ class UserServiceTest {
     private UserEntity user;
     private UserEntity opponent;
 
-    private GameEntity game(UserEntity white, UserEntity black, GameStatus status, EndedBy endedBy) {
-        return new GameEntity(white, black, status, Instant.now(), "RAPID_10_0", endedBy);
+    private GameStatRow game(UserEntity white, UserEntity black, GameStatus status, EndedBy endedBy) {
+        return new GameStatRow(white.getId(), status, endedBy);
     }
 
     private void stubStats(int games, int wins, int losses) {
@@ -64,7 +63,7 @@ class UserServiceTest {
         user.setRapidLosses(losses);
         user.setRapidElo(1200);
         when(userRepository.findByUsernameIgnoreCase("someUser")).thenReturn(Optional.of(user));
-        when(gameHistoryService.getAllGames("someUser", "RAPID")).thenReturn(List.of());
+        when(gameHistoryService.getFinishedGameStats(user.getId(),"RAPID")).thenReturn(List.of());
     }
 
     @BeforeEach
@@ -305,7 +304,7 @@ class UserServiceTest {
     void getPlayerStatsShouldBeCaseInsensitiveForTimeControl() {
         user.setRapidElo(1200);
         when(userRepository.findByUsernameIgnoreCase("someUser")).thenReturn(Optional.of(user));
-        when(gameHistoryService.getAllGames("someUser", "rapid")).thenReturn(List.of());
+        when(gameHistoryService.getFinishedGameStats(user.getId(),"rapid")).thenReturn(List.of());
         assertThat(userService.getPlayerStats("someUser", "rapid").elo()).isEqualTo(1200);
     }
 
@@ -328,7 +327,7 @@ class UserServiceTest {
     @Test
     void getPlayerStatsShouldCountWinsByTerminationType() {
         stubStats(3, 3, 0);
-        when(gameHistoryService.getAllGames("someUser", "RAPID")).thenReturn(List.of(
+        when(gameHistoryService.getFinishedGameStats(user.getId(),"RAPID")).thenReturn(List.of(
                 game(user, opponent, GameStatus.WHITE_WIN, EndedBy.CHECKMATE),
                 game(user, opponent, GameStatus.WHITE_WIN, EndedBy.TIMEOUT),
                 game(user, opponent, GameStatus.WHITE_WIN, EndedBy.RESIGNATION)
@@ -342,7 +341,7 @@ class UserServiceTest {
     @Test
     void getPlayerStatsShouldCountLossesByTerminationType() {
         stubStats(3, 0, 3);
-        when(gameHistoryService.getAllGames("someUser", "RAPID")).thenReturn(List.of(
+        when(gameHistoryService.getFinishedGameStats(user.getId(),"RAPID")).thenReturn(List.of(
                 game(opponent, user, GameStatus.WHITE_WIN, EndedBy.CHECKMATE),
                 game(opponent, user, GameStatus.WHITE_WIN, EndedBy.TIMEOUT),
                 game(opponent, user, GameStatus.WHITE_WIN, EndedBy.RESIGNATION)
@@ -356,7 +355,7 @@ class UserServiceTest {
     @Test
     void getPlayerStatsShouldCountDrawsByTerminationType() {
         stubStats(5, 0, 0);
-        when(gameHistoryService.getAllGames("someUser", "RAPID")).thenReturn(List.of(
+        when(gameHistoryService.getFinishedGameStats(user.getId(),"RAPID")).thenReturn(List.of(
                 game(user, opponent, GameStatus.DRAW, EndedBy.STALEMATE),
                 game(user, opponent, GameStatus.DRAW, EndedBy.AGREEMENT),
                 game(user, opponent, GameStatus.DRAW, EndedBy.REPETITION),
@@ -374,7 +373,7 @@ class UserServiceTest {
     @Test
     void getPlayerStatsShouldCountColorStats() {
         stubStats(4, 3, 1);
-        when(gameHistoryService.getAllGames("someUser", "RAPID")).thenReturn(List.of(
+        when(gameHistoryService.getFinishedGameStats(user.getId(),"RAPID")).thenReturn(List.of(
                 game(user, opponent, GameStatus.WHITE_WIN, EndedBy.CHECKMATE),
                 game(user, opponent, GameStatus.BLACK_WIN, EndedBy.CHECKMATE),
                 game(opponent, user, GameStatus.BLACK_WIN, EndedBy.CHECKMATE),
@@ -392,7 +391,7 @@ class UserServiceTest {
     @Test
     void getPlayerStatsShouldHandleNullEndedBy() {
         stubStats(1, 1, 0);
-        when(gameHistoryService.getAllGames("someUser", "RAPID")).thenReturn(List.of(
+        when(gameHistoryService.getFinishedGameStats(user.getId(),"RAPID")).thenReturn(List.of(
                 game(user, opponent, GameStatus.WHITE_WIN, null)
         ));
         PlayerStatsDTO dto = userService.getPlayerStats("someUser", "RAPID");

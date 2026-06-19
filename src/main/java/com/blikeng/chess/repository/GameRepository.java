@@ -1,5 +1,6 @@
 package com.blikeng.chess.repository;
 
+import com.blikeng.chess.dto.GameStatRow;
 import com.blikeng.chess.entity.GameEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,16 +26,21 @@ public interface GameRepository extends JpaRepository<GameEntity, UUID> {
     """)
     Page<GameEntity> findByUsernameOrderedByTimestampDesc(@Param("username") String username, Pageable pageable);
 
-    /** Finished games for a user in a time-control category; matches by enum-name prefix (e.g. "RAPID" → "RAPID_10_0"). */
+    /**
+     * Lightweight stat projections for a user's finished games in a time-control category;
+     * matches by enum-name prefix (e.g. "RAPID" → "RAPID_10_0"). Filters on the indexed
+     * white/black id columns (no join to users) and selects only the fields needed to
+     * aggregate stats, avoiding full entity loads and the heavy moves column.
+     */
     @Query("""
-        SELECT game
+        SELECT new com.blikeng.chess.dto.GameStatRow(game.white.id, game.status, game.endedBy)
         FROM GameEntity game
         WHERE
-            (game.black.username = :username OR game.white.username = :username)
+            (game.white.id = :userId OR game.black.id = :userId)
         AND
             game.timeControl LIKE CONCAT(:tcType, '%')
         AND
             game.status <> 'ONGOING'
     """)
-    List<GameEntity> findFinishedByUsernameAndTcType(@Param("username") String username, @Param("tcType") String tcType);
+    List<GameStatRow> findFinishedStatsByUserAndTcType(@Param("userId") UUID userId, @Param("tcType") String tcType);
 }

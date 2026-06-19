@@ -3,9 +3,9 @@ package com.blikeng.chess.service;
 import com.blikeng.chess.dto.PasswordDTO;
 import com.blikeng.chess.dto.PlayerStatsDTO;
 import com.blikeng.chess.dto.ProfileDTO;
+import com.blikeng.chess.dto.GameStatRow;
 import com.blikeng.chess.dto.ProfileEditDTO;
 import com.blikeng.chess.entity.FriendId;
-import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.types.BadEditException;
 import com.blikeng.chess.exception.types.InvalidPasswordException;
@@ -139,7 +139,7 @@ public class UserService {
         int losses = user.getLosses(type);
         int draws = gamesPlayed - wins - losses;
 
-        List<GameEntity> games = gameHistoryService.getAllGames(username, timeControl);
+        List<GameStatRow> games = gameHistoryService.getFinishedGameStats(user.getId(), timeControl);
 
         int winsByCheckmate = 0, winsByFlagging = 0, winsByResignation = 0;
         int lossesByCheckmate = 0, lossesByFlagging = 0, lossesByResignation = 0;
@@ -147,10 +147,10 @@ public class UserService {
         int gamesAsBlack = 0, winsAsBlack = 0, lossesAsBlack = 0;
         int gamesAsWhite = 0, winsAsWhite = 0, lossesAsWhite = 0;
 
-        for (GameEntity game : games) {
-            boolean isWhite = game.getWhite().getId().equals(user.getId());
-            boolean won = isWhite ? game.getStatus() == GameStatus.WHITE_WIN : game.getStatus() == GameStatus.BLACK_WIN;
-            boolean lost = isWhite ? game.getStatus() == GameStatus.BLACK_WIN : game.getStatus() == GameStatus.WHITE_WIN;
+        for (GameStatRow game : games) {
+            boolean isWhite = game.whiteId().equals(user.getId());
+            boolean won = isWhite ? game.status() == GameStatus.WHITE_WIN : game.status() == GameStatus.BLACK_WIN;
+            boolean lost = isWhite ? game.status() == GameStatus.BLACK_WIN : game.status() == GameStatus.WHITE_WIN;
 
             if (isWhite) {
                 gamesAsWhite++;
@@ -162,21 +162,21 @@ public class UserService {
                 if (lost) lossesAsBlack++;
             }
 
-            if (game.getEndedBy() == null) continue;
+            if (game.endedBy() == null) continue;
 
-            if (won) switch (game.getEndedBy()) {
+            if (won) switch (game.endedBy()) {
                 case CHECKMATE -> winsByCheckmate++;
                 case TIMEOUT -> winsByFlagging++;
                 case RESIGNATION -> winsByResignation++;
                 default -> {}
             }
-            else if (lost) switch (game.getEndedBy()) {
+            else if (lost) switch (game.endedBy()) {
                 case CHECKMATE -> lossesByCheckmate++;
                 case TIMEOUT -> lossesByFlagging++;
                 case RESIGNATION -> lossesByResignation++;
                 default -> {}
             }
-            else switch (game.getEndedBy()) {
+            else switch (game.endedBy()) {
                 case STALEMATE -> drawsByStalemate++;
                 case AGREEMENT -> drawsByAgreement++;
                 case REPETITION -> drawsByRepetition++;
