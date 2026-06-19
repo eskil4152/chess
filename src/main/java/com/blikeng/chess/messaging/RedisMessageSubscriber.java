@@ -11,6 +11,9 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
+/**
+ * Subscribes to Redis channels matching {@code user:*} and forwards messages to the {@link LocalBroadcaster}.
+ */
 @Component
 public class RedisMessageSubscriber implements MessageListener {
     private final LocalBroadcaster broadcaster;

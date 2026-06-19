@@ -10,6 +10,10 @@ import org.springframework.web.socket.TextMessage;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 
+/**
+ * Handles messages from redis to the local WebSocket clients. Sends the payload to the WebSocket sessions a specific
+ * userID has active at this instance.
+ */
 @Component
 public class LocalBroadcaster {
     private final Executor executor;
