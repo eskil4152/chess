@@ -8,6 +8,12 @@ import com.blikeng.chess.model.piece.Piece;
 
 import java.util.List;
 
+/**
+ * Detects whether a square is attacked - used for check detection and castling safety.
+ *
+ * <p>A square counts as attacked if any enemy piece has a pseudo-legal move onto it
+ * (via {@link MoveGenerator}). {@link #isInCheck} applies this to a king's square.
+ */
 public class SquareAttacked {
     private final MoveGenerator moveGenerator;
 

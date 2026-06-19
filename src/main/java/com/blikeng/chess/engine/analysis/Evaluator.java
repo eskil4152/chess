@@ -13,6 +13,14 @@ import com.blikeng.chess.model.piece.PieceType;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * Position evaluation and move search (minimax with alpha-beta pruning).
+ *
+ * <p>{@link #getBestMove} searches to the given depth and returns the best move for the
+ * side to move (White maximizes the score, Black minimizes). An optional {@code noise}
+ * adds a random +- centipawn jitter to move scores so weaker bots deviate from the ideal
+ * move.
+ */
 public class Evaluator {
     private Evaluator() {}
 

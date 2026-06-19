@@ -18,22 +18,30 @@ import com.blikeng.chess.repository.UserRepository;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.PasswordService;
+import com.blikeng.chess.service.game.GameHistoryService;
+import com.blikeng.chess.service.game.ActiveGameStore;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * User profile operations: fetch a profile, edit profile fields, change password, and read
+ * per-time-control stats.
+ */
 @Service
 public class UserService {
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
     private final PasswordService passwordService;
-    private final GameService gameService;
+    private final ActiveGameStore activeGameStore;
+    private final GameHistoryService gameHistoryService;
 
-    public UserService(UserRepository userRepository, FriendRepository friendRepository, PasswordService passwordService, GameService gameService){
+    public UserService(UserRepository userRepository, FriendRepository friendRepository, PasswordService passwordService, ActiveGameStore activeGameStore, GameHistoryService gameHistoryService){
         this.userRepository = userRepository;
         this.friendRepository = friendRepository;
         this.passwordService = passwordService;
-        this.gameService = gameService;
+        this.activeGameStore = activeGameStore;
+        this.gameHistoryService = gameHistoryService;
     }
 
     public ProfileDTO getUser(String username) {
@@ -53,7 +61,7 @@ public class UserService {
             );
         }
 
-        String gameId = gameService.getActiveGame(user.getId())
+        String gameId = activeGameStore.findByUser(user.getId())
                 .map(g -> g.getId().toString())
                 .orElse(null);
 
@@ -131,7 +139,7 @@ public class UserService {
         int losses = user.getLosses(type);
         int draws = gamesPlayed - wins - losses;
 
-        List<GameEntity> games = gameService.getAllGames(username, timeControl);
+        List<GameEntity> games = gameHistoryService.getAllGames(username, timeControl);
 
         int winsByCheckmate = 0, winsByFlagging = 0, winsByResignation = 0;
         int lossesByCheckmate = 0, lossesByFlagging = 0, lossesByResignation = 0;

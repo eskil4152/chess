@@ -8,7 +8,8 @@ import com.blikeng.chess.model.timecontrol.TimeControl;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.UserRole;
 import com.blikeng.chess.service.AuthService;
-import com.blikeng.chess.service.GameService;
+import com.blikeng.chess.service.game.ActiveGameStore;
+import com.blikeng.chess.service.game.GameCreationService;
 import com.blikeng.chess.service.MatchmakingService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +33,8 @@ import static org.mockito.Mockito.*;
 class MatchmakingServiceTest {
 
     @Mock AuthService authService;
-    @Mock GameService gameService;
+    @Mock ActiveGameStore activeGameStore;
+    @Mock GameCreationService gameCreationService;
     @InjectMocks MatchmakingService matchmakingService;
 
     private UserEntity user1;
@@ -64,7 +66,7 @@ class MatchmakingServiceTest {
 
         matchmakingService.queuePlayer(timeControlDTO);
 
-        verify(gameService, never()).beginGame(any(), any(), any());
+        verify(gameCreationService, never()).beginGame(any(), any(), any());
     }
 
     @Test
@@ -78,7 +80,7 @@ class MatchmakingServiceTest {
         matchmakingService.queuePlayer(timeControlDTO);
 
         verify(authService, times(2)).findUserById(user1.getId());
-        verify(gameService, never()).beginGame(any(), any(), any());
+        verify(gameCreationService, never()).beginGame(any(), any(), any());
     }
 
     @Test
@@ -95,7 +97,7 @@ class MatchmakingServiceTest {
         setupSecurityContext(user2.getId());
         matchmakingService.queuePlayer(timeControlDTO);
 
-        verify(gameService).beginGame(user1, user2, TimeControl.BLITZ_5_0);
+        verify(gameCreationService).beginGame(user1, user2, TimeControl.BLITZ_5_0);
     }
 
     @Test
@@ -113,7 +115,7 @@ class MatchmakingServiceTest {
         setupSecurityContext(user2.getId());
         matchmakingService.queuePlayer(timeControlDTO);
 
-        verify(gameService, never()).beginGame(any(), any(), any());
+        verify(gameCreationService, never()).beginGame(any(), any(), any());
     }
 
     @Test
@@ -136,8 +138,8 @@ class MatchmakingServiceTest {
         setupSecurityContext(user3.getId());
         matchmakingService.queuePlayer(timeControlDTO); // min picks user2 (100) over user1 (150)
 
-        verify(gameService).beginGame(user2, user3, timeControlDTO.resolved());
-        verify(gameService, never()).beginGame(eq(user1), any(), any());
+        verify(gameCreationService).beginGame(user2, user3, timeControlDTO.resolved());
+        verify(gameCreationService, never()).beginGame(eq(user1), any(), any());
     }
 
     @Test
@@ -156,7 +158,7 @@ class MatchmakingServiceTest {
 
         setupSecurityContext(user1.getId());
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
-        when(gameService.isInGame(user1.getId())).thenReturn(true);
+        when(activeGameStore.isInGame(user1.getId())).thenReturn(true);
 
         assertThatThrownBy(() -> matchmakingService.queuePlayer(timeControlDTO))
                 .isInstanceOf(ExistingGameException.class);
@@ -185,7 +187,7 @@ class MatchmakingServiceTest {
         setupSecurityContext(user2.getId());
         matchmakingService.queuePlayer(timeControlDTO);
 
-        verify(gameService, never()).beginGame(any(), any(), any());
+        verify(gameCreationService, never()).beginGame(any(), any(), any());
     }
 
     @Test
@@ -203,7 +205,7 @@ class MatchmakingServiceTest {
         setupSecurityContext(user2.getId());
         matchmakingService.queuePlayer(timeControlDTO);
 
-        verify(gameService, never()).beginGame(any(), any(), any());
+        verify(gameCreationService, never()).beginGame(any(), any(), any());
     }
 
     @Test

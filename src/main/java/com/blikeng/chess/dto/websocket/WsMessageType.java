@@ -1,5 +1,6 @@
 package com.blikeng.chess.dto.websocket;
 
+/** Discriminator for all WebSocket messages (the {@code type} field). */
 public enum WsMessageType {
     GAME_STARTED,
     GAME_STATE,

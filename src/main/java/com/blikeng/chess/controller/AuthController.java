@@ -11,6 +11,13 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Authentication endpoints (base path {@code /api/auth}).
+ *
+ * <p>{@code POST /login} and {@code POST /register} authenticate the user and set an
+ * {@code AUTH} cookie. {@code POST /logout} blacklists the token and clears the cookie.
+ * {@code GET} returns the currently authenticated user.
+ */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {

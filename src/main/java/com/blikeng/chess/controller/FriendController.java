@@ -14,6 +14,13 @@ import com.blikeng.chess.dto.UsernameDTO;
 import com.blikeng.chess.dto.FriendDTO;
 import java.util.List;
 
+/**
+ * Endpoints for managing friends (base path {@code /api/friends}).
+ *
+ * <p>{@code GET} lists the user's friends and {@code GET /requests} lists pending
+ * requests. {@code POST /add} sends a request, {@code POST /respond} accepts or declines
+ * one, and {@code DELETE /remove} removes a friend.
+ */
 @Controller
 @RequestMapping("/api/friends")
 public class FriendController {

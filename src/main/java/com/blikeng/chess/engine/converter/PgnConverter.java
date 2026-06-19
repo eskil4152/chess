@@ -5,6 +5,15 @@ import com.blikeng.chess.engine.PositionMapper;
 import com.blikeng.chess.model.Game;
 import com.blikeng.chess.model.Move;
 
+/**
+ * Exports a finished {@link Game} to PGN movetext, e.g. {@code 1. e4 e5 2. Nf3 Nc6}.
+ *
+ * <p>Outputs the movetext <em>only</em>. No tag-pair header ({@code [Event]},
+ * {@code [White]}, {@code [Result]}, …) and no trailing result token.
+ *
+ * <p>Replays the game's recorded moves on a fresh copy, so the original game is not
+ * mutated during export.
+ */
 public class PgnConverter {
     private PgnConverter() {}
 

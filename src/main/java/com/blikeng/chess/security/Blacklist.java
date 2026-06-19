@@ -8,6 +8,10 @@ import java.time.Duration;
 
 // TODO: Replace with a proper blacklist. Maybe redis with configured persistence
 
+/**
+ * In-memory store of invalidated (logged-out) JWTs, kept until they would expire anyway
+ * (30-day Caffeine TTL). Tokens listed here are rejected by {@link JwtAuthFilter}.
+ */
 @Component
 public class Blacklist {
     private final Cache<String, String> blacklist =

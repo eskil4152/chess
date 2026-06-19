@@ -2,9 +2,9 @@ package com.blikeng.chess.websocket;
 
 import com.blikeng.chess.dto.websocket.*;
 import com.blikeng.chess.exception.ApiException;
-import com.blikeng.chess.notifications.NotificationService;
+import com.blikeng.chess.service.NotificationService;
 import com.blikeng.chess.service.ChallengeService;
-import com.blikeng.chess.service.GameService;
+import com.blikeng.chess.service.game.GameService;
 import com.blikeng.chess.service.MatchmakingService;
 import com.blikeng.chess.service.PresenceService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -20,6 +20,18 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.util.UUID;
 
+/**
+ * Server endpoint for the {@code /ws} WebSocket: handles inbound client messages and the
+ * connection lifecycle. Outbound pushes are sent separately via {@link NotificationService}.
+ *
+ * <p>Each text message is dispatched by its {@code "type"} field (MOVE, RESIGN, OFFER_DRAW,
+ * CHALLENGE, CHALLENGE_RESPONSE, CANCEL_CHALLENGE) to the relevant service; unknown types
+ * are ignored. An {@link ApiException} is returned to the client as an error frame with its
+ * status; any other error becomes a generic 500 frame.
+ *
+ * <p>On connect/disconnect the session is registered/removed in {@link PresenceService};
+ * when a user's last session closes, they are removed from matchmaking.
+ */
 @Component
 public class WebSocketHandler extends TextWebSocketHandler {
     private final GameService gameService;

@@ -7,10 +7,11 @@ import com.blikeng.chess.dto.websocket.WsMoveDTO;
 import com.blikeng.chess.model.Game;
 import com.blikeng.chess.model.Position;
 import com.blikeng.chess.model.piece.*;
-import com.blikeng.chess.notifications.events.MatchStartedEvent;
-import com.blikeng.chess.notifications.events.MoveMadeEvent;
+import com.blikeng.chess.events.MatchStartedEvent;
+import com.blikeng.chess.events.MoveMadeEvent;
 import java.util.Set;
-import com.blikeng.chess.service.GameService;
+import com.blikeng.chess.service.game.GameService;
+import com.blikeng.chess.service.game.ActiveGameStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +34,7 @@ import static org.mockito.Mockito.*;
 class BotServiceTest {
 
     @Mock GameService gameService;
+    @Mock ActiveGameStore activeGameStore;
     @InjectMocks BotService botService;
 
     private ExecutorService executor;
@@ -145,7 +147,7 @@ class BotServiceTest {
     void scheduledRunnableShouldCallMakeMoveWhenGameIsActive() {
         UUID gameId = UUID.randomUUID();
         Game game = new Game(gameId, BOT_ID, "Bot-Easy", PLAYER_ID, "player", true);
-        when(gameService.getActiveGame(BOT_ID)).thenReturn(Optional.of(game));
+        when(activeGameStore.findByUser(BOT_ID)).thenReturn(Optional.of(game));
 
         MatchStartedEvent event = new MatchStartedEvent(gameId, BOT_ID, "Bot-Easy", PLAYER_ID, "player", 800, 800);
         botService.onMatchStarted(event);
@@ -160,7 +162,7 @@ class BotServiceTest {
     @Test
     void scheduledRunnableShouldNotCallMakeMoveWhenGameNoLongerActive() {
         UUID gameId = UUID.randomUUID();
-        when(gameService.getActiveGame(BOT_ID)).thenReturn(Optional.empty());
+        when(activeGameStore.findByUser(BOT_ID)).thenReturn(Optional.empty());
 
         botService.onMatchStarted(new MatchStartedEvent(gameId, BOT_ID, "Bot-Easy", PLAYER_ID, "player", 800, 800));
 
@@ -185,7 +187,7 @@ class BotServiceTest {
         game.getBoard().setPiece(0, 2, new Queen(Color.BLACK)); // covers b1, b2 and rank 1
         game.setWhiteKingPosition(new Position(0, 0));
         game.setBlackKingPosition(new Position(7, 4));
-        when(gameService.getActiveGame(BOT_ID)).thenReturn(Optional.of(game));
+        when(activeGameStore.findByUser(BOT_ID)).thenReturn(Optional.of(game));
 
         botService.onMatchStarted(new MatchStartedEvent(gameId, BOT_ID, "Bot-Easy", PLAYER_ID, "player", 800, 800));
 
@@ -209,7 +211,7 @@ class BotServiceTest {
         game.getBoard().setPiece(7, 4, new King(Color.BLACK));
         game.setWhiteKingPosition(new Position(0, 4));
         game.setBlackKingPosition(new Position(7, 4));
-        when(gameService.getActiveGame(BOT_ID)).thenReturn(Optional.of(game));
+        when(activeGameStore.findByUser(BOT_ID)).thenReturn(Optional.of(game));
 
         botService.onMatchStarted(new MatchStartedEvent(gameId, BOT_ID, "Bot-Easy", PLAYER_ID, "player", 800, 800));
 
@@ -240,7 +242,7 @@ class BotServiceTest {
     @Test
     void scheduledRunnableShouldLogAndSwallowGeneralException() {
         UUID gameId = UUID.randomUUID();
-        when(gameService.getActiveGame(BOT_ID)).thenThrow(new RuntimeException("boom"));
+        when(activeGameStore.findByUser(BOT_ID)).thenThrow(new RuntimeException("boom"));
 
         botService.onMatchStarted(new MatchStartedEvent(gameId, BOT_ID, "Bot-Easy", PLAYER_ID, "player", 800, 800));
 

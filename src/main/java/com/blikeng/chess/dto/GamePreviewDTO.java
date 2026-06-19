@@ -4,6 +4,7 @@ import com.blikeng.chess.model.GameStatus;
 
 import java.util.UUID;
 
+/** A finished-game summary for history lists (players, status, time control). */
 public record GamePreviewDTO(
     UUID gameId,
     String blackUsername,

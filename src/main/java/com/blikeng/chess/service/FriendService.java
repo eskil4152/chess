@@ -7,7 +7,7 @@ import com.blikeng.chess.dto.*;
 import com.blikeng.chess.entity.FriendRequestEntity;
 import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.types.*;
-import com.blikeng.chess.notifications.events.FriendRequestEvent;
+import com.blikeng.chess.events.FriendRequestEvent;
 import com.blikeng.chess.repository.FriendRequestRepository;
 import com.blikeng.chess.repository.UserRepository;
 import org.springframework.context.ApplicationEventPublisher;
@@ -20,6 +20,10 @@ import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Friends and friend requests: list friends, send/accept/decline requests, and remove
+ * friends. A new request is published as an event so the recipient can be notified.
+ */
 @Service
 public class FriendService {
     private final FriendRepository friendRepository;

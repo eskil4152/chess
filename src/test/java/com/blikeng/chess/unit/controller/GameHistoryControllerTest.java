@@ -9,7 +9,7 @@ import com.blikeng.chess.model.GameStatus;
 import com.blikeng.chess.security.Blacklist;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.ratelimit.RateLimitingService;
-import com.blikeng.chess.service.GameHistoryService;
+import com.blikeng.chess.service.game.GameHistoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

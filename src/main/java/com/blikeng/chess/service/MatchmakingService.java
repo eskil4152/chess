@@ -7,20 +7,32 @@ import com.blikeng.chess.exception.types.InvalidUserException;
 import com.blikeng.chess.model.timecontrol.TimeControl;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
+import com.blikeng.chess.service.game.ActiveGameStore;
+import com.blikeng.chess.service.game.GameCreationService;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Elo-based matchmaking queue (one entry per user).
+ *
+ * <p>A queuing player is paired with the closest-rated waiting player on the same
+ * {@link TimeControl} within ±200 Elo; if none qualifies they wait in the queue. Queue
+ * mutations are synchronized so two players can't be matched into separate games at once.
+ * Leaving the queue is also a synchronized action to avoid a match with a player who has dequeued.
+ */
 @Service
 public class MatchmakingService {
     private final AuthService authService;
-    private final GameService gameService;
+    private final ActiveGameStore activeGameStore;
+    private final GameCreationService gameCreationService;
 
-    public MatchmakingService(AuthService authService, GameService gameService) {
+    public MatchmakingService(AuthService authService, ActiveGameStore activeGameStore, GameCreationService gameCreationService) {
         this.authService = authService;
-        this.gameService = gameService;
+        this.activeGameStore = activeGameStore;
+        this.gameCreationService = gameCreationService;
     }
 
     private final ConcurrentHashMap<UUID, QueueEntry> queue = new ConcurrentHashMap<>();
@@ -36,7 +48,7 @@ public class MatchmakingService {
         UserEntity matched;
 
         synchronized (queue) {
-            if (gameService.isInGame(userId)) throw new ExistingGameException();
+            if (activeGameStore.isInGame(userId)) throw new ExistingGameException();
             if (queue.containsKey(userId)) return;
 
             TimeControl requestedTc = timeControlDTO.resolved();
@@ -55,7 +67,7 @@ public class MatchmakingService {
             queue.remove(best.getKey());
             matched = best.getValue().user();
 
-            gameService.beginGame(matched, user, requestedTc);
+            gameCreationService.beginGame(matched, user, requestedTc);
         }
     }
 

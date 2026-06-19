@@ -10,6 +10,15 @@ import com.blikeng.chess.model.piece.PieceType;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Generates the pseudo-legal moves for a single piece.
+ *
+ * <p>Uses lists of directions which are looped for relevant pieces. Castling moves are handled by checking
+ * relevant squares on the board. Illegal castling (through check) is handled by {@link MoveExecutor}.
+ *
+ * <p>Pawn moves are checked with en passant and capturing.
+ * Board edges are considered on pawn captures, since checking positions outside the board for pieces results in out-of-bounds.
+ */
 public class MoveGenerator {
     public List<Position> getPseudoLegalMoves(Game game, Board board, Position position) {
         Piece piece = board.getPiece(position.row(), position.col());

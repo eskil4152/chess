@@ -2,6 +2,7 @@ package com.blikeng.chess.dto.websocket;
 
 import java.util.UUID;
 
+/** Outbound CHALLENGE notification to the challenged user. */
 public record WsOutgoingChallengeDTO(
     WsMessageType type,
     UUID challengeId,

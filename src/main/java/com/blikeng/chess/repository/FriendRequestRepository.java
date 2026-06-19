@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.UUID;
 
+/** Pending friend-request persistence. */
 @Repository
 public interface FriendRequestRepository extends JpaRepository<FriendRequestEntity, UUID> {
     boolean existsByFromUser_IdAndToUser(UUID fromUser, UUID toUser);

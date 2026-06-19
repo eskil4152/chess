@@ -8,7 +8,11 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
-
+/**
+ * Token-bucket store backing {@link RateLimitInterceptor}: one Caffeine-cached
+ * {@link io.github.bucket4j.Bucket} per key, refilled greedily over the given window.
+ * {@link #tryConsume} takes one token and returns whether it was allowed.
+ */
 @Service
 public class RateLimitingService {
     private final Cache<String, Bucket> buckets =

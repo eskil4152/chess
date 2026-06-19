@@ -5,6 +5,18 @@ import com.blikeng.chess.model.piece.Piece;
 
 import static com.blikeng.chess.engine.SetupBoard.setupBoard;
 
+/**
+ * An 8×8 grid of squares, each holding a {@link Piece} or {@code null} when empty
+ * (row 0 = rank 1).
+ *
+ * <p>The default constructor sets up the standard starting position; the copy constructor
+ * deep-copies every piece (via {@link Piece#copy}) so simulated games don't share state -
+ * e.g. checking move legality copies the board, plays the move, and tests whether the
+ * mover's king is left in check, all without touching the live board.
+ * {@link #toString} renders a compact text grid (knights shown as {@code N} to avoid
+ * clashing with the king's {@code K}) and doubles as the board signature in the
+ * repetition key.
+ */
 public class Board {
     private final Piece[][] squares = new Piece[8][8];
 

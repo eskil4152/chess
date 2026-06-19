@@ -47,7 +47,7 @@ class JwtServiceTest {
 
     @Test
     void validatingGeneratedTokenShouldReturnJwtPrincipal() {
-        String token = jwtService.generateToken(user);
+        String token = jwtService.generateToken(user, false);
         assertThat(token).isNotBlank();
 
         JwtPrincipal principal = jwtService.validateToken(token);
@@ -64,7 +64,7 @@ class JwtServiceTest {
 
     @Test
     void validatingTamperedTokenShouldReturnNull() {
-        String token = jwtService.generateToken(user);
+        String token = jwtService.generateToken(user, false);
         String tampered = token + "tampered";
         assertThat(jwtService.validateToken(tampered)).isNull();
     }

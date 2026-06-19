@@ -5,6 +5,11 @@ import com.blikeng.chess.service.MatchmakingService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Matchmaking queue endpoints (base path {@code /api/queue}).
+ *
+ * <p>{@code POST} joins the queue for a given time control; {@code DELETE} leaves it.
+ */
 @RestController
 @RequestMapping("/api/queue")
 public class QueueController {

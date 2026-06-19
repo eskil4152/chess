@@ -17,21 +17,25 @@ import com.blikeng.chess.model.piece.King;
 import com.blikeng.chess.model.piece.Pawn;
 import com.blikeng.chess.model.piece.Queen;
 import com.blikeng.chess.model.timecontrol.TimeControl;
-import com.blikeng.chess.notifications.NotificationService;
-import com.blikeng.chess.notifications.events.MatchEndedEvent;
-import com.blikeng.chess.notifications.events.MatchStartedEvent;
-import com.blikeng.chess.notifications.events.MoveMadeEvent;
+import com.blikeng.chess.service.NotificationService;
+import com.blikeng.chess.events.MatchEndedEvent;
+import com.blikeng.chess.events.MatchStartedEvent;
+import com.blikeng.chess.events.MoveMadeEvent;
 import com.blikeng.chess.repository.GameRepository;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.UserRole;
-import com.blikeng.chess.service.GameService;
-import com.blikeng.chess.service.EloService;
+import com.blikeng.chess.service.game.GameService;
+import com.blikeng.chess.service.game.GameClockService;
+import com.blikeng.chess.service.game.GameCompletionService;
+import com.blikeng.chess.service.game.ActiveGameStore;
+import com.blikeng.chess.service.game.GameCreationService;
+import com.blikeng.chess.service.game.GameViewService;
+import com.blikeng.chess.service.StatsService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
@@ -57,8 +61,12 @@ class GameServiceTest {
     @Mock GameRepository gameRepository;
     @Mock ApplicationEventPublisher eventPublisher;
     @Mock NotificationService notificationService;
-    @Mock EloService eloService;
-    @InjectMocks GameService gameService;
+    @Mock StatsService statsService;
+
+    private GameService gameService;
+    private GameCreationService gameCreationService;
+    private GameViewService gameViewService;
+    private ActiveGameStore activeGameStore;
 
     private UserEntity white;
     private UserEntity black;
@@ -69,6 +77,15 @@ class GameServiceTest {
         white = new UserEntity("white", "h");
         black = new UserEntity("black", "h");
         savedEntity = new GameEntity(white, black, GameStatus.ONGOING, Instant.now(), "blitz", null);
+
+        // Real collaborators wired with the mocked infrastructure, so behavior
+        // assertions (saves / events / stats / cleanup) still flow through.
+        GameClockService clockService = new GameClockService();
+        activeGameStore = new ActiveGameStore();
+        GameCompletionService completionService = new GameCompletionService(eventPublisher, gameRepository, statsService, activeGameStore, clockService);
+        gameService = new GameService(eventPublisher, notificationService, clockService, completionService, activeGameStore);
+        gameCreationService = new GameCreationService(gameRepository, activeGameStore, clockService, eventPublisher, completionService);
+        gameViewService = new GameViewService(activeGameStore);
     }
 
     @AfterEach
@@ -83,9 +100,9 @@ class GameServiceTest {
     @SuppressWarnings("unchecked")
     private Game beginAndGetGame() {
         stubSave();
-        gameService.beginGame(white, black, TimeControl.BLITZ_3_0);
+        gameCreationService.beginGame(white, black, TimeControl.BLITZ_3_0);
         ConcurrentHashMap<UUID, Game> gamesMap = (ConcurrentHashMap<UUID, Game>)
-                ReflectionTestUtils.getField(gameService, "games");
+                ReflectionTestUtils.getField(activeGameStore, "games");
         assert gamesMap != null;
         return gamesMap.values().iterator().next();
     }
@@ -95,9 +112,9 @@ class GameServiceTest {
 
     @SuppressWarnings("unchecked")
     private Game beginBotGameAndGet() {
-        gameService.beginBotGame(white, BOT);
+        gameCreationService.beginBotGame(white, BOT);
         ConcurrentHashMap<UUID, Game> gamesMap = (ConcurrentHashMap<UUID, Game>)
-                ReflectionTestUtils.getField(gameService, "games");
+                ReflectionTestUtils.getField(activeGameStore, "games");
         assert gamesMap != null;
         return gamesMap.values().iterator().next();
     }
@@ -107,7 +124,7 @@ class GameServiceTest {
     @Test
     void beginGameShouldSaveEntityAndPublishEvent() {
         stubSave();
-        gameService.beginGame(white, black, TimeControl.BLITZ_3_0);
+        gameCreationService.beginGame(white, black, TimeControl.BLITZ_3_0);
 
         verify(gameRepository).save(any());
         ArgumentCaptor<MatchStartedEvent> captor = ArgumentCaptor.forClass(MatchStartedEvent.class);
@@ -120,9 +137,9 @@ class GameServiceTest {
     @Test
     void beginGameShouldAddBothPlayersToActiveGames() {
         stubSave();
-        gameService.beginGame(white, black, TimeControl.BLITZ_3_0);
-        assertThat(gameService.isInGame(white.getId())).isTrue();
-        assertThat(gameService.isInGame(black.getId())).isTrue();
+        gameCreationService.beginGame(white, black, TimeControl.BLITZ_3_0);
+        assertThat(activeGameStore.isInGame(white.getId())).isTrue();
+        assertThat(activeGameStore.isInGame(black.getId())).isTrue();
     }
 
 
@@ -130,13 +147,13 @@ class GameServiceTest {
 
     @Test
     void beginBotGameShouldNotPersistToDatabase() {
-        gameService.beginBotGame(white, BOT);
+        gameCreationService.beginBotGame(white, BOT);
         verify(gameRepository, never()).save(any());
     }
 
     @Test
     void beginBotGameShouldPublishMatchStartedEvent() {
-        gameService.beginBotGame(white, BOT);
+        gameCreationService.beginBotGame(white, BOT);
         ArgumentCaptor<MatchStartedEvent> captor = ArgumentCaptor.forClass(MatchStartedEvent.class);
         verify(eventPublisher).publishEvent(captor.capture());
         assertThat(captor.getValue().whiteUsername()).isIn("white", "Bot-Easy");
@@ -145,9 +162,9 @@ class GameServiceTest {
 
     @Test
     void beginBotGameShouldAddBothPlayersToActiveGames() {
-        gameService.beginBotGame(white, BOT);
-        assertThat(gameService.isInGame(white.getId())).isTrue();
-        assertThat(gameService.isInGame(BOT.id())).isTrue();
+        gameCreationService.beginBotGame(white, BOT);
+        assertThat(activeGameStore.isInGame(white.getId())).isTrue();
+        assertThat(activeGameStore.isInGame(BOT.id())).isTrue();
     }
 
     // --- Get Active Game ---
@@ -155,49 +172,49 @@ class GameServiceTest {
     @Test
     void getActiveGameShouldReturnGameForWhitePlayer() {
         Game game = beginAndGetGame();
-        assertThat(gameService.getActiveGame(game.getWhiteId())).contains(game);
+        assertThat(activeGameStore.findByUser(game.getWhiteId())).contains(game);
     }
 
     @Test
     void getActiveGameShouldReturnGameForBlackPlayer() {
         Game game = beginAndGetGame();
-        assertThat(gameService.getActiveGame(game.getBlackId())).contains(game);
+        assertThat(activeGameStore.findByUser(game.getBlackId())).contains(game);
     }
 
     @Test
     void getActiveGameShouldReturnEmptyWhenPlayerNotInGame() {
-        assertThat(gameService.getActiveGame(UUID.randomUUID())).isEmpty();
+        assertThat(activeGameStore.findByUser(UUID.randomUUID())).isEmpty();
     }
 
     @Test
     void getActiveGameShouldReturnEmptyWhenGameExistsButUserIsNotInIt() {
         beginAndGetGame();
-        assertThat(gameService.getActiveGame(UUID.randomUUID())).isEmpty();
+        assertThat(activeGameStore.findByUser(UUID.randomUUID())).isEmpty();
     }
 
     // --- Is In Game ---
     @Test
     void isInGameShouldReturnFalseWhenPlayerHasNoGame() {
-        assertThat(gameService.isInGame(UUID.randomUUID())).isFalse();
+        assertThat(activeGameStore.isInGame(UUID.randomUUID())).isFalse();
     }
 
     // --- Is In Game (filter branching) ---
     @Test
     void isInGameShouldReturnTrueForWhitePlayer() {
         Game game = beginAndGetGame();
-        assertThat(gameService.isInGame(game.getWhiteId())).isTrue();
+        assertThat(activeGameStore.isInGame(game.getWhiteId())).isTrue();
     }
 
     @Test
     void isInGameShouldReturnTrueForBlackPlayer() {
         Game game = beginAndGetGame();
-        assertThat(gameService.isInGame(game.getBlackId())).isTrue();
+        assertThat(activeGameStore.isInGame(game.getBlackId())).isTrue();
     }
 
     @Test
     void isInGameShouldReturnFalseForUnknownPlayer() {
         beginAndGetGame();
-        assertThat(gameService.isInGame(UUID.randomUUID())).isFalse();
+        assertThat(activeGameStore.isInGame(UUID.randomUUID())).isFalse();
     }
 
     // --- Is User Turn ---
@@ -311,14 +328,14 @@ class GameServiceTest {
         game.setBlackKingPosition(new Position(7, 0));
 
         when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
-        when(eloService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(statsService.updateUserStatsAndReturnNewElos(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "d7c7", null, null));
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
         assertThat(captor.getAllValues()).anyMatch(MatchEndedEvent.class::isInstance);
-        assertThat(gameService.isInGame(white.getId())).isFalse();
+        assertThat(activeGameStore.isInGame(white.getId())).isFalse();
     }
 
     @Test
@@ -336,7 +353,7 @@ class GameServiceTest {
         game.setBlackKingPosition(new Position(7, 7));
 
         when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
-        when(eloService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(statsService.updateUserStatsAndReturnNewElos(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "g5g7", null, null));
 
@@ -345,7 +362,7 @@ class GameServiceTest {
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
         assertThat(captor.getAllValues()).anyMatch(MatchEndedEvent.class::isInstance);
-        assertThat(gameService.isInGame(game.getWhiteId())).isFalse();
+        assertThat(activeGameStore.isInGame(game.getWhiteId())).isFalse();
     }
 
 
@@ -369,7 +386,7 @@ class GameServiceTest {
         gameService.makeMove(moverId, new WsMoveDTO(game.getId().toString(), "g5g7", null, null));
 
         verify(gameRepository, never()).findById(any());
-        verify(eloService, never()).updateUserElo(any(), any(), any(), any());
+        verify(statsService, never()).updateUserStatsAndReturnNewElos(any(), any(), any(), any());
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(1)).publishEvent(captor.capture());
         assertThat(captor.getAllValues()).anyMatch(MatchEndedEvent.class::isInstance);
@@ -382,8 +399,8 @@ class GameServiceTest {
         gameService.resignGame(game.getWhiteId(), new WsResignDTO(game.getId().toString()));
 
         verify(gameRepository, never()).findById(any());
-        verify(eloService, never()).updateUserElo(any(), any(), any(), any());
-        assertThat(gameService.isInGame(game.getWhiteId())).isFalse();
+        verify(statsService, never()).updateUserStatsAndReturnNewElos(any(), any(), any(), any());
+        assertThat(activeGameStore.isInGame(game.getWhiteId())).isFalse();
     }
 
     @Test
@@ -396,8 +413,8 @@ class GameServiceTest {
         gameService.handleDraw(botId, new WsDrawDTO(game.getId().toString()));
 
         verify(gameRepository, never()).findById(any());
-        verify(eloService, never()).updateUserElo(any(), any(), any(), any());
-        assertThat(gameService.isInGame(humanId)).isFalse();
+        verify(statsService, never()).updateUserStatsAndReturnNewElos(any(), any(), any(), any());
+        assertThat(activeGameStore.isInGame(humanId)).isFalse();
     }
 
     // --- Resign ---
@@ -414,7 +431,7 @@ class GameServiceTest {
     void resignGameShouldEndGameWithBlackWinWhenWhiteResigns() {
         Game game = beginAndGetGame();
         when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
-        when(eloService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(statsService.updateUserStatsAndReturnNewElos(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.resignGame(game.getWhiteId(), new WsResignDTO(game.getId().toString()));
 
@@ -422,14 +439,14 @@ class GameServiceTest {
         verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
         assertThat(captor.getAllValues()).anyMatch(e ->
                 e instanceof MatchEndedEvent ev && ev.status() == GameStatus.BLACK_WIN);
-        assertThat(gameService.isInGame(game.getWhiteId())).isFalse();
+        assertThat(activeGameStore.isInGame(game.getWhiteId())).isFalse();
     }
 
     @Test
     void resignGameShouldEndGameWithWhiteWinWhenBlackResigns() {
         Game game = beginAndGetGame();
         when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
-        when(eloService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(statsService.updateUserStatsAndReturnNewElos(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.resignGame(game.getBlackId(), new WsResignDTO(game.getId().toString()));
 
@@ -456,7 +473,7 @@ class GameServiceTest {
         gameService.handleDraw(game.getWhiteId(), new WsDrawDTO(game.getId().toString()));
 
         verify(notificationService).sendDrawOffer(game.getId(), game.getBlackId());
-        assertThat(gameService.isInGame(game.getWhiteId())).isTrue();
+        assertThat(activeGameStore.isInGame(game.getWhiteId())).isTrue();
     }
 
     @Test
@@ -466,14 +483,14 @@ class GameServiceTest {
         gameService.handleDraw(game.getBlackId(), new WsDrawDTO(game.getId().toString()));
 
         verify(notificationService).sendDrawOffer(game.getId(), game.getWhiteId());
-        assertThat(gameService.isInGame(game.getBlackId())).isTrue();
+        assertThat(activeGameStore.isInGame(game.getBlackId())).isTrue();
     }
 
     @Test
     void handleDrawShouldEndGameWhenBothPlayersAccept() {
         Game game = beginAndGetGame();
         when(gameRepository.findById(game.getId())).thenReturn(java.util.Optional.of(savedEntity));
-        when(eloService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(statsService.updateUserStatsAndReturnNewElos(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.handleDraw(white.getId(), new WsDrawDTO(game.getId().toString()));
         gameService.handleDraw(black.getId(), new WsDrawDTO(game.getId().toString()));
@@ -482,7 +499,7 @@ class GameServiceTest {
         verify(eventPublisher, atLeast(2)).publishEvent(captor.capture());
         assertThat(captor.getAllValues()).anyMatch(e ->
                 e instanceof MatchEndedEvent ev && ev.status() == GameStatus.DRAW);
-        assertThat(gameService.isInGame(white.getId())).isFalse();
+        assertThat(activeGameStore.isInGame(white.getId())).isFalse();
     }
 
     // --- Restore Game State ---
@@ -496,7 +513,7 @@ class GameServiceTest {
     void restoreGameStateShouldReturnStateWhenPlayerIsInGame() {
         beginAndGetGame();
         setupSecurityContext(white.getId());
-        GameStateDTO dto = gameService.restoreGameState();
+        GameStateDTO dto = gameViewService.restoreGameState();
         assertThat(dto.whiteId()).isIn(white.getId(), black.getId());
     }
 
@@ -504,14 +521,14 @@ class GameServiceTest {
     void restoreGameStateShouldReturnStateForBlackPlayer() {
         beginAndGetGame();
         setupSecurityContext(black.getId());
-        GameStateDTO dto = gameService.restoreGameState();
+        GameStateDTO dto = gameViewService.restoreGameState();
         assertThat(dto.blackId()).isIn(white.getId(), black.getId());
     }
 
     @Test
     void restoreGameStateShouldThrowWhenPlayerNotInGame() {
         setupSecurityContext(UUID.randomUUID());
-        assertThatThrownBy(() -> gameService.restoreGameState())
+        assertThatThrownBy(() -> gameViewService.restoreGameState())
                 .isInstanceOf(GameNotFoundException.class);
     }
 
@@ -519,13 +536,13 @@ class GameServiceTest {
     void restoreGameStateShouldThrowWhenExistingGameDoesNotBelongToUser() {
         beginAndGetGame();
         setupSecurityContext(UUID.randomUUID());
-        assertThatThrownBy(() -> gameService.restoreGameState())
+        assertThatThrownBy(() -> gameViewService.restoreGameState())
                 .isInstanceOf(GameNotFoundException.class);
     }
 
     @Test
     void restoreGameStateShouldThrowWhenNotAuthenticated() {
-        assertThatThrownBy(() -> gameService.restoreGameState())
+        assertThatThrownBy(() -> gameViewService.restoreGameState())
                 .isInstanceOf(InvalidUserException.class);
     }
 
@@ -537,7 +554,7 @@ class GameServiceTest {
         game.setWhiteRemainingMs(0);
 
         when(gameRepository.findById(game.getId())).thenReturn(Optional.of(savedEntity));
-        when(eloService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(statsService.updateUserStatsAndReturnNewElos(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4", null, null));
 
@@ -545,7 +562,7 @@ class GameServiceTest {
         verify(eventPublisher, atLeast(1)).publishEvent(captor.capture());
         assertThat(captor.getAllValues()).anyMatch(e ->
                 e instanceof MatchEndedEvent ev && ev.status() == GameStatus.BLACK_WIN);
-        assertThat(gameService.isInGame(game.getWhiteId())).isFalse();
+        assertThat(activeGameStore.isInGame(game.getWhiteId())).isFalse();
     }
 
     @Test
@@ -556,7 +573,7 @@ class GameServiceTest {
         game.setBlackRemainingMs(0);
 
         when(gameRepository.findById(game.getId())).thenReturn(Optional.of(savedEntity));
-        when(eloService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(statsService.updateUserStatsAndReturnNewElos(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.makeMove(game.getBlackId(), new WsMoveDTO(game.getId().toString(), "e7e5", null, null));
 
@@ -564,7 +581,7 @@ class GameServiceTest {
         verify(eventPublisher, atLeast(1)).publishEvent(captor.capture());
         assertThat(captor.getAllValues()).anyMatch(e ->
                 e instanceof MatchEndedEvent ev && ev.status() == GameStatus.WHITE_WIN);
-        assertThat(gameService.isInGame(game.getBlackId())).isFalse();
+        assertThat(activeGameStore.isInGame(game.getBlackId())).isFalse();
     }
 
     // --- Clock update (ONGOING branch) ---
@@ -583,9 +600,9 @@ class GameServiceTest {
     @SuppressWarnings("unchecked")
     void makeMoveShouldAddIncrementAfterValidMove() {
         stubSave();
-        gameService.beginGame(white, black, TimeControl.BLITZ_3_2);
+        gameCreationService.beginGame(white, black, TimeControl.BLITZ_3_2);
         ConcurrentHashMap<UUID, Game> gamesMap = (ConcurrentHashMap<UUID, Game>)
-                ReflectionTestUtils.getField(gameService, "games");
+                ReflectionTestUtils.getField(activeGameStore, "games");
         assert gamesMap != null;
         Game game = gamesMap.values().iterator().next();
         int initialMs = game.getWhiteRemainingMs();
@@ -603,11 +620,11 @@ class GameServiceTest {
         game.setBlackRemainingMs(100);
 
         when(gameRepository.findById(any())).thenReturn(Optional.of(savedEntity));
-        when(eloService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(statsService.updateUserStatsAndReturnNewElos(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4", null, null));
 
-        await().atMost(2, TimeUnit.SECONDS).until(() -> !gameService.isInGame(game.getWhiteId()));
+        await().atMost(2, TimeUnit.SECONDS).until(() -> !activeGameStore.isInGame(game.getWhiteId()));
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher, atLeast(1)).publishEvent(captor.capture());
@@ -621,13 +638,13 @@ class GameServiceTest {
         game.setBlackRemainingMs(100);
 
         when(gameRepository.findById(any())).thenReturn(Optional.of(savedEntity));
-        when(eloService.updateUserElo(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
+        when(statsService.updateUserStatsAndReturnNewElos(any(), any(), any(), any())).thenReturn(new int[]{800, 800});
 
         gameService.makeMove(game.getWhiteId(), new WsMoveDTO(game.getId().toString(), "e2e4", null, null));
         gameService.resignGame(game.getBlackId(), new WsResignDTO(game.getId().toString()));
 
         Thread.sleep(300);
 
-        verify(eloService, times(1)).updateUserElo(any(), any(), any(), any());
+        verify(statsService, times(1)).updateUserStatsAndReturnNewElos(any(), any(), any(), any());
     }
 }

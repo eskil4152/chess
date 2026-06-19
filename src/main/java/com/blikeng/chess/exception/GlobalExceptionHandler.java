@@ -7,6 +7,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+/**
+ * Translates exceptions into HTTP responses for all controllers.
+ *
+ * <p>An {@link ApiException} becomes a response with its own status and message (404s
+ * logged at info, everything else at warn). Any other exception is logged at error and
+ * returned as a generic 500.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);

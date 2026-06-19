@@ -7,11 +7,12 @@ import com.blikeng.chess.entity.UserEntity;
 import com.blikeng.chess.exception.types.*;
 import com.blikeng.chess.model.Challenge;
 import com.blikeng.chess.model.timecontrol.TimeControl;
-import com.blikeng.chess.notifications.NotificationService;
 import com.blikeng.chess.dto.websocket.WsOutgoingChallengeCancelledDTO;
 import com.blikeng.chess.dto.websocket.WsOutgoingChallengeDTO;
 import com.blikeng.chess.dto.websocket.WsOutgoingChallengeResponseDTO;
 import com.blikeng.chess.repository.UserRepository;
+import com.blikeng.chess.service.game.ActiveGameStore;
+import com.blikeng.chess.service.game.GameCreationService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -20,19 +21,28 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Direct player-to-player challenges: create, accept/decline, and cancel, with results
+ * pushed via {@link NotificationService}.
+ *
+ * <p>Pending challenges are held in memory and expired by a scheduled sweep (every 60s).
+ */
 @Service
 public class ChallengeService {
     private final UserRepository userRepository;
-    private final GameService gameService;
+    private final ActiveGameStore activeGameStore;
+    private final GameCreationService gameCreationService;
     private final NotificationService notificationService;
 
     public ChallengeService(
         UserRepository userRepository,
-        GameService gameService,
+        ActiveGameStore activeGameStore,
+        GameCreationService gameCreationService,
         NotificationService notificationService
     ){
         this.userRepository = userRepository;
-        this.gameService = gameService;
+        this.activeGameStore = activeGameStore;
+        this.gameCreationService = gameCreationService;
         this.notificationService = notificationService;
     }
 
@@ -54,7 +64,7 @@ public class ChallengeService {
         UserEntity receiver = userRepository.findById(challengeDTO.receiver())
             .orElseThrow(UserNotFoundException::new);
 
-        if (gameService.isInGame(receiver.getId())) throw new AlreadyInGameException();
+        if (activeGameStore.isInGame(receiver.getId())) throw new AlreadyInGameException();
 
         if (challenges.values().stream()
             .anyMatch(challenge -> challenge.challengerId().equals(userId) && challenge.challengedId().equals(challengeDTO.receiver()))
@@ -69,7 +79,7 @@ public class ChallengeService {
 
         if (mutual.isPresent()) {
             challenges.remove(mutual.get().id());
-            gameService.beginGame(receiver, sender, mutual.get().timeControl());
+            gameCreationService.beginGame(receiver, sender, mutual.get().timeControl());
             return;
         }
 
@@ -104,7 +114,7 @@ public class ChallengeService {
             .orElseThrow(UserNotFoundException::new);
 
         if (challengeResponseDTO.accepted()) {
-            gameService.beginGame(challenger, challenged, challenge.timeControl());
+            gameCreationService.beginGame(challenger, challenged, challenge.timeControl());
         } else {
             notificationService.onChallengeDeclined(
                 challenger.getId(),

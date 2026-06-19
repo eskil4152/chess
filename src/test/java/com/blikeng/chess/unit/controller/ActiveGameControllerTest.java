@@ -7,7 +7,7 @@ import com.blikeng.chess.exception.types.GameNotFoundException;
 import com.blikeng.chess.security.Blacklist;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.ratelimit.RateLimitingService;
-import com.blikeng.chess.service.GameService;
+import com.blikeng.chess.service.game.GameViewService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser
 class ActiveGameControllerTest {
     @Autowired MockMvc mockMvc;
-    @MockitoBean GameService gameService;
+    @MockitoBean GameViewService gameViewService;
     @MockitoBean JwtService jwtService;
     @MockitoBean RateLimitingService rateLimitingService;
     @MockitoBean Blacklist blacklist;
@@ -46,7 +46,7 @@ class ActiveGameControllerTest {
         UUID gameId = UUID.randomUUID();
         UUID whiteId = UUID.randomUUID();
         UUID blackId = UUID.randomUUID();
-        when(gameService.restoreGameState())
+        when(gameViewService.restoreGameState())
                 .thenReturn(new GameStateDTO(gameId, whiteId, "white", blackId, "black", List.of(), false, false, 800, 800, 50000, 50000));
 
         mockMvc.perform(get("/api/games/active"))
@@ -57,7 +57,7 @@ class ActiveGameControllerTest {
 
     @Test
     void shouldReturn404WhenNoActiveGame() throws Exception {
-        when(gameService.restoreGameState()).thenThrow(new GameNotFoundException());
+        when(gameViewService.restoreGameState()).thenThrow(new GameNotFoundException());
 
         mockMvc.perform(get("/api/games/active"))
                 .andExpect(status().isNotFound());

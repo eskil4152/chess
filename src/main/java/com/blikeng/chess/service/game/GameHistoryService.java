@@ -1,7 +1,8 @@
-package com.blikeng.chess.service;
+package com.blikeng.chess.service.game;
 
 import com.blikeng.chess.dto.GameDTO;
 import com.blikeng.chess.dto.GamePreviewDTO;
+import com.blikeng.chess.entity.GameEntity;
 import com.blikeng.chess.exception.types.GameNotFoundException;
 import com.blikeng.chess.exception.types.InvalidParameterException;
 import com.blikeng.chess.exception.types.InvalidUUIDException;
@@ -13,6 +14,10 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Read access to finished games: a single game by id, or a user's games as paged previews
+ * (newest first).
+ */
 @Service
 public class GameHistoryService {
     private final GameRepository gameRepository;
@@ -57,5 +62,9 @@ public class GameHistoryService {
                     game.getTimeControl()
                 ))
                 .toList();
+    }
+
+    public List<GameEntity> getAllGames(String username, String timeControl) {
+        return gameRepository.findFinishedByUsernameAndTcType(username, timeControl);
     }
 }

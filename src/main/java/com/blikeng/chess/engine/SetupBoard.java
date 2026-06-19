@@ -5,6 +5,11 @@ import com.blikeng.chess.model.piece.*;
 import static com.blikeng.chess.model.piece.Color.BLACK;
 import static com.blikeng.chess.model.piece.Color.WHITE;
 
+/**
+ * Places all pieces in the standard chess starting position.
+ *
+ * <p>White occupies rows 0-1, and Black rows 6-7 (row 0 = rank 1).
+ */
 public class SetupBoard {
     private SetupBoard() {}
 

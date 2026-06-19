@@ -16,6 +16,12 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Authentication: login and registration (issuing JWTs) plus current-user lookup.
+ *
+ * <p>Registration trims and length-checks the username (3-32) and password (8-128) before
+ * hashing via {@link PasswordService}.
+ */
 @Service
 public class AuthService {
     private final AuthRepository authRepository;
@@ -44,7 +50,7 @@ public class AuthService {
             throw new InvalidCredentialsException();
         }
 
-        String token = jwtService.generateToken(user.get());
+        String token = jwtService.generateToken(user.get(), loginDTO.rememberMe());
         AuthDTO authDTO = new AuthDTO(
                 user.get().getId(), user.get().getUsername(), user.get().getRole()
         );
@@ -63,7 +69,7 @@ public class AuthService {
 
         UserEntity user = authRepository.save(new UserEntity(trimmedUsername, passwordService.hashPassword(trimmedPassword)));
 
-        String token = jwtService.generateToken(user);
+        String token = jwtService.generateToken(user, loginDTO.rememberMe());
         AuthDTO authDTO = new AuthDTO(
                 user.getId(), user.getUsername(), user.getRole()
         );

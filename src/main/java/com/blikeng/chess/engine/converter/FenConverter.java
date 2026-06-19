@@ -7,6 +7,11 @@ import com.blikeng.chess.model.piece.Color;
 import com.blikeng.chess.model.piece.Piece;
 import com.blikeng.chess.model.piece.PieceType;
 
+/**
+ * Serializes a {@link Game} to a complete 6-field Forsyth–Edwards Notation (FEN) string:
+ * board, side to move, castling rights, en passant target, halfmove clock and fullmove
+ * number. Castling rights are derived from the kings' and rooks' moved state.
+ */
 public class FenConverter {
     private FenConverter() {}
 

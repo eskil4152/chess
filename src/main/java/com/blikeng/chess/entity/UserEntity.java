@@ -9,6 +9,14 @@ import lombok.Setter;
 
 import java.util.UUID;
 
+/**
+ * A user account (table {@code users}).
+ *
+ * <p>Holds profile fields plus a separate stat block (games/wins/losses/Elo and a
+ * "reached 2400" flag) for each {@link TcType time control}: bullet, blitz, rapid, and
+ * classical. New players start at Elo 800. The {@code getX(TcType)} accessors return the
+ * value for a given time control.
+ */
 @Entity
 @Getter
 @Setter

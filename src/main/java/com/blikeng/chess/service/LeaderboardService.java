@@ -9,6 +9,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Builds Elo-ranked leaderboard pages for a given time control (BULLET, BLITZ, RAPID,
+ * CLASSICAL).
+ */
 @Service
 public class LeaderboardService {
     private final UserRepository userRepository;

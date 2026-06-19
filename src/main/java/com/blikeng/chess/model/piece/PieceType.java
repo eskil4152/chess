@@ -1,5 +1,13 @@
 package com.blikeng.chess.model.piece;
 
+/**
+ * The six piece types, with notation-character conversions and material values.
+ *
+ * <p>{@link #toChar} maps every type to its standard letter (R, N, B, Q, K, P);
+ * {@link #fromChar} is the inverse but only accepts promotion pieces (q, r, b, n) and
+ * throws otherwise. {@link #getPieceValue} returns centipawn material values used by the
+ * evaluator (pawn 100, …, queen 1000, king 10000).
+ */
 public enum PieceType {
     ROOK, KNIGHT, BISHOP, QUEEN, KING, PAWN;
 
@@ -27,11 +35,10 @@ public enum PieceType {
     public int getPieceValue() {
         return switch (this) {
             case PAWN -> 100;
-            case KNIGHT -> 350;
-            case BISHOP -> 350;
             case ROOK -> 525;
             case QUEEN -> 1000;
             case KING -> 10000;
+            default -> 350;
         };
     }
 }

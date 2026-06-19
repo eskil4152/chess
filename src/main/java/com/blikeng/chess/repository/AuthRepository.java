@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 import java.util.UUID;
 
+/** User persistence for authentication — username lookups and existence checks. */
 @Repository
 public interface AuthRepository extends JpaRepository<UserEntity, UUID> {
     boolean existsByUsernameIgnoreCase(String username);

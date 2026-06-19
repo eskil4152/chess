@@ -2,6 +2,7 @@ package com.blikeng.chess.dto;
 
 import java.util.UUID;
 
+/** A leaderboard row: identity plus games/wins/win% and Elo for one time control. */
 public class LeaderboardPlayerDTO {
     public UUID id;
     public String username;

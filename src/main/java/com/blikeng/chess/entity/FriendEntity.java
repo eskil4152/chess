@@ -10,6 +10,12 @@ import lombok.Getter;
 
 import java.time.Instant;
 
+/**
+ * A friendship between two users (table {@code friends}).
+ *
+ * <p>Keyed by a {@link FriendId} composite of the two user ids; {@code friendsSince}
+ * records when the friendship was formed.
+ */
 @Entity
 @Table(name = "friends")
 @Getter

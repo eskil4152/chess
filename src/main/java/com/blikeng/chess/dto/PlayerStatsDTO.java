@@ -1,5 +1,6 @@
 package com.blikeng.chess.dto;
 
+/** Detailed per-time-control stats: win/loss/draw counts broken down by ending type and by colour. */
 public record PlayerStatsDTO(
     int elo,
 

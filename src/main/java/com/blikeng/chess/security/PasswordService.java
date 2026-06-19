@@ -3,6 +3,7 @@ package com.blikeng.chess.security;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+/** Thin wrapper over the configured {@link PasswordEncoder} for hashing and verifying passwords. */
 @Service
 public class PasswordService {
     private final PasswordEncoder passwordEncoder;

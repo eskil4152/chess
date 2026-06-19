@@ -1,8 +1,10 @@
-package com.blikeng.chess.notifications;
+package com.blikeng.chess.service;
 
 import com.blikeng.chess.dto.websocket.*;
-import com.blikeng.chess.notifications.events.*;
-import com.blikeng.chess.service.PresenceService;
+import com.blikeng.chess.events.FriendRequestEvent;
+import com.blikeng.chess.events.MatchEndedEvent;
+import com.blikeng.chess.events.MatchStartedEvent;
+import com.blikeng.chess.events.MoveMadeEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -16,11 +18,18 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Central WebSocket push: serializes DTOs to JSON and sends them to a user's session(s)
+ * via {@link PresenceService}.
+ *
+ * <p>Listens for domain events (match started/move/ended, friend request) and also exposes
+ * direct methods for challenges and draw offers. Per-session sends are lock-guarded, and a
+ * scheduled ping (every 20s) keeps connections alive and reaps dead sessions.
+ */
 @Service
 public class NotificationService {
     private final PresenceService presenceService;

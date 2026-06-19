@@ -2,6 +2,7 @@ package com.blikeng.chess.dto.websocket;
 
 import java.util.UUID;
 
+/** Outbound CHALLENGE_CANCELLED notification to the challenged user. */
 public record WsOutgoingChallengeCancelledDTO(
     WsMessageType type,
     UUID challengeId,
