@@ -5,6 +5,8 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/chess}
     username: ${SPRING_DATASOURCE_USERNAME:eskil}
     password: ${SPRING_DATASOURCE_PASSWORD:password}
+    hikari:
+      maximum-pool-size: 20
   flyway:
     enabled: true
     baseline-on-migrate: true
