@@ -39,6 +39,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -67,6 +68,7 @@ class GameServiceTest {
     private GameCreationService gameCreationService;
     private GameViewService gameViewService;
     private ActiveGameStore activeGameStore;
+    private RedisTemplate<String, String> redisTemplate;
 
     private UserEntity white;
     private UserEntity black;
@@ -83,7 +85,7 @@ class GameServiceTest {
         GameClockService clockService = new GameClockService();
         activeGameStore = new ActiveGameStore();
         GameCompletionService completionService = new GameCompletionService(eventPublisher, gameRepository, statsService, activeGameStore, clockService);
-        gameService = new GameService(eventPublisher, notificationService, clockService, completionService, activeGameStore);
+        gameService = new GameService(eventPublisher, notificationService, clockService, completionService, activeGameStore, redisTemplate);
         gameCreationService = new GameCreationService(gameRepository, activeGameStore, clockService, eventPublisher, completionService);
         gameViewService = new GameViewService(activeGameStore);
     }
