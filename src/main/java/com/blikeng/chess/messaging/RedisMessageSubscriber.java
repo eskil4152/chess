@@ -50,7 +50,6 @@ public class RedisMessageSubscriber implements MessageListener {
     public void init() {
         container.addMessageListener(this, new PatternTopic("user:*"));
         container.addMessageListener(this, new PatternTopic("game:*"));
-        container.addMessageListener(this, new PatternTopic("challenge:*"));
     }
 
     @Override
@@ -61,7 +60,6 @@ public class RedisMessageSubscriber implements MessageListener {
         switch (prefix) {
             case "user" -> handleUserMessage(message, channel);
             case "game" -> handleGameMessage(message, channel);
-            case "challenge" -> handleChallengeMessage(message, channel);
             default -> logger.warn("Unknown channel: {}", channel);
         }
     }
@@ -102,9 +100,7 @@ public class RedisMessageSubscriber implements MessageListener {
                     WsMoveDTO moveDTO = new WsMoveDTO(gameId, json.path("move").asText(), null, null);
                     gameService.makeMove(userId, moveDTO);
                 }
-                default -> {
-                    logger.warn("Invalid action received: {}, for game {}", action, gameId);
-                }
+                default -> logger.warn("Invalid action received: {}, for game {}", action, gameId);
             }
         } catch (IOException e) {
             logger.error("Failed to parse message: {}", message.getBody(), e);
@@ -112,9 +108,5 @@ public class RedisMessageSubscriber implements MessageListener {
         } catch (IllegalArgumentException _){
             logger.warn("Invalid message received: {}", message.getBody());
         }
-    }
-
-    private void handleChallengeMessage(Message message, String channel){
-
     }
 }
