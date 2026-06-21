@@ -50,56 +50,71 @@ public class RedisMessageSubscriber implements MessageListener {
     public void init() {
         container.addMessageListener(this, new PatternTopic("user:*"));
         container.addMessageListener(this, new PatternTopic("game:*"));
+        container.addMessageListener(this, new PatternTopic("challenge:*"));
     }
 
     @Override
     public void onMessage(Message message, byte @Nullable [] pattern) {
         String channel = new String(message.getChannel(), StandardCharsets.UTF_8);
+        String prefix = channel.split(":")[0];
 
-        if (channel.startsWith("user")){
-            String payload = new String(message.getBody(), StandardCharsets.UTF_8);
-            UUID userId;
-
-            try {
-                userId = UUID.fromString(channel.substring(5));
-            } catch (IllegalArgumentException _) {
-                return;
-            }
-
-            broadcaster.sendToUser(userId, payload);
-        } else {
-            try {
-                JsonNode json = objectMapper.readTree(message.getBody());
-                String gameId = json.path("gameId").asText();
-
-                if (activeGameStore.get(gameId).isEmpty()) return;
-
-                UUID userId = UUID.fromString(json.path("userId").asText());
-                String action = json.path("action").asText();
-
-                switch (action) {
-                    case "RESIGN" -> {
-                        WsResignDTO resignDTO = new WsResignDTO(gameId);
-                        gameService.resignGame(userId, resignDTO);
-                    }
-                    case "DRAW" -> {
-                        WsDrawDTO drawDTO = new WsDrawDTO(gameId);
-                        gameService.handleDraw(userId, drawDTO);
-                    }
-                    case "MOVE" -> {
-                        WsMoveDTO moveDTO = new WsMoveDTO(gameId, json.path("move").asText(), null, null);
-                        gameService.makeMove(userId, moveDTO);
-                    }
-                    default -> {
-                        logger.warn("Invalid action received: {}, for game {}", action, gameId);
-                    }
-                }
-            } catch (IOException e) {
-                logger.error("Failed to parse message: {}", message.getBody(), e);
-                throw new RuntimeException(e);
-            } catch (IllegalArgumentException _){
-                logger.warn("Invalid message received: {}", message.getBody());
-            }
+        switch (prefix) {
+            case "user" -> handleUserMessage(message, channel);
+            case "game" -> handleGameMessage(message, channel);
+            case "challenge" -> handleChallengeMessage(message, channel);
+            default -> logger.warn("Unknown channel: {}", channel);
         }
+    }
+
+    private void handleUserMessage(Message message, String channel){
+        String payload = new String(message.getBody(), StandardCharsets.UTF_8);
+        UUID userId;
+
+        try {
+            userId = UUID.fromString(channel.substring(5));
+        } catch (IllegalArgumentException _) {
+            return;
+        }
+
+        broadcaster.sendToUser(userId, payload);
+    }
+
+    private void handleGameMessage(Message message, String channel){
+        try {
+            JsonNode json = objectMapper.readTree(message.getBody());
+            String gameId = json.path("gameId").asText();
+
+            if (activeGameStore.get(gameId).isEmpty()) return;
+
+            UUID userId = UUID.fromString(json.path("userId").asText());
+            String action = json.path("action").asText();
+
+            switch (action) {
+                case "RESIGN" -> {
+                    WsResignDTO resignDTO = new WsResignDTO(gameId);
+                    gameService.resignGame(userId, resignDTO);
+                }
+                case "DRAW" -> {
+                    WsDrawDTO drawDTO = new WsDrawDTO(gameId);
+                    gameService.handleDraw(userId, drawDTO);
+                }
+                case "MOVE" -> {
+                    WsMoveDTO moveDTO = new WsMoveDTO(gameId, json.path("move").asText(), null, null);
+                    gameService.makeMove(userId, moveDTO);
+                }
+                default -> {
+                    logger.warn("Invalid action received: {}, for game {}", action, gameId);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Failed to parse message: {}", message.getBody(), e);
+            throw new RuntimeException(e);
+        } catch (IllegalArgumentException _){
+            logger.warn("Invalid message received: {}", message.getBody());
+        }
+    }
+
+    private void handleChallengeMessage(Message message, String channel){
+
     }
 }
