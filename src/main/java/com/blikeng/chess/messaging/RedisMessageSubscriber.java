@@ -1,10 +1,13 @@
 package com.blikeng.chess.messaging;
 
+import com.blikeng.chess.dto.GameStateDTO;
 import com.blikeng.chess.dto.websocket.WsDrawDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
 import com.blikeng.chess.dto.websocket.WsResignDTO;
+import com.blikeng.chess.model.Game;
 import com.blikeng.chess.service.game.ActiveGameStore;
 import com.blikeng.chess.service.game.GameService;
+import com.blikeng.chess.service.game.GameViewService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -30,6 +33,7 @@ public class RedisMessageSubscriber implements MessageListener {
     private final RedisMessageListenerContainer container;
     private final GameService gameService;
     private final ActiveGameStore activeGameStore;
+    private final GameViewService gameViewService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final Logger logger = LoggerFactory.getLogger(RedisMessageSubscriber.class);
@@ -38,12 +42,14 @@ public class RedisMessageSubscriber implements MessageListener {
         LocalBroadcaster broadcaster,
         RedisMessageListenerContainer container,
         GameService gameService,
-        ActiveGameStore activeGameStore
+        ActiveGameStore activeGameStore,
+        GameViewService gameViewService
     ) {
         this.broadcaster = broadcaster;
         this.container = container;
         this.gameService = gameService;
         this.activeGameStore = activeGameStore;
+        this.gameViewService = gameViewService;
     }
 
     @PostConstruct
@@ -100,6 +106,7 @@ public class RedisMessageSubscriber implements MessageListener {
                     WsMoveDTO moveDTO = new WsMoveDTO(gameId, json.path("move").asText(), null, null);
                     gameService.makeMove(userId, moveDTO);
                 }
+                case "RESTORE" -> gameViewService.pushGameState(gameId, userId);
                 default -> logger.warn("Invalid action received: {}, for game {}", action, gameId);
             }
         } catch (IOException e) {

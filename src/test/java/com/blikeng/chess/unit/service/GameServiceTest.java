@@ -87,7 +87,7 @@ class GameServiceTest {
         GameCompletionService completionService = new GameCompletionService(eventPublisher, gameRepository, statsService, activeGameStore, clockService);
         gameService = new GameService(eventPublisher, notificationService, clockService, completionService, activeGameStore, redisTemplate);
         gameCreationService = new GameCreationService(gameRepository, activeGameStore, clockService, eventPublisher, completionService);
-        gameViewService = new GameViewService(activeGameStore);
+        gameViewService = new GameViewService(activeGameStore, redisTemplate);
     }
 
     @AfterEach

@@ -20,8 +20,11 @@ public class ActiveGameController {
     }
 
     @GetMapping
-    public ResponseEntity<GameStateDTO> getActiveGame() {
-        return ResponseEntity.ok(gameViewService.restoreGameState());
+    public ResponseEntity<?> getActiveGame() {
+        GameStateDTO dto = gameViewService.restoreGameState();
+        if (dto == null) return ResponseEntity.accepted().build();
+
+        return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/{id}")
