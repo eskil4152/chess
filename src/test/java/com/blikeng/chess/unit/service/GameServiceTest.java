@@ -83,7 +83,7 @@ class GameServiceTest {
         // Real collaborators wired with the mocked infrastructure, so behavior
         // assertions (saves / events / stats / cleanup) still flow through.
         GameClockService clockService = new GameClockService();
-        activeGameStore = new ActiveGameStore();
+        activeGameStore = new ActiveGameStore(redisTemplate);
         GameCompletionService completionService = new GameCompletionService(eventPublisher, gameRepository, statsService, activeGameStore, clockService);
         gameService = new GameService(eventPublisher, notificationService, clockService, completionService, activeGameStore, redisTemplate);
         gameCreationService = new GameCreationService(gameRepository, activeGameStore, clockService, eventPublisher, completionService);
