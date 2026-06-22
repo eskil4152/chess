@@ -11,7 +11,6 @@ import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.security.UserRole;
 import com.blikeng.chess.security.ratelimit.RateLimitingService;
 import com.blikeng.chess.service.AuthService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +20,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.UUID;
 

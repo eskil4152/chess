@@ -10,22 +10,24 @@ import com.blikeng.chess.repository.UserRepository;
 import com.blikeng.chess.service.ChallengeService;
 import com.blikeng.chess.service.game.ActiveGameStore;
 import com.blikeng.chess.service.game.GameCreationService;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -36,7 +38,12 @@ class ChallengeServiceTest {
     @Mock ActiveGameStore activeGameStore;
     @Mock GameCreationService gameCreationService;
     @Mock NotificationService notificationService;
+    @Mock RedisTemplate<String, String> redisTemplate;
+    @Mock ValueOperations<String, String> valueOps;
+
     @InjectMocks ChallengeService challengeService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private UserEntity challenger;
     private UserEntity challenged;
@@ -53,11 +60,12 @@ class ChallengeServiceTest {
     void handleChallengeShouldStoreChallengeAndNotify() {
         when(userRepository.findById(challenged.getId())).thenReturn(Optional.of(challenged));
         when(userRepository.findById(challenger.getId())).thenReturn(Optional.of(challenger));
+        when(redisTemplate.hasKey(anyString())).thenReturn(false);
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
 
         challengeService.handleChallenge(challenger.getId(), new WsChallengeDTO(challenged.getId(), "BLITZ_5_0"));
 
-        ConcurrentHashMap<?, ?> map = map();
-        assertThat(map).hasSize(1);
+        verify(valueOps, times(2)).set(anyString(), anyString(), any(Duration.class));
         verify(notificationService).onChallenge(eq(challenger.getId()), eq(challenged.getId()), any(WsOutgoingChallengeDTO.class));
     }
 
@@ -80,8 +88,8 @@ class ChallengeServiceTest {
 
     @Test
     void handleChallengeShouldThrowWhenDuplicatePending() {
-        seedChallenge(challenger.getId(), challenged.getId(), TimeControl.BLITZ_5_0, Instant.now());
         when(userRepository.findById(challenged.getId())).thenReturn(Optional.of(challenged));
+        when(redisTemplate.hasKey("challenge:pair:" + challenger.getId() + ":" + challenged.getId())).thenReturn(true);
 
         assertThatThrownBy(() ->
             challengeService.handleChallenge(challenger.getId(), new WsChallengeDTO(challenged.getId(), "BLITZ_5_0"))
@@ -90,14 +98,19 @@ class ChallengeServiceTest {
 
     @Test
     void handleChallengeShouldAutoStartGameOnMutualChallenge() {
-        Challenge existing = seedChallenge(challenged.getId(), challenger.getId(), TimeControl.BLITZ_5_0, Instant.now());
+        Challenge existing = new Challenge(UUID.randomUUID(), challenged.getId(), challenger.getId(), TimeControl.BLITZ_5_0, Instant.now());
+        String mutualKey = "challenge:pair:" + challenged.getId() + ":" + challenger.getId();
+
         when(userRepository.findById(challenged.getId())).thenReturn(Optional.of(challenged));
         when(userRepository.findById(challenger.getId())).thenReturn(Optional.of(challenger));
+        when(redisTemplate.hasKey(anyString())).thenReturn(false);
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get(mutualKey)).thenReturn(json(existing));
 
         challengeService.handleChallenge(challenger.getId(), new WsChallengeDTO(challenged.getId(), "BLITZ_3_0"));
 
         verify(gameCreationService).beginGame(challenged, challenger, existing.timeControl());
-        assertThat(map()).isEmpty();
+        verify(redisTemplate).delete(mutualKey);
         verify(notificationService, never()).onChallenge(any(), any(), any());
     }
 
@@ -105,42 +118,50 @@ class ChallengeServiceTest {
 
     @Test
     void handleChallengeResponseShouldStartGameWhenAccepted() {
-        Challenge challenge = seedChallenge(challenger.getId(), challenged.getId(), TimeControl.BLITZ_5_0, Instant.now());
+        Challenge challenge = new Challenge(UUID.randomUUID(), challenger.getId(), challenged.getId(), TimeControl.BLITZ_5_0, Instant.now());
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get("challenge:" + challenge.id())).thenReturn(json(challenge));
         when(userRepository.findById(challenged.getId())).thenReturn(Optional.of(challenged));
         when(userRepository.findById(challenger.getId())).thenReturn(Optional.of(challenger));
 
         challengeService.handleChallengeResponse(challenged.getId(), new WsChallengeResponseDTO(WsMessageType.CHALLENGE_RESPONSE, challenge.id(), true));
 
         verify(gameCreationService).beginGame(challenger, challenged, TimeControl.BLITZ_5_0);
-        assertThat(map()).isEmpty();
+        verify(redisTemplate).delete("challenge:" + challenge.id());
     }
 
     @Test
     void handleChallengeResponseShouldNotifyDeclineAndRemoveChallenge() {
-        Challenge challenge = seedChallenge(challenger.getId(), challenged.getId(), TimeControl.BLITZ_5_0, Instant.now());
+        Challenge challenge = new Challenge(UUID.randomUUID(), challenger.getId(), challenged.getId(), TimeControl.BLITZ_5_0, Instant.now());
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get("challenge:" + challenge.id())).thenReturn(json(challenge));
         when(userRepository.findById(challenged.getId())).thenReturn(Optional.of(challenged));
         when(userRepository.findById(challenger.getId())).thenReturn(Optional.of(challenger));
 
         challengeService.handleChallengeResponse(challenged.getId(), new WsChallengeResponseDTO(WsMessageType.CHALLENGE_RESPONSE, challenge.id(), false));
 
         verify(notificationService).onChallengeDeclined(eq(challenger.getId()), any(WsOutgoingChallengeResponseDTO.class));
-        assertThat(map()).isEmpty();
+        verify(redisTemplate).delete("challenge:" + challenge.id());
     }
 
     @Test
     void handleChallengeResponseShouldThrowWhenCallerIsNotChallenged() {
-        Challenge challenge = seedChallenge(challenger.getId(), challenged.getId(), TimeControl.BLITZ_5_0, Instant.now());
+        Challenge challenge = new Challenge(UUID.randomUUID(), challenger.getId(), challenged.getId(), TimeControl.BLITZ_5_0, Instant.now());
         UUID intruder = UUID.randomUUID();
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get("challenge:" + challenge.id())).thenReturn(json(challenge));
 
         assertThatThrownBy(() ->
             challengeService.handleChallengeResponse(intruder, new WsChallengeResponseDTO(WsMessageType.CHALLENGE_RESPONSE, challenge.id(), true))
         ).isInstanceOf(NotFoundException.class);
 
-        assertThat(map()).hasSize(1);
+        verify(redisTemplate, never()).delete(anyString());
     }
 
     @Test
     void handleChallengeResponseShouldThrowWhenChallengeNotFound() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+
         assertThatThrownBy(() ->
             challengeService.handleChallengeResponse(challenged.getId(), new WsChallengeResponseDTO(WsMessageType.CHALLENGE_RESPONSE, UUID.randomUUID(), true))
         ).isInstanceOf(NotFoundException.class);
@@ -150,65 +171,46 @@ class ChallengeServiceTest {
 
     @Test
     void cancelChallengeShouldRemoveChallengeAndNotifyChallenged() {
-        Challenge challenge = seedChallenge(challenger.getId(), challenged.getId(), TimeControl.BLITZ_5_0, Instant.now());
+        Challenge challenge = new Challenge(UUID.randomUUID(), challenger.getId(), challenged.getId(), TimeControl.BLITZ_5_0, Instant.now());
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get("challenge:" + challenge.id())).thenReturn(json(challenge));
         when(userRepository.findById(challenger.getId())).thenReturn(Optional.of(challenger));
 
         challengeService.cancelChallenge(challenger.getId(), new WsCancelChallengeDTO(WsMessageType.CANCEL_CHALLENGE, challenge.id()));
 
-        assertThat(map()).isEmpty();
+        verify(redisTemplate).delete("challenge:" + challenge.id());
         verify(notificationService).onChallengeCancelled(eq(challenged.getId()), any(WsOutgoingChallengeCancelledDTO.class));
     }
 
     @Test
     void cancelChallengeShouldThrowWhenCallerIsNotChallenger() {
-        Challenge challenge = seedChallenge(challenger.getId(), challenged.getId(), TimeControl.BLITZ_5_0, Instant.now());
+        Challenge challenge = new Challenge(UUID.randomUUID(), challenger.getId(), challenged.getId(), TimeControl.BLITZ_5_0, Instant.now());
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get("challenge:" + challenge.id())).thenReturn(json(challenge));
 
         assertThatThrownBy(() ->
             challengeService.cancelChallenge(challenged.getId(), new WsCancelChallengeDTO(WsMessageType.CANCEL_CHALLENGE, challenge.id()))
         ).isInstanceOf(NotFoundException.class);
 
-        assertThat(map()).hasSize(1);
+        verify(redisTemplate, never()).delete(anyString());
     }
 
     @Test
     void cancelChallengeShouldThrowWhenChallengeNotFound() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+
         assertThatThrownBy(() ->
             challengeService.cancelChallenge(challenger.getId(), new WsCancelChallengeDTO(WsMessageType.CANCEL_CHALLENGE, UUID.randomUUID()))
         ).isInstanceOf(NotFoundException.class);
     }
 
-    // --- clearStaleChallenges ---
-
-    @Test
-    void clearStaleChallengesShouldRemoveExpiredAndNotifyChallenger() {
-        Challenge stale = seedChallenge(challenger.getId(), challenged.getId(), TimeControl.BLITZ_5_0, Instant.now().minusSeconds(700));
-
-        ReflectionTestUtils.invokeMethod(challengeService, "clearStaleChallenges");
-
-        assertThat(map()).isEmpty();
-        verify(notificationService).onChallengeExpired(stale.challengerId());
-    }
-
-    @Test
-    void clearStaleChallengesShouldRetainFreshChallenges() {
-        seedChallenge(challenger.getId(), challenged.getId(), TimeControl.BLITZ_5_0, Instant.now());
-
-        ReflectionTestUtils.invokeMethod(challengeService, "clearStaleChallenges");
-
-        assertThat(map()).hasSize(1);
-        verify(notificationService, never()).onChallengeExpired(any());
-    }
-
     // --- helpers ---
 
-    @SuppressWarnings("unchecked")
-    private ConcurrentHashMap<UUID, Challenge> map() {
-        return (ConcurrentHashMap<UUID, Challenge>) ReflectionTestUtils.getField(challengeService, "challenges");
-    }
-
-    private Challenge seedChallenge(UUID challengerId, UUID challengedId, TimeControl tc, Instant sent) {
-        Challenge c = new Challenge(UUID.randomUUID(), challengerId, challengedId, tc, sent);
-        map().put(c.id(), c);
-        return c;
+    private String json(Challenge challenge) {
+        try {
+            return objectMapper.writeValueAsString(challenge);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

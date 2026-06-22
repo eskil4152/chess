@@ -40,11 +40,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,6 +56,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -62,17 +66,20 @@ class GameServiceTest {
     @Mock GameRepository gameRepository;
     @Mock ApplicationEventPublisher eventPublisher;
     @Mock NotificationService notificationService;
+    @Mock RedisTemplate<String, String> redisTemplate;
+    @Mock ValueOperations<String, String> valueOps;
     @Mock StatsService statsService;
 
     private GameService gameService;
     private GameCreationService gameCreationService;
     private GameViewService gameViewService;
     private ActiveGameStore activeGameStore;
-    private RedisTemplate<String, String> redisTemplate;
 
     private UserEntity white;
     private UserEntity black;
     private GameEntity savedEntity;
+
+    private final Map<String, String> redisStore = new ConcurrentHashMap<>();
 
     @BeforeEach
     void setup() {
@@ -80,14 +87,18 @@ class GameServiceTest {
         black = new UserEntity("black", "h");
         savedEntity = new GameEntity(white, black, GameStatus.ONGOING, Instant.now(), "blitz", null);
 
-        // Real collaborators wired with the mocked infrastructure, so behavior
-        // assertions (saves / events / stats / cleanup) still flow through.
         GameClockService clockService = new GameClockService();
         activeGameStore = new ActiveGameStore(redisTemplate);
         GameCompletionService completionService = new GameCompletionService(eventPublisher, gameRepository, statsService, activeGameStore, clockService);
         gameService = new GameService(eventPublisher, notificationService, clockService, completionService, activeGameStore, redisTemplate);
         gameCreationService = new GameCreationService(gameRepository, activeGameStore, clockService, eventPublisher, completionService);
         gameViewService = new GameViewService(activeGameStore, redisTemplate);
+
+        lenient().when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        lenient().when(valueOps.get(anyString())).thenAnswer(inv -> redisStore.get(inv.<String>getArgument(0)));
+        lenient().doAnswer(inv -> { redisStore.put(inv.getArgument(0), inv.getArgument(1)); return null; })
+                .when(valueOps).set(anyString(), anyString());
+        lenient().when(redisTemplate.delete(anyString())).thenAnswer(inv -> redisStore.remove(inv.<String>getArgument(0)) != null);
     }
 
     @AfterEach
@@ -239,11 +250,14 @@ class GameServiceTest {
 
     // --- Make Move ---
     @Test
-    void makeMoveShouldThrowWhenGameNotFound() {
-        WsMoveDTO dto = new WsMoveDTO(UUID.randomUUID().toString(), "e2e4", null, null);
-        UUID whiteId = white.getId();
-        assertThatThrownBy(() -> gameService.makeMove(whiteId, dto))
-                .isInstanceOf(GameNotFoundException.class);
+    void makeMoveShouldForwardToRedisWhenGameNotLocal() {
+        String gameId = UUID.randomUUID().toString();
+        WsMoveDTO dto = new WsMoveDTO(gameId, "e2e4", null, null);
+
+        gameService.makeMove(white.getId(), dto);
+
+        verify(redisTemplate).convertAndSend(eq("game:" + gameId), anyString());
+        verify(eventPublisher, never()).publishEvent(any(MoveMadeEvent.class));
     }
 
     @Test
