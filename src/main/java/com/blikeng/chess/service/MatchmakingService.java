@@ -9,34 +9,43 @@ import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
 import com.blikeng.chess.service.game.ActiveGameStore;
 import com.blikeng.chess.service.game.GameCreationService;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Elo-based matchmaking queue (one entry per user).
+ * Elo-based matchmaking queue backed by Redis sorted sets.
  *
  * <p>A queuing player is paired with the closest-rated waiting player on the same
- * {@link TimeControl} within ±200 Elo; if none qualifies they wait in the queue. Queue
- * mutations are synchronized so two players can't be matched into separate games at once.
- * Leaving the queue is also a synchronized action to avoid a match with a player who has dequeued.
+ * {@link TimeControl} within ±200 Elo via an atomic Lua script. If none qualifies
+ * they wait in the queue.
  */
 @Service
 public class MatchmakingService {
     private final AuthService authService;
     private final ActiveGameStore activeGameStore;
     private final GameCreationService gameCreationService;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final DefaultRedisScript<String> script;
 
-    public MatchmakingService(AuthService authService, ActiveGameStore activeGameStore, GameCreationService gameCreationService) {
+    public MatchmakingService(
+        AuthService authService,
+        ActiveGameStore activeGameStore,
+        GameCreationService gameCreationService,
+        RedisTemplate<String, String> redisTemplate
+    ){
         this.authService = authService;
         this.activeGameStore = activeGameStore;
         this.gameCreationService = gameCreationService;
+        this.redisTemplate = redisTemplate;
+        this.script = new DefaultRedisScript<>();
+        script.setResultType(String.class);
+        script.setLocation(new ClassPathResource("scripts/matchmaking.lua"));
     }
-
-    private final ConcurrentHashMap<UUID, QueueEntry> queue = new ConcurrentHashMap<>();
-    private record QueueEntry(UserEntity user, TimeControl timeControl) {}
 
     public void queuePlayer(TimeControlDTO timeControlDTO) {
         JwtPrincipal jwtPrincipal = JwtService.getCurrentUser();
@@ -45,29 +54,22 @@ public class MatchmakingService {
         UUID userId = jwtPrincipal.userId();
         UserEntity user = authService.findUserById(userId).orElseThrow(InvalidUserException::new);
 
-        UserEntity matched;
+        if (activeGameStore.isInGame(userId)) throw new ExistingGameException();
 
-        synchronized (queue) {
-            if (activeGameStore.isInGame(userId)) throw new ExistingGameException();
-            if (queue.containsKey(userId)) return;
+        TimeControl requestedTc = timeControlDTO.resolved();
+        String matchedUserId = redisTemplate.execute(
+            script,
+            List.of("queue:" + requestedTc.name()),
+            userId.toString(),
+            String.valueOf(user.getElo(requestedTc.type()))
+        );
 
-            TimeControl requestedTc = timeControlDTO.resolved();
-
-            var best = queue.entrySet().stream()
-                    .filter(e -> e.getValue().timeControl.equals(requestedTc))
-                    .min(Comparator.comparingInt(e -> Math.abs(e.getValue().user.getElo(requestedTc.type()) - user.getElo(requestedTc.type()))))
-                    .filter(e -> Math.abs(e.getValue().user.getElo(requestedTc.type()) - user.getElo(requestedTc.type())) <= 200)
-                    .orElse(null);
-
-            if (best == null) {
-                queue.put(userId, new QueueEntry(user, requestedTc));
-                return;
-            }
-
-            queue.remove(best.getKey());
-            matched = best.getValue().user();
-
+        if (matchedUserId != null){
+            UserEntity matched = authService.findUserById(UUID.fromString(matchedUserId))
+                .orElseThrow(InvalidUserException::new);
             gameCreationService.beginGame(matched, user, requestedTc);
+        } else {
+            redisTemplate.opsForValue().set("queue:tc:" + userId, requestedTc.name());
         }
     }
 
@@ -77,14 +79,18 @@ public class MatchmakingService {
 
         UUID userId = jwtPrincipal.userId();
 
-        synchronized (queue) {
-            queue.remove(userId);
+        String tc = redisTemplate.opsForValue().get("queue:tc:" + userId);
+        if (tc != null) {
+            redisTemplate.opsForZSet().remove("queue:" + tc, userId.toString());
+            redisTemplate.delete("queue:tc:" + userId);
         }
     }
 
     public void dequeuePlayer(UUID userId) {
-        synchronized (queue) {
-            queue.remove(userId);
+        String tc = redisTemplate.opsForValue().get("queue:tc:" + userId);
+        if (tc != null) {
+            redisTemplate.opsForZSet().remove("queue:" + tc, userId.toString());
+            redisTemplate.delete("queue:tc:" + userId);
         }
     }
 }

@@ -4,6 +4,7 @@ import com.blikeng.chess.dto.websocket.WsCancelChallengeDTO;
 import com.blikeng.chess.dto.websocket.WsChallengeDTO;
 import com.blikeng.chess.dto.websocket.WsChallengeResponseDTO;
 import com.blikeng.chess.entity.UserEntity;
+import com.blikeng.chess.exception.ApiException;
 import com.blikeng.chess.exception.types.*;
 import com.blikeng.chess.model.Challenge;
 import com.blikeng.chess.model.timecontrol.TimeControl;
@@ -13,19 +14,24 @@ import com.blikeng.chess.dto.websocket.WsOutgoingChallengeResponseDTO;
 import com.blikeng.chess.repository.UserRepository;
 import com.blikeng.chess.service.game.ActiveGameStore;
 import com.blikeng.chess.service.game.GameCreationService;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Direct player-to-player challenges: create, accept/decline, and cancel, with results
  * pushed via {@link NotificationService}.
  *
- * <p>Pending challenges are held in memory and expired by a scheduled sweep (every 60s).
+ * <p>Pending challenges are held in redis and expired a set constant.
+ * <p>Every incoming challenge is checked for duplication and mirror. Mirrored invites auto accept.
  */
 @Service
 public class ChallengeService {
@@ -33,29 +39,25 @@ public class ChallengeService {
     private final ActiveGameStore activeGameStore;
     private final GameCreationService gameCreationService;
     private final NotificationService notificationService;
+    private final RedisTemplate<String, String> redisTemplate;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Logger logger = LoggerFactory.getLogger(ChallengeService.class);
+
+    private final long CHALLENGE_EXPIRY_MINUTES = 5;
 
     public ChallengeService(
         UserRepository userRepository,
         ActiveGameStore activeGameStore,
         GameCreationService gameCreationService,
-        NotificationService notificationService
+        NotificationService notificationService,
+        RedisTemplate<String, String> redisTemplate
     ){
         this.userRepository = userRepository;
         this.activeGameStore = activeGameStore;
         this.gameCreationService = gameCreationService;
         this.notificationService = notificationService;
-    }
-
-    private final ConcurrentHashMap<UUID, Challenge> challenges = new ConcurrentHashMap<>();
-
-    @Scheduled(fixedRate = 60000L)
-    private void clearStaleChallenges(){
-        for (Challenge challenge : challenges.values()) {
-            if (challenge.sent().isBefore(Instant.now().minusSeconds(600))) {
-                challenges.remove(challenge.id());
-                notificationService.onChallengeExpired(challenge.challengerId());
-            }
-        }
+        this.redisTemplate = redisTemplate;
     }
 
     public void handleChallenge(UUID userId, WsChallengeDTO challengeDTO){
@@ -66,20 +68,25 @@ public class ChallengeService {
 
         if (activeGameStore.isInGame(receiver.getId())) throw new AlreadyInGameException();
 
-        if (challenges.values().stream()
-            .anyMatch(challenge -> challenge.challengerId().equals(userId) && challenge.challengedId().equals(challengeDTO.receiver()))
-        ) throw new AlreadyChallengedException();
+        if (redisTemplate.hasKey("challenge:pair:" + userId + ":" + challengeDTO.receiver())) throw new AlreadyChallengedException();
 
         UserEntity sender = userRepository.findById(userId)
             .orElseThrow(InvalidUserException::new);
 
-        Optional<Challenge> mutual = challenges.values().stream()
-            .filter(c -> c.challengedId().equals(userId) && c.challengerId().equals(challengeDTO.receiver()))
-            .findFirst();
+        String mutual = redisTemplate.opsForValue().get("challenge:pair:" + challengeDTO.receiver() + ":" + userId);
 
-        if (mutual.isPresent()) {
-            challenges.remove(mutual.get().id());
-            gameCreationService.beginGame(receiver, sender, mutual.get().timeControl());
+        if (mutual != null) {
+            redisTemplate.delete("challenge:pair:" + challengeDTO.receiver() + ":" + userId);
+            Challenge challenge;
+
+            try {
+                challenge = objectMapper.readValue(mutual, Challenge.class);
+            } catch (JacksonException e) {
+                logger.error("Failed to deserialize challenge: {}", mutual, e);
+                throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to handle challenge");
+            }
+
+            gameCreationService.beginGame(receiver, sender, challenge.timeControl());
             return;
         }
 
@@ -93,7 +100,16 @@ public class ChallengeService {
             Instant.now()
         );
 
-        challenges.put(challenge.id(), challenge);
+        String json;
+        try {
+            json = objectMapper.writeValueAsString(challenge);
+        } catch (JacksonException e) {
+            logger.error("Failed to serialize challenge: {}", challenge, e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to handle challenge");
+        }
+
+        redisTemplate.opsForValue().set("challenge:" + challenge.id(), json, Duration.ofMinutes(CHALLENGE_EXPIRY_MINUTES));
+        redisTemplate.opsForValue().set("challenge:pair:" + userId + ":" + receiver.getId(), json, Duration.ofMinutes(CHALLENGE_EXPIRY_MINUTES));
 
         notificationService.onChallenge(
             challenge.challengerId(),
@@ -103,9 +119,12 @@ public class ChallengeService {
     }
 
     public void handleChallengeResponse(UUID userId, WsChallengeResponseDTO challengeResponseDTO){
-        Challenge challenge = challenges.get(challengeResponseDTO.challengeId());
+        Challenge challenge = getChallenge(challengeResponseDTO.challengeId());
+
         if (challenge == null || !challenge.challengedId().equals(userId)) throw new NotFoundException();
-        challenges.remove(challengeResponseDTO.challengeId());
+
+        redisTemplate.delete("challenge:" + challenge.id());
+        redisTemplate.delete("challenge:pair:" + challenge.challengerId() + ":" + challenge.challengedId());
 
         UserEntity challenged = userRepository.findById(userId)
             .orElseThrow(InvalidUserException::new);
@@ -124,9 +143,11 @@ public class ChallengeService {
     }
 
     public void cancelChallenge(UUID userId, WsCancelChallengeDTO cancelDTO){
-        Challenge challenge = challenges.get(cancelDTO.challengeId());
+        Challenge challenge = getChallenge(cancelDTO.challengeId());
+
         if (challenge == null || !challenge.challengerId().equals(userId)) throw new NotFoundException();
-        challenges.remove(cancelDTO.challengeId());
+        redisTemplate.delete("challenge:" + challenge.id());
+        redisTemplate.delete("challenge:pair:" + challenge.challengerId() + ":" + challenge.challengedId());
 
         UserEntity challenger = userRepository.findById(userId)
             .orElseThrow(InvalidUserException::new);
@@ -135,5 +156,17 @@ public class ChallengeService {
             challenge.challengedId(),
             new WsOutgoingChallengeCancelledDTO(challenge.id(), challenger.getUsername())
         );
+    }
+
+    private Challenge getChallenge(UUID challengeId){
+        String challengeString = redisTemplate.opsForValue().get("challenge:" + challengeId);
+        if (challengeString == null) throw new NotFoundException();
+
+        try {
+            return objectMapper.readValue(challengeString, Challenge.class);
+        } catch (JacksonException e){
+            logger.error("Failed to deserialize challenge: {}", challengeString, e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to process challenge");
+        }
     }
 }

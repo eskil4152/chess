@@ -7,6 +7,9 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:password}
     hikari:
       maximum-pool-size: 20
+  data:
+    redis:
+      url: ${SPRING_REDIS_URL:redis://localhost:6379}
   flyway:
     enabled: true
     baseline-on-migrate: true

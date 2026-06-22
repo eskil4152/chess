@@ -2,6 +2,7 @@ package com.blikeng.chess.service.game;
 
 import com.blikeng.chess.exception.types.InvalidUUIDException;
 import com.blikeng.chess.model.Game;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -17,14 +18,27 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Service
 public class ActiveGameStore {
+    private final RedisTemplate<String, String> redisTemplate;
+
+    public ActiveGameStore(RedisTemplate<String, String> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
+
     private final ConcurrentHashMap<UUID, Game> games = new ConcurrentHashMap<>();
 
     public void add(Game game) {
         games.put(game.getId(), game);
+
+        redisTemplate.opsForValue().set("game:user:" + game.getWhiteId(), game.getId().toString());
+        redisTemplate.opsForValue().set("game:user:" + game.getBlackId(), game.getId().toString());
     }
 
     public void remove(UUID gameId) {
-        games.remove(gameId);
+        Game game = games.remove(gameId);
+        if (game == null) return;
+
+        redisTemplate.delete("game:user:" + game.getWhiteId());
+        redisTemplate.delete("game:user:" + game.getBlackId());
     }
 
     public Optional<Game> get(UUID gameId) {
@@ -48,6 +62,6 @@ public class ActiveGameStore {
     }
 
     public boolean isInGame(UUID userId) {
-        return findByUser(userId).isPresent();
+        return redisTemplate.opsForValue().get("game:user:" + userId) != null;
     }
 }

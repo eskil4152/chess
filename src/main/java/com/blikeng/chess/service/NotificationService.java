@@ -5,10 +5,13 @@ import com.blikeng.chess.events.FriendRequestEvent;
 import com.blikeng.chess.events.MatchEndedEvent;
 import com.blikeng.chess.events.MatchStartedEvent;
 import com.blikeng.chess.events.MoveMadeEvent;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.blikeng.chess.exception.ApiException;
+import org.springframework.http.HttpStatus;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionPhase;
@@ -33,13 +36,15 @@ import java.util.concurrent.locks.ReentrantLock;
 @Service
 public class NotificationService {
     private final PresenceService presenceService;
+    private final RedisTemplate<String, String> redisTemplate;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final Logger logger = LoggerFactory.getLogger(NotificationService.class);
     private final ConcurrentHashMap<String, ReentrantLock> sessionLocks = new ConcurrentHashMap<>();
 
-    public NotificationService(PresenceService presenceService) {
+    public NotificationService(PresenceService presenceService, RedisTemplate<String, String> redisTemplate) {
         this.presenceService = presenceService;
+        this.redisTemplate = redisTemplate;
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -119,7 +124,7 @@ public class NotificationService {
     }
 
     @Scheduled(fixedRate = 20000)
-    public void pingAllSessions() {
+    public void pingLocalSessions() {
         PingMessage ping = new PingMessage();
         presenceService.getAllSessions().forEach(session -> {
             ReentrantLock lock = sessionLocks.computeIfAbsent(session.getId(), _ -> new ReentrantLock());
@@ -144,15 +149,16 @@ public class NotificationService {
         sessionLocks.remove(sessionId);
     }
 
-    private void sendToUser(UUID userId, String payload) {
-        presenceService.getSessions(userId).forEach(session -> sendToSession(session, payload));
+    private void sendToUser(UUID userId, String payload){
+        redisTemplate.convertAndSend("user:" + userId, payload);
     }
 
     private String serialize(Object obj) {
         try {
             return objectMapper.writeValueAsString(obj);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to serialize object", e);
+        } catch (JacksonException e) {
+            logger.error("Failed to serialize message: {}", obj, e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to serialize, please try again later.");
         }
     }
 }

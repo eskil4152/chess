@@ -18,9 +18,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,6 +39,9 @@ class MatchmakingServiceTest {
     @Mock AuthService authService;
     @Mock ActiveGameStore activeGameStore;
     @Mock GameCreationService gameCreationService;
+    @Mock RedisTemplate<String, String> redisTemplate;
+    @Mock ValueOperations<String, String> valueOps;
+
     @InjectMocks MatchmakingService matchmakingService;
 
     private UserEntity user1;
@@ -64,6 +71,7 @@ class MatchmakingServiceTest {
         setupSecurityContext(user1.getId());
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
 
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
         matchmakingService.queuePlayer(timeControlDTO);
 
         verify(gameCreationService, never()).beginGame(any(), any(), any());
@@ -76,6 +84,7 @@ class MatchmakingServiceTest {
         setupSecurityContext(user1.getId());
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
 
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
         matchmakingService.queuePlayer(timeControlDTO);
         matchmakingService.queuePlayer(timeControlDTO);
 
@@ -89,12 +98,17 @@ class MatchmakingServiceTest {
         user1.setBlitzElo(800);
         user2.setBlitzElo(850);
 
-        when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
-        when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
-
-        setupSecurityContext(user1.getId());
-        matchmakingService.queuePlayer(timeControlDTO);
         setupSecurityContext(user2.getId());
+        when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
+        when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
+
+        when(redisTemplate.execute(
+                any(RedisScript.class),
+                eq(List.of("queue:BLITZ_5_0")),
+                eq(user2.getId().toString()),
+                eq("850")))
+                .thenReturn(user1.getId().toString());
+
         matchmakingService.queuePlayer(timeControlDTO);
 
         verify(gameCreationService).beginGame(user1, user2, TimeControl.BLITZ_5_0);
@@ -109,6 +123,7 @@ class MatchmakingServiceTest {
 
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
         when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
 
         setupSecurityContext(user1.getId());
         matchmakingService.queuePlayer(timeControlDTO);
@@ -119,27 +134,23 @@ class MatchmakingServiceTest {
     }
 
     @Test
-    void queuePlayerShouldMatchClosestEloFromMultipleCandidates() {
+    void queuePlayerShouldExecuteMatchmakingScriptWithEloScore() {
         TimeControlDTO timeControlDTO = new TimeControlDTO("BLITZ_5_0");
-
-        UserEntity user3 = new UserEntity("user3", "h");
-        user1.setBlitzElo(500);  // diff to user3(650) = 150
-        user2.setBlitzElo(750);  // diff to user3(650) = 100  ← closer, should be matched
-        user3.setBlitzElo(650);
-
-        when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
-        when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
-        when(authService.findUserById(user3.getId())).thenReturn(Optional.of(user3));
+        user1.setBlitzElo(800);
 
         setupSecurityContext(user1.getId());
-        matchmakingService.queuePlayer(timeControlDTO); // queued (empty)
-        setupSecurityContext(user2.getId());
-        matchmakingService.queuePlayer(timeControlDTO); // diff to user1 = 250 > 200, queued
-        setupSecurityContext(user3.getId());
-        matchmakingService.queuePlayer(timeControlDTO); // min picks user2 (100) over user1 (150)
+        when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
 
-        verify(gameCreationService).beginGame(user2, user3, timeControlDTO.resolved());
-        verify(gameCreationService, never()).beginGame(eq(user1), any(), any());
+        matchmakingService.queuePlayer(timeControlDTO);
+
+        verify(redisTemplate).execute(
+                any(RedisScript.class),
+                eq(List.of("queue:BLITZ_5_0")),
+                eq(user1.getId().toString()),
+                eq("800"));
+        verify(valueOps).set("queue:tc:" + user1.getId(), "BLITZ_5_0");
+        verify(gameCreationService, never()).beginGame(any(), any(), any());
     }
 
     @Test
@@ -180,6 +191,7 @@ class MatchmakingServiceTest {
         user2.setBlitzElo(810);
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
         when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
 
         setupSecurityContext(user1.getId());
         matchmakingService.queuePlayer(timeControlDTO);
@@ -198,6 +210,7 @@ class MatchmakingServiceTest {
         user2.setBlitzElo(810);
         when(authService.findUserById(user1.getId())).thenReturn(Optional.of(user1));
         when(authService.findUserById(user2.getId())).thenReturn(Optional.of(user2));
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
 
         setupSecurityContext(user1.getId());
         matchmakingService.queuePlayer(timeControlDTO);

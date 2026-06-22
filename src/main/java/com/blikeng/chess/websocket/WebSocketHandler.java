@@ -7,9 +7,6 @@ import com.blikeng.chess.service.ChallengeService;
 import com.blikeng.chess.service.game.GameService;
 import com.blikeng.chess.service.MatchmakingService;
 import com.blikeng.chess.service.PresenceService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -17,6 +14,9 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.UUID;
 
@@ -115,7 +115,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
         try {
             notificationService.sendToSession(session,
                     objectMapper.writeValueAsString(new WsErrorDTO(status, message)));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             logger.error("Failed to serialize message: {}", message, e);
         }
     }
