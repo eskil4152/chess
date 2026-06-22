@@ -3,14 +3,19 @@ package com.blikeng.chess.service.game;
 import com.blikeng.chess.dto.websocket.*;
 import com.blikeng.chess.engine.MoveExecutor;
 import com.blikeng.chess.engine.PositionMapper;
+import com.blikeng.chess.exception.ApiException;
 import com.blikeng.chess.exception.types.*;
 import com.blikeng.chess.model.*;
 import com.blikeng.chess.events.MoveMadeEvent;
 import com.blikeng.chess.service.NotificationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.*;
@@ -37,6 +42,7 @@ public class GameService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final MoveExecutor moveExecutor = new MoveExecutor();
+    private final Logger logger = LoggerFactory.getLogger(GameService.class);
 
     public GameService(
             ApplicationEventPublisher eventPublisher,
@@ -121,9 +127,9 @@ public class GameService {
 
             try {
                 redisTemplate.convertAndSend("game:" + moveDTO.gameId(), objectMapper.writeValueAsString(command));
-            } catch (Exception e) {
-                // TODO: Custom exception and logger
-                e.printStackTrace();
+            } catch (JacksonException e) {
+                logger.error("Failed to serialize message: {} when making move in game {}", command, moveDTO.gameId(), e);
+                throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to make move");
             }
         }
     }
@@ -157,9 +163,9 @@ public class GameService {
 
             try {
                 redisTemplate.convertAndSend("game:" + resignDTO.gameId(), objectMapper.writeValueAsString(command));
-            } catch (Exception e) {
-                // TODO: Custom exception and logger
-                e.printStackTrace();
+            } catch (JacksonException e) {
+                logger.error("Failed to serialize message: {} when resigning game {} as {}", command, resignDTO.gameId(), userId, e);
+                throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to resign game");
             }
         }
     }
@@ -201,9 +207,9 @@ public class GameService {
 
             try {
                 redisTemplate.convertAndSend("game:" + drawDTO.gameId(), objectMapper.writeValueAsString(command));
-            } catch (Exception e) {
-                // TODO: Custom exception and logger
-                e.printStackTrace();
+            } catch (JacksonException e) {
+                logger.error("Failed to serialize message: {} when sending draw in game {} as {}", command, drawDTO.gameId(), userId, e);
+                throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to offer draw");
             }
         }
     }

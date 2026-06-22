@@ -59,7 +59,10 @@ public class RedisMessageSubscriber implements MessageListener {
     @Override
     public void onMessage(Message message, byte @Nullable [] pattern) {
         String channel = new String(message.getChannel(), StandardCharsets.UTF_8);
-        String prefix = channel.split(":")[0];
+        int separatorIndex = channel.indexOf(':');
+        String prefix = separatorIndex >= 0 
+            ? channel.substring(0, separatorIndex) 
+            : channel;
 
         switch (prefix) {
             case "user" -> handleUserMessage(message, channel);

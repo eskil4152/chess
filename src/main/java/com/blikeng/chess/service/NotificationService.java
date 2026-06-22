@@ -5,6 +5,8 @@ import com.blikeng.chess.events.FriendRequestEvent;
 import com.blikeng.chess.events.MatchEndedEvent;
 import com.blikeng.chess.events.MatchStartedEvent;
 import com.blikeng.chess.events.MoveMadeEvent;
+import com.blikeng.chess.exception.ApiException;
+import org.springframework.http.HttpStatus;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -155,8 +157,8 @@ public class NotificationService {
         try {
             return objectMapper.writeValueAsString(obj);
         } catch (JacksonException e) {
-            // TODO: Custom exception and logger
-            throw new IllegalStateException("Failed to serialize object", e);
+            logger.error("Failed to serialize message: {}", obj, e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to serialize, please try again later.");
         }
     }
 }

@@ -4,6 +4,7 @@ import com.blikeng.chess.dto.websocket.WsCancelChallengeDTO;
 import com.blikeng.chess.dto.websocket.WsChallengeDTO;
 import com.blikeng.chess.dto.websocket.WsChallengeResponseDTO;
 import com.blikeng.chess.entity.UserEntity;
+import com.blikeng.chess.exception.ApiException;
 import com.blikeng.chess.exception.types.*;
 import com.blikeng.chess.model.Challenge;
 import com.blikeng.chess.model.timecontrol.TimeControl;
@@ -13,6 +14,10 @@ import com.blikeng.chess.dto.websocket.WsOutgoingChallengeResponseDTO;
 import com.blikeng.chess.repository.UserRepository;
 import com.blikeng.chess.service.game.ActiveGameStore;
 import com.blikeng.chess.service.game.GameCreationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -35,7 +40,9 @@ public class ChallengeService {
     private final GameCreationService gameCreationService;
     private final NotificationService notificationService;
     private final RedisTemplate<String, String> redisTemplate;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Logger logger = LoggerFactory.getLogger(ChallengeService.class);
 
     private final long CHALLENGE_EXPIRY_MINUTES = 5;
 
@@ -74,9 +81,9 @@ public class ChallengeService {
 
             try {
                 challenge = objectMapper.readValue(mutual, Challenge.class);
-            } catch (Exception e) {
-                // TODO: Custom exception and logger
-                throw new IllegalStateException("Failed to serialize challenge", e);
+            } catch (JacksonException e) {
+                logger.error("Failed to deserialize challenge: {}", mutual, e);
+                throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to handle challenge");
             }
 
             gameCreationService.beginGame(receiver, sender, challenge.timeControl());
@@ -96,9 +103,9 @@ public class ChallengeService {
         String json;
         try {
             json = objectMapper.writeValueAsString(challenge);
-        } catch (Exception e) {
-            // TODO: Custom exception and logger
-            throw new IllegalStateException("Failed to serialize challenge", e);
+        } catch (JacksonException e) {
+            logger.error("Failed to serialize challenge: {}", challenge, e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to handle challenge");
         }
 
         redisTemplate.opsForValue().set("challenge:" + challenge.id(), json, Duration.ofMinutes(CHALLENGE_EXPIRY_MINUTES));
@@ -157,9 +164,9 @@ public class ChallengeService {
 
         try {
             return objectMapper.readValue(challengeString, Challenge.class);
-        } catch (Exception e){
-            // TODO: Custom exception and logger
-            throw new IllegalStateException("Failed to serialize challenge", e);
+        } catch (JacksonException e){
+            logger.error("Failed to deserialize challenge: {}", challengeString, e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to process challenge");
         }
     }
 }

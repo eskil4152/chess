@@ -1,13 +1,18 @@
 package com.blikeng.chess.service.game;
 
 import com.blikeng.chess.dto.GameStateDTO;
+import com.blikeng.chess.exception.ApiException;
 import com.blikeng.chess.exception.types.GameNotFoundException;
 import com.blikeng.chess.exception.types.InvalidUserException;
 import com.blikeng.chess.model.Game;
 import com.blikeng.chess.security.JwtPrincipal;
 import com.blikeng.chess.security.JwtService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.Map;
@@ -25,7 +30,9 @@ import java.util.UUID;
 public class GameViewService {
     private final ActiveGameStore activeGameStore;
     private final RedisTemplate<String, String> redisTemplate;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Logger logger = LoggerFactory.getLogger(GameViewService.class);
 
     public GameViewService(ActiveGameStore activeGameStore, RedisTemplate<String, String> redisTemplate) {
         this.activeGameStore = activeGameStore;
@@ -57,9 +64,9 @@ public class GameViewService {
 
             try {
                 redisTemplate.convertAndSend("game:" + gameId, objectMapper.writeValueAsString(command));
-            } catch (Exception e) {
-                // TODO: Custom exception and logger
-                e.printStackTrace();
+            } catch (JacksonException e) {
+                logger.error("Failed to serialize message: {}", command, e);
+                throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to restore game");
             }
         } else {
             Optional<Game> game = activeGameStore.get(gameIdString);
@@ -78,9 +85,9 @@ public class GameViewService {
 
             try {
                 redisTemplate.convertAndSend("game:" + gameIdString, objectMapper.writeValueAsString(command));
-            } catch (Exception e) {
-                // TODO: Custom exception and logger
-                e.printStackTrace();
+            } catch (JacksonException e) {
+                logger.error("Failed to serialize message: {}", command, e);
+                throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to restore game");
             }
         }
 
@@ -92,9 +99,8 @@ public class GameViewService {
         GameStateDTO dto = buildGameStateDTO(game);
         try {
             redisTemplate.convertAndSend("user:" + userId, objectMapper.writeValueAsString(dto));
-        } catch (Exception e) {
-            // TODO: Custom exception and logger
-            e.printStackTrace();
+        } catch (JacksonException e) {
+            logger.error("Failed to serialize message for game: {}", dto.gameId(), e);
         }
     }
 
