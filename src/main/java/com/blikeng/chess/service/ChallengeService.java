@@ -13,7 +13,7 @@ import com.blikeng.chess.dto.websocket.WsOutgoingChallengeResponseDTO;
 import com.blikeng.chess.repository.UserRepository;
 import com.blikeng.chess.service.game.ActiveGameStore;
 import com.blikeng.chess.service.game.GameCreationService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 

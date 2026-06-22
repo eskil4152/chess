@@ -5,8 +5,8 @@ import com.blikeng.chess.events.FriendRequestEvent;
 import com.blikeng.chess.events.MatchEndedEvent;
 import com.blikeng.chess.events.MatchStartedEvent;
 import com.blikeng.chess.events.MoveMadeEvent;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -154,7 +154,8 @@ public class NotificationService {
     private String serialize(Object obj) {
         try {
             return objectMapper.writeValueAsString(obj);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
+            // TODO: Custom exception and logger
             throw new IllegalStateException("Failed to serialize object", e);
         }
     }

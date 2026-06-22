@@ -7,12 +7,11 @@ import com.blikeng.chess.exception.types.*;
 import com.blikeng.chess.model.*;
 import com.blikeng.chess.events.MoveMadeEvent;
 import com.blikeng.chess.service.NotificationService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -123,6 +122,7 @@ public class GameService {
             try {
                 redisTemplate.convertAndSend("game:" + moveDTO.gameId(), objectMapper.writeValueAsString(command));
             } catch (Exception e) {
+                // TODO: Custom exception and logger
                 e.printStackTrace();
             }
         }
@@ -158,6 +158,7 @@ public class GameService {
             try {
                 redisTemplate.convertAndSend("game:" + resignDTO.gameId(), objectMapper.writeValueAsString(command));
             } catch (Exception e) {
+                // TODO: Custom exception and logger
                 e.printStackTrace();
             }
         }
@@ -201,6 +202,7 @@ public class GameService {
             try {
                 redisTemplate.convertAndSend("game:" + drawDTO.gameId(), objectMapper.writeValueAsString(command));
             } catch (Exception e) {
+                // TODO: Custom exception and logger
                 e.printStackTrace();
             }
         }

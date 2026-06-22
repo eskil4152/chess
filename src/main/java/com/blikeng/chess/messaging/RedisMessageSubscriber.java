@@ -1,15 +1,11 @@
 package com.blikeng.chess.messaging;
 
-import com.blikeng.chess.dto.GameStateDTO;
 import com.blikeng.chess.dto.websocket.WsDrawDTO;
 import com.blikeng.chess.dto.websocket.WsMoveDTO;
 import com.blikeng.chess.dto.websocket.WsResignDTO;
-import com.blikeng.chess.model.Game;
 import com.blikeng.chess.service.game.ActiveGameStore;
 import com.blikeng.chess.service.game.GameService;
 import com.blikeng.chess.service.game.GameViewService;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -19,8 +15,10 @@ import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
@@ -65,7 +63,7 @@ public class RedisMessageSubscriber implements MessageListener {
 
         switch (prefix) {
             case "user" -> handleUserMessage(message, channel);
-            case "game" -> handleGameMessage(message, channel);
+            case "game" -> handleGameMessage(message);
             default -> logger.warn("Unknown channel: {}", channel);
         }
     }
@@ -83,15 +81,15 @@ public class RedisMessageSubscriber implements MessageListener {
         broadcaster.sendToUser(userId, payload);
     }
 
-    private void handleGameMessage(Message message, String channel){
+    private void handleGameMessage(Message message){
         try {
             JsonNode json = objectMapper.readTree(message.getBody());
-            String gameId = json.path("gameId").asText();
+            String gameId = json.path("gameId").asString();
 
             if (activeGameStore.get(gameId).isEmpty()) return;
 
-            UUID userId = UUID.fromString(json.path("userId").asText());
-            String action = json.path("action").asText();
+            UUID userId = UUID.fromString(json.path("userId").asString());
+            String action = json.path("action").asString();
 
             switch (action) {
                 case "RESIGN" -> {
@@ -103,13 +101,13 @@ public class RedisMessageSubscriber implements MessageListener {
                     gameService.handleDraw(userId, drawDTO);
                 }
                 case "MOVE" -> {
-                    WsMoveDTO moveDTO = new WsMoveDTO(gameId, json.path("move").asText(), null, null);
+                    WsMoveDTO moveDTO = new WsMoveDTO(gameId, json.path("move").asString(), null, null);
                     gameService.makeMove(userId, moveDTO);
                 }
                 case "RESTORE" -> gameViewService.pushGameState(gameId, userId);
                 default -> logger.warn("Invalid action received: {}, for game {}", action, gameId);
             }
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             logger.error("Failed to parse message: {}", message.getBody(), e);
             throw new RuntimeException(e);
         } catch (IllegalArgumentException _){
